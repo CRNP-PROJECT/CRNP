@@ -1,5 +1,4 @@
 <?php
-
 include("../config.php");
 
 if(!isset($_SESSION['user_id'])){
@@ -13,15 +12,21 @@ $username = $_SESSION['username'] ?? "User";
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="../styles.css">
-<title>User Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="dashboard-design.css">
+    <title>User Dashboard</title>
 </head>
-<body>
+<body class="dashboard-body">
 
 <nav class="navbar">
-    <a href="index.php" class="navbar-brand">CRNP</a>
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" alt="Logo" class="logo" 
+             style="height: 160px !important; width: auto !important; display: block; object-fit: contain;">
+        <a href="index.php" class="navbar-brand"></a>
+    </div>
+
     <ul class="navbar-menu">
         <li><a href="index.php">Home</a></li>
         <li><a href="products.php">Products</a></li>
