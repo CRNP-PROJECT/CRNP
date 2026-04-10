@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 include(__DIR__ . "/../config.php");
 include(__DIR__ . "/../firebaseRDB.php");
 
@@ -8,44 +10,57 @@ if (!isset($_SESSION['admin_id'])) {
 }
 
 $message = "";
+
 if ($_SERVER['REQUEST_METHOD'] === "POST") {
     $name = $_POST['name'] ?? '';
     $price = $_POST['price'] ?? '';
     $description = $_POST['description'] ?? '';
+    $category = $_POST['category'] ?? '';
     $imageFile = $_FILES['image'] ?? null;
 
-    if ($name == "" || $price == "" || $description == "" || !$imageFile) {
+    if ($name == "" || $price == "" || $description == "" || $category == "" || !$imageFile) {
         $message = "All fields are required.";
     } else {
-        $uploadDir = __DIR__ . "/uploads/";
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-        $imageName = time() . "_" . basename($imageFile['name']);
-        $targetFile = $uploadDir . $imageName;
+        // ✅ VALIDATE CATEGORY
+        $allowedCategories = ["Food", "Drinks", "Beverages"];
+        if (!in_array($category, $allowedCategories)) {
+            $message = "Invalid category selected.";
+        } else {
 
-        if (move_uploaded_file($imageFile['tmp_name'], $targetFile)) {
-            try {
-                $rdb = new firebaseRDB($databaseURL);
+            $uploadDir = __DIR__ . "/uploads/";
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-                $insert = $rdb->insert("/products", [
-                    "name" => $name,
-                    "price" => $price,
-                    "description" => $description,
-                    "image" => "uploads/" . $imageName
-                ]);
+            $imageName = time() . "_" . basename($imageFile['name']);
+            $targetFile = $uploadDir . $imageName;
 
-                if ($insert) {
-                    header("Location: product_list.php");
-                    exit;
-                } else {
-                    $message = "Failed to add product.";
+            if (move_uploaded_file($imageFile['tmp_name'], $targetFile)) {
+
+                try {
+                    $rdb = new firebaseRDB($databaseURL);
+
+                    $insert = $rdb->insert("/products", [
+                        "name" => $name,
+                        "price" => $price,
+                        "description" => $description,
+                        "category" => $category, // 🔥 IMPORTANT
+                        "image" => "uploads/" . $imageName
+                    ]);
+
+                    if ($insert) {
+                        header("Location: product_list.php");
+                        exit;
+                    } else {
+                        $message = "Failed to add product.";
+                    }
+
+                } catch (Exception $e) {
+                    $message = "Error: " . $e->getMessage();
                 }
 
-            } catch (Exception $e) {
-                $message = "Error: " . $e->getMessage();
+            } else {
+                $message = "Failed to upload image.";
             }
-        } else {
-            $message = "Failed to upload image.";
         }
     }
 }
@@ -80,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
             <?php endif; ?>
 
             <form action="" method="POST" enctype="multipart/form-data">
+
                 <div class="form-group">
                     <label class="form-label">Product Name</label>
                     <input type="text" name="name" class="form-input" required>
@@ -88,6 +104,17 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                 <div class="form-group">
                     <label class="form-label">Price</label>
                     <input type="number" step="0.01" name="price" class="form-input" required>
+                </div>
+
+                <!-- 🔥 CATEGORY DROPDOWN -->
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-input" required>
+                        <option value="">Select Category</option>
+                        <option value="Food">Food</option>
+                        <option value="Drinks">Drinks</option>
+                        <option value="Beverages">Beverages </option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -101,6 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-block">Add Product</button>
+
             </form>
         </div>
     </div>

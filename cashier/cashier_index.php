@@ -19,6 +19,7 @@ if(!isset($_SESSION['cashier_email'])){
 <nav class="navbar">
     <a href="cashier_index.php" class="navbar-brand">Cashier Dashboard</a>
     <ul class="navbar-menu">
+        <li><a href="create_order.php">New Order</a></li> <!-- this is for ordering when there is a customer that usually walking in in crnp -->
         <li><a href="view_orders.php">View Orders</a></li>
         <li><a href="view_bookings.php">View Bookings</a></li>
         <li><a href="cashier_logout.php">Logout</a></li>
@@ -32,14 +33,24 @@ if(!isset($_SESSION['cashier_email'])){
     </div>
 
     <div class="kpi-grid mt-3">
+
+        <!--  NEW WALK-IN ORDER FOR CRNP  -->
+        <a href="create_order.php" class="card" style="text-decoration: none;">
+            <div class="kpi-value">New Order</div>
+            <div class="kpi-label">Walk-in Customer</div>
+        </a>
+
+        
         <a href="view_orders.php" class="card" style="text-decoration: none;">
             <div class="kpi-value">Orders</div>
             <div class="kpi-label">View & Manage</div>
         </a>
+
         <a href="view_bookings.php" class="card" style="text-decoration: none;">
             <div class="kpi-value">Bookings</div>
             <div class="kpi-label">View Reservations</div>
         </a>
+
     </div>
 </div>
 

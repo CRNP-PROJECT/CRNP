@@ -124,6 +124,50 @@ switch($action){
 
         header("Location: view_bookings.php");
         exit;
+        
+        case 'create_order':
+
+    if(!isset($_SESSION['cashier_email'])){
+        header("Location: cashier_login.php");
+        exit;
+    }
+
+    $cart_data = $_POST['cart_data'] ?? '';
+    $customer_name = $_POST['customer_name'] ?? '';
+    $table_number = $_POST['table_number'] ?? '';
+    $payment_method = $_POST['payment_method'] ?? '';
+
+    if(!$cart_data || !$customer_name || !$table_number){
+        die("Missing order data");
+    }
+
+    $cart = json_decode($cart_data, true);
+
+    if(empty($cart)){
+        die("Cart is empty");
+    }
+
+    $total = 0;
+
+    foreach($cart as $item){
+        $total += $item['price'] * $item['qty'];
+    }
+
+    $order = [
+        "customer_name" => $customer_name,
+        "table_number" => $table_number,
+        "payment_method" => $payment_method,
+        "items" => $cart,
+        "total" => $total,
+        "status" => "pending",
+        "created_at" => date("Y-m-d H:i:s"),
+        "cashier" => $_SESSION['cashier_email']
+    ];
+
+    $rdb->insert("/orders", $order);
+
+    header("Location: cashier_index.php?success=1");
+    exit;
 }
 
 ?>
