@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="../styles.css">
 <title>Sign Up</title>
 </head>
-<body>
+<body class="login-body">
 
 <div class="container-sm" style="padding-top: 80px;">
     <div class="auth-card">

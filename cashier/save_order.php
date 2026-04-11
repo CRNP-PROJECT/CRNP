@@ -27,25 +27,32 @@ foreach($cart as $item){
     $total += $item['price'] * $item['qty'];
 }
 
-// ================= CREATE ORDER =================
+// ================= CREATE ORDER (KITCHEN READY FORMAT) =================
 $order_id = uniqid("ORD-");
 
 $order = [
     "order_id" => $order_id,
-    "customer_name" => $customer_name,
+
+    // ✅ KITCHEN EXPECTS THIS FORMAT
+    "full_name" => $customer_name,
     "table_number" => $table_number,
     "payment_method" => $payment_method,
-    "items" => $cart,
+
+    // ✅ FIX: must match kitchen loop
+    "products" => $cart,
+
     "total" => $total,
-    "status" => "pending",
-    "created_at" => date("Y-m-d H:i:s")
+
+    // cashier auto-approved
+    "status" => "accepted",
+    "kitchen_status" => "pending",
+
+    "created_at" => date("Y-m-d H:i:s"),
+    "cashier" => $_SESSION['cashier_email']
 ];
 
 // ================= SAVE TO FIREBASE =================
 $rdb->insert("/orders", $order);
-
-// ================= SEND TO KITCHEN =================
-$rdb->insert("/kitchen", $order);
 
 // ================= STORE FOR RECEIPT =================
 $_SESSION['last_order'] = $order;
@@ -53,11 +60,11 @@ $_SESSION['last_order'] = $order;
 ?>
 
 <!-- ================= RECEIPT UI ================= -->
-<h2>✅ ORDER SUCCESSFUL</h2>
+<h2> ORDER SUCCESSFUL</h2>
 <h3>🧾 RECEIPT</h3>
 
 <p><b>Order ID:</b> <?= $order['order_id'] ?></p>
-<p><b>Customer:</b> <?= $order['customer_name'] ?></p>
+<p><b>Customer:</b> <?= $order['full_name'] ?></p>
 <p><b>Table:</b> <?= $order['table_number'] ?></p>
 <p><b>Payment:</b> <?= $order['payment_method'] ?></p>
 <p><b>Status:</b> <?= $order['status'] ?></p>
@@ -66,20 +73,21 @@ $_SESSION['last_order'] = $order;
 
 <h3>Items</h3>
 
-<?php foreach($order['items'] as $item): ?>
+<?php foreach($order['products'] as $item): ?>
     <p>
-        <?= $item['name'] ?> x <?= $item['qty'] ?>
-        = ₱<?= $item['price'] * $item['qty'] ?>
+        <?= htmlspecialchars($item['name']) ?> 
+        x <?= intval($item['qty']) ?>
+        = ₱<?= number_format($item['price'] * $item['qty'], 2) ?>
     </p>
 <?php endforeach; ?>
 
 <hr>
 
-<h2>Total: ₱<?= $order['total'] ?></h2>
+<h2>Total: ₱<?= number_format($order['total'], 2) ?></h2>
 
 <br>
 
-<button onclick="window.print()">🖨 Print Receipt</button>
+<button onclick="window.print()"> Print Receipt</button>
 
 <br><br>
 

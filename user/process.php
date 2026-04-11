@@ -27,7 +27,8 @@ switch($action) {
             $_SESSION['cart'][$product_id] = 1;
         }
 
-        header("Location: cart.php");
+        //header("Location: cart.php");// ging change ko kay everytime ga click ko sa add to cart ga redirect ko sa cart
+        header("Location: products.php");
         exit;
 
     // ===== BUY NOW =====

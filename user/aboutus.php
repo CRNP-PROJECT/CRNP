@@ -15,10 +15,12 @@ if(!isset($_SESSION['email'])){
 <link rel="stylesheet" href="../styles.css">
 <title>About Us</title>
 </head>
-<body>
+<body class="about-page-body">
 
 <nav class="navbar">
-    <a href="index.php" class="navbar-brand">CRNP</a>
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" alt="Logo" class="logo" style="height: 100px; width: auto;">
+    </div>
     <ul class="navbar-menu">
         <li><a href="index.php">Home</a></li>
         <li><a href="products.php">Products</a></li>

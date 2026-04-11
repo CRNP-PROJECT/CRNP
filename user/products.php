@@ -63,10 +63,14 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
 </style>
 
 </head>
-<body>
+<body class="products-page-body">
 
 <nav class="navbar">
-    <a href="index.php" class="navbar-brand">CRNP</a>
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" alt="Logo" class="logo" 
+             style="height: 160px !important; width: auto !important; display: block; object-fit: contain;">
+        <a href="index.php" class="navbar-brand"></a>
+    </div>
     <ul class="navbar-menu">
         <li><a href="index.php">Home</a></li>
         <li><a href="products.php">Products</a></li>
