@@ -18,6 +18,8 @@ $total = 0;
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../styles.css">
 <title>Your Cart</title>
 </head>
@@ -26,27 +28,27 @@ $total = 0;
 
 <nav class="navbar">
     <div class="navbar-brand-container">
-        <img src="../img/logo.png" alt="Logo" class="logo" 
-             style="height: 160px !important; width: auto !important; display: block; object-fit: contain;">
-        <a href="index.php" class="navbar-brand"></a>
+        <img src="../img/logo.png" alt="Logo" class="logo">
+        <a href="cart.php" class="navbar-brand"></a>
     </div>
     <ul class="navbar-menu">
-        <li><a href="index.php">Home</a></li>
-        <li><a href="products.php">Products</a></li>
-        <li><a href="cart.php">Cart</a></li>
-        <li><a href="../logout.php">Logout</a></li>
+        <li><a href="index.php"><i class="fa-solid fa-house-chimney"></i> Home</a></li>
+        <li><a href="products.php"><i class="fa-solid fa-bag-shopping"></i> Products</a></li>
+        <li><a href="booking.php"><i class="fa-solid fa-calendar-days"></i> Booking</a></li>
+        <li><a href="cart.php"><i class="fa-solid fa-cart-plus"></i> Cart</a></li>
+        <li><a href="../logout.php"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
     </ul>
 </nav>
 
 <div class="container">
 
-    <!-- HEADER ONLY -->
     <div class="page-header">
-        <h1 class="page-title">Your Cart</h1>
+        <h1 class="page-title"><i class="fa-solid fa-cart-shopping"></i> Your Cart</h1>
     </div>
 
-    <!-- CONTINUE BUTTON (separate for proper positioning) -->
-    <a href="products.php" class="btn-secondary">← Continue Shopping</a>
+    <a href="products.php" class="btn-secondary">
+        <i class="fa-solid fa-circle-arrow-left"></i> Continue Shopping
+    </a>
 
     <?php if(empty($cart)): ?>
         <div class="card">
@@ -55,22 +57,24 @@ $total = 0;
     <?php else: ?>
 
         <?php foreach($cart as $id => $qty): 
-            $product = json_decode($rdb->retrieve("/products/$id"), true);
+            $res = $rdb->retrieve("/products/$id");
+            $product = json_decode($res, true);
+
             if (!$product) continue;
 
-            $price = floatval($product['price']);
+            $price = floatval($product['price'] ?? 0);
             $subtotal = $price * $qty;
             $total += $subtotal;
         ?>
 
         <div class="cart-item">
-            <img src="../admin/<?php echo htmlspecialchars($product['image']); ?>">
+            <img src="../admin/<?php echo htmlspecialchars($product['image'] ?? 'default.png'); ?>">
 
-            <!-- ✅ FIXED CLASS NAME -->
             <div class="cart-item-info">
-                <h3><?php echo htmlspecialchars($product['name']); ?></h3>
-                <p>Price: ₱<?php echo number_format($price, 2); ?></p>
-                <p>Subtotal: ₱<?php echo number_format($subtotal, 2); ?></p>
+                <h3><?php echo htmlspecialchars($product['name'] ?? 'Item'); ?></h3>
+                
+                <p><i class="fa-solid fa-peso-sign"></i> Price: ₱<?php echo number_format($price, 2); ?></p>
+                <p><i class="fa-solid fa-receipt"></i> Subtotal: ₱<?php echo number_format($subtotal, 2); ?></p>
             </div>
 
             <div class="cart-item-actions">
@@ -81,16 +85,16 @@ $total = 0;
                     <div class="flex gap-1">
                         <input type="number" name="quantity" value="<?php echo $qty; ?>" min="1" class="form-input" style="width: 70px;">
 
-                        <!-- ✅ FIXED BUTTON -->
-                        <button type="submit" class="btn-update">Update</button>
+                        <button type="submit" class="btn-update">
+                            <i class="fa-solid fa-arrows-rotate"></i> Update
+                        </button>
                     </div>
                 </form>
 
-                <!-- ✅ FIXED BUTTON -->
                 <a href="process.php?action=remove_cart&id=<?php echo $id; ?>" 
                    class="btn-danger" 
                    onclick="return confirm('Remove item?')">
-                   Remove
+                    <i class="fa-solid fa-trash"></i> Remove
                 </a>
             </div>
         </div>
@@ -100,9 +104,12 @@ $total = 0;
         <div class="card mt-2">
             <p class="cart-total">Total: ₱<?php echo number_format($total, 2); ?></p>
 
-            <!-- ✅ centered by CSS fix -->
-            <a href="checkout.php" class="btn-primary">Proceed to Checkout</a>
+            <a href="checkout.php" class="btn-primary">
+                <i class="fa-solid fa-wallet"></i> Proceed to Checkout
+            </a>
         </div>
 
     <?php endif; ?>
 </div>
+</body>
+</html>
