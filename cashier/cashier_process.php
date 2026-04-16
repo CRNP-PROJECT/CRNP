@@ -1,192 +1,187 @@
 <?php
 session_start();
+
 include(__DIR__ . "/../config.php");
 include(__DIR__ . "/../firebaseRDB.php");
 
 $rdb = new firebaseRDB($databaseURL);
+
 $action = $_POST['action'] ?? '';
 
 switch($action){
 
-    // ================= SIGNUP =================
-    case 'signup':
+// ================= SIGNUP =================
+case 'signup':
 
-        $full_name = $_POST['full_name'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
+    $full_name = $_POST['full_name'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
 
-        if(!$email || !$password){
-            die("Email and password are required.");
+    if(!$email || !$password){
+        die("Email and password are required.");
+    }
+
+    $cashiers = json_decode($rdb->retrieve("/cashiers"), true) ?? [];
+
+    foreach($cashiers as $c){
+        if(($c['email'] ?? '') === $email){
+            die("Email already exists.");
         }
+    }
 
-        $cashiers = json_decode($rdb->retrieve("/cashiers"), true) ?? [];
+    $rdb->insert("/cashiers", [
+        'full_name' => $full_name,
+        'email' => $email,
+        'password' => password_hash($password, PASSWORD_DEFAULT),
+        'created_at' => date('Y-m-d H:i:s')
+    ]);
 
-        foreach($cashiers as $c){
-            if(($c['email'] ?? '') === $email){
-                die("Email already exists.");
-            }
+    $_SESSION['cashier_email'] = $email;
+    header("Location: cashier_index.php");
+    exit;
+
+
+// ================= LOGIN =================
+case 'login':
+
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+
+    $cashiers = json_decode($rdb->retrieve("/cashiers"), true) ?? [];
+
+    foreach($cashiers as $c){
+        if(($c['email'] ?? '') === $email && password_verify($password, $c['password'] ?? '')){
+            $_SESSION['cashier_email'] = $email;
+            header("Location: cashier_index.php");
+            exit;
         }
+    }
 
-        $cashier_data = [
-            'full_name' => $full_name,
-            'email' => $email,
-            'password' => password_hash($password, PASSWORD_DEFAULT),
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-
-        $rdb->insert("/cashiers", $cashier_data);
-
-        $_SESSION['cashier_email'] = $email;
-        header("Location: cashier_index.php");
-        exit;
+    die("Invalid email or password");
 
 
-    // ================= LOGIN =================
-    case 'login':
-
-        $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
-
-        $cashiers = json_decode($rdb->retrieve("/cashiers"), true) ?? [];
-
-        foreach($cashiers as $c){
-            if(($c['email'] ?? '') === $email && password_verify($password, $c['password'] ?? '')){
-
-                $_SESSION['cashier_email'] = $email;
-                header("Location: cashier_index.php");
-                exit;
-            }
-        }
-
-        die("Invalid email or password");
+// ================= LOGOUT =================
+case 'logout':
+    session_destroy();
+    header("Location: cashier_login.php");
+    exit;
 
 
-    // ================= LOGOUT =================
-    case 'logout':
-        session_destroy();
+// ================= UPDATE ORDER STATUS =================
+case 'update_status':
+
+    if(!isset($_SESSION['cashier_email'])){
         header("Location: cashier_login.php");
         exit;
+    }
 
+    $order_id = $_POST['order_id'] ?? '';
+    $status = $_POST['status'] ?? '';
 
-    // ================= CREATE ORDER (POS) =================
-    case 'create_order':
-
-        if(!isset($_SESSION['cashier_email'])){
-            header("Location: cashier_login.php");
-            exit;
-        }
-
-        $cart_data = $_POST['cart_data'] ?? '';
-        $customer_name = $_POST['customer_name'] ?? '';
-        $table_number = $_POST['table_number'] ?? '';
-        $payment_method = $_POST['payment_method'] ?? 'Over the Counter';
-
-        if(!$cart_data || !$customer_name || !$table_number){
-            die("Missing order data");
-        }
-
-        $cart = json_decode($cart_data, true);
-
-        if(empty($cart)){
-            die("Cart is empty");
-        }
-
-        $items = [];
-        $total = 0;
-
-        foreach($cart as $item){
-            $subtotal = $item['price'] * $item['qty'];
-            $total += $subtotal;
-
-            $items[] = [
-                "name" => $item['name'],
-                "price" => $item['price'],
-                "qty" => $item['qty'],
-                "subtotal" => $subtotal
-            ];
-        }
-
-        $order = [
-            "customer_name" => $customer_name,
-            "table_number" => $table_number,
-            "payment_method" => $payment_method,
-            "items" => $items,
-            "total" => $total,
-
-            // 🔥 CASHIER AUTO ACCEPTED
-            "status" => "accepted",
-            "kitchen_status" => "pending",
-
-            "created_at" => date("Y-m-d H:i:s"),
-            "cashier" => $_SESSION['cashier_email']
-        ];
-
-        $rdb->insert("/orders", $order);
-
-        header("Location: save_order.php?success=1");
-        exit;
-
-
-    // ================= UPDATE ORDER STATUS =================
-    case 'update_status':
-
-        if(!isset($_SESSION['cashier_email'])){
-            header("Location: cashier_login.php");
-            exit;
-        }
-
-        $order_id = $_POST['order_id'] ?? '';
-        $status = $_POST['status'] ?? '';
-
-        if(!$order_id || !$status){
-            die("Missing data");
-        }
-
-        if(!in_array($status, ['accepted', 'rejected'])){
-            die("Invalid status");
-        }
-
-        $rdb->update("orders", $order_id, [
-            'status' => $status
-        ]);
-
+    if(!$order_id || !$status){
         header("Location: view_orders.php");
         exit;
+    }
 
-
-    // ================= UPDATE BOOKING =================
-    case 'update_booking_status':
-
-        if(!isset($_SESSION['cashier_email'])){
-            header("Location: cashier_login.php");
-            exit;
-        }
-
-        $booking_id = $_POST['booking_id'] ?? '';
-        $status = $_POST['status'] ?? '';
-
-        if(!$booking_id || !$status){
-            die("Missing data");
-        }
-
-        if(!in_array($status, ['accepted', 'rejected'])){
-            die("Invalid status");
-        }
-
-        $rdb->update("bookings", $booking_id, [
-            'status' => $status
-        ]);
-
-        header("Location: view_bookings.php");
+    if(!in_array($status, ['accepted', 'rejected', 'done'])){
+        header("Location: view_orders.php");
         exit;
+    }
+
+    $order = json_decode($rdb->retrieve("/orders/$order_id"), true);
+
+    if(!$order){
+        header("Location: view_orders.php");
+        exit;
+    }
+
+    $order['final_status'] = $status;
+    $order['cashier_action_time'] = date("M d, Y h:i A");
+    $order['processed_by'] = $_SESSION['cashier_email'];
+
+    if($status === "accepted"){
+
+        $order['status'] = "accepted";
+        $order['kitchen_status'] = "accepted";
+
+        $rdb->update("/orders", $order_id, $order);
+        $rdb->insert("/cashier_orderhistory", $order);
+    }
+
+    elseif($status === "rejected"){
+
+        $order['status'] = "rejected";
+        $order['kitchen_status'] = "rejected";
+
+        $rdb->delete("/orders", $order_id);
+        $rdb->insert("/cashier_orderhistory", $order);
+    }
+
+    elseif($status === "done"){
+
+        $order['status'] = "done";
+        $order['kitchen_status'] = "done";
+
+        $rdb->delete("/orders", $order_id);
+        $rdb->insert("/cashier_orderhistory", $order);
+    }
+
+    header("Location: view_orders.php");
+    exit;
 
 
-    // ================= DEFAULT =================
-    default:
+// ================= 🆕 BOOKING FIX (IMPORTANT) =================
+case 'update_booking_status':
+
+    if(!isset($_SESSION['cashier_email'])){
         header("Location: cashier_login.php");
         exit;
+    }
 
-        case 'create_order':
+    $booking_id = $_POST['booking_id'] ?? '';
+    $status = $_POST['status'] ?? '';
+
+    if(!$booking_id || !$status){
+        header("Location: view_bookings.php");
+        exit;
+    }
+
+    if(!in_array($status, ['accepted', 'rejected'])){
+        header("Location: view_bookings.php");
+        exit;
+    }
+
+    $booking = json_decode($rdb->retrieve("/bookings/$booking_id"), true);
+
+    if(!$booking){
+        header("Location: view_bookings.php");
+        exit;
+    }
+
+    $booking['booking_id'] = $booking_id;
+    $booking['status'] = $status;
+    $booking['final_status'] = $status;
+    $booking['processed_by'] = $_SESSION['cashier_email'];
+    $booking['cashier_action_time'] = date("M d, Y h:i A");
+
+    if($status === "accepted"){
+
+        $rdb->update("/bookings", $booking_id, $booking);
+        $rdb->insert("/cashier_bookinghistory", $booking);
+    }
+
+    elseif($status === "rejected"){
+
+        $rdb->delete("/bookings", $booking_id);
+        $rdb->insert("/cashier_bookinghistory", $booking);
+    }
+
+    header("Location: view_bookings.php");
+    exit;
+
+
+// ================= CREATE ORDER =================
+case 'create_order':
 
     if(!isset($_SESSION['cashier_email'])){
         header("Location: cashier_login.php");
@@ -196,7 +191,6 @@ switch($action){
     $cart_data = $_POST['cart_data'] ?? '';
     $customer_name = $_POST['customer_name'] ?? '';
     $table_number = $_POST['table_number'] ?? '';
-    $payment_method = $_POST['payment_method'] ?? 'Over the Counter';
 
     if(!$cart_data || !$customer_name || !$table_number){
         die("Missing order data");
@@ -204,20 +198,13 @@ switch($action){
 
     $cart = json_decode($cart_data, true);
 
-    if(empty($cart)){
-        die("Cart is empty");
-    }
-
-    // compute total
-    $total = 0;
     $products = [];
+    $total = 0;
 
     foreach($cart as $id => $item){
-
         $subtotal = $item['price'] * $item['qty'];
         $total += $subtotal;
 
-        // 🔥 FIX STRUCTURE FOR KITCHEN
         $products[] = [
             "id" => $id,
             "name" => $item['name'],
@@ -227,27 +214,37 @@ switch($action){
         ];
     }
 
-    // 🔥 THIS IS NOW COMPATIBLE WITH KITCHEN
+    $order_id = uniqid("walkin_");
+
     $order = [
-        "full_name" => $customer_name,   // FIXED (kitchen expects this)
+        "order_id" => $order_id,
+        "order_type" => "walkin",
+
+        "full_name" => $customer_name,
         "table_number" => $table_number,
-        "payment_method" => $payment_method,
-        "products" => $products,         // FIXED (kitchen expects this)
+        "products" => $products,
         "total" => $total,
 
-        "status" => "accepted",          // cashier auto-accept
-        "kitchen_status" => "pending",
+        "status" => "accepted",
+        "kitchen_status" => "accepted",
+        "final_status" => "accepted",
 
-        "created_at" => date("Y-m-d H:i:s"),
-        "cashier" => $_SESSION['cashier_email']
+        "cashier" => $_SESSION['cashier_email'],
+        "processed_by" => $_SESSION['cashier_email'],
+
+        "created_at" => date("M d, Y h:i A"),
+        "cashier_action_time" => date("M d, Y h:i A")
     ];
 
-    $rdb->insert("/orders", $order);
-
-    // 🔥 redirect to receipt page
-    $_SESSION['last_order'] = $order;
+    $rdb->update("/orders", $order_id, $order);
+    $rdb->insert("/cashier_orderhistory", $order);
 
     header("Location: receipt.php");
+    exit;
+
+
+default:
+    header("Location: cashier_login.php");
     exit;
 }
 ?>

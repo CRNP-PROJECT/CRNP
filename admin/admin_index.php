@@ -80,6 +80,8 @@ $bookingsStatus = $adminData['bookingsStatus'] ?? [
         </div>
     </div>
 
+
+    
     <div class="chart-grid">
         <div class="chart-box">
             <h3>Orders Status</h3>

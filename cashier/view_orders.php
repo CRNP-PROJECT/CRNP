@@ -1,8 +1,12 @@
 <?php
+session_start();
+
 include(__DIR__ . "/../config.php");
 include(__DIR__ . "/../firebaseRDB.php");
 
 header("Cache-Control: no-cache, must-revalidate");
+
+date_default_timezone_set("Asia/Manila");
 
 if(!isset($_SESSION['cashier_email'])){
     header("Location: cashier_login.php");
@@ -12,7 +16,7 @@ if(!isset($_SESSION['cashier_email'])){
 $rdb = new firebaseRDB($databaseURL);
 
 $orders_raw = $rdb->retrieve("/orders");
-$orders = json_decode($orders_raw, true);
+$orders = json_decode($orders_raw, true) ?? [];
 ?>
 
 <!DOCTYPE html>
@@ -29,74 +33,102 @@ $orders = json_decode($orders_raw, true);
     <a href="cashier_index.php" class="navbar-brand">Cashier Dashboard</a>
     <ul class="navbar-menu">
         <li><a href="view_orders.php">View Orders</a></li>
-        <li><a href="view_bookings.php">View Bookings</a></li>
-        <li><a href="cashier_logout.php">Logout</a></li>
+        <li><a href="cashier_orderHistory.php">History</a></li>
     </ul>
 </nav>
 
 <div class="container">
+
     <div class="page-header flex-between">
-        <div>
-            <h1 class="page-title">Orders Status</h1>
-        </div>
+        <h1 class="page-title">Orders Status</h1>
         <a href="cashier_index.php" class="btn btn-secondary btn-sm">← Back</a>
     </div>
 
-    <?php if(empty($orders)): ?>
-        <div class="card">
-            <p class="text-center text-muted">No orders yet.</p>
-        </div>
-    <?php else: ?>
-        <div class="table-wrapper">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>User Email</th>
-                        <th>Customer Name</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach($orders as $id => $order): 
-                        $status = $order['status'] ?? 'pending';
+    <?php $hasOrders = false; ?>
+
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>User Email</th>
+                    <th>Customer Name</th>
+                    <th>Total</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <?php foreach($orders as $id => $order): ?>
+
+                    <?php
+                    // 🔥 ONLY SHOW PENDING
+                    if(($order['status'] ?? '') !== 'pending') continue;
+
+                    $hasOrders = true;
+
+                    $status = $order['status'];
+                    $email = $order['user_email'] ?? 'None';
+                    $created_at = $order['created_at'] ?? '';
                     ?>
+
                     <tr>
-                        <td><?php echo htmlspecialchars($id); ?></td>
-                        <td><?php echo htmlspecialchars($order['user_email'] ?? ''); ?></td>
-                        <td><?php echo htmlspecialchars($order['full_name'] ?? ''); ?></td>
-                        <td>₱<?php echo number_format($order['total'] ?? 0, 2); ?></td>
+
+                        <td><?= htmlspecialchars($id); ?></td>
+                        <td><?= htmlspecialchars($email); ?></td>
+                        <td><?= htmlspecialchars($order['full_name'] ?? ''); ?></td>
+                        <td>₱<?= number_format($order['total'] ?? 0, 2); ?></td>
+
                         <td>
-                            <span class="badge badge-<?php echo htmlspecialchars($status); ?>">
-                                <?php echo strtoupper($status); ?>
+                            <?= !empty($created_at) 
+                                ? date("M d, Y h:i A", strtotime($created_at)) 
+                                : "N/A"; ?>
+                        </td>
+
+                        <td>
+                            <span class="badge badge-<?= htmlspecialchars($status); ?>">
+                                <?= strtoupper($status); ?>
                             </span>
                         </td>
+
                         <td>
-                            <?php if($status === 'pending'): ?>
-                                <form style="display:inline;" action="cashier_process.php" method="POST">
-                                    <input type="hidden" name="action" value="update_status">
-                                    <input type="hidden" name="order_id" value="<?php echo $id; ?>">
-                                    <input type="hidden" name="status" value="accepted">
-                                    <button type="submit" class="btn btn-success btn-sm">Accept</button>
-                                </form>
-                                <form style="display:inline;" action="cashier_process.php" method="POST">
-                                    <input type="hidden" name="action" value="update_status">
-                                    <input type="hidden" name="order_id" value="<?php echo $id; ?>">
-                                    <input type="hidden" name="status" value="rejected">
-                                    <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-                                </form>
-                            <?php else: ?>
-                                <span class="text-muted">Processed</span>
-                            <?php endif; ?>
+
+                            <form style="display:inline;" action="cashier_process.php" method="POST">
+                                <input type="hidden" name="action" value="update_status">
+                                <input type="hidden" name="order_id" value="<?= $id; ?>">
+                                <input type="hidden" name="status" value="accepted">
+                                <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                            </form>
+
+                            <form style="display:inline;" action="cashier_process.php" method="POST">
+                                <input type="hidden" name="action" value="update_status">
+                                <input type="hidden" name="order_id" value="<?= $id; ?>">
+                                <input type="hidden" name="status" value="rejected">
+                                <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                            </form>
+
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+                <?php if(!$hasOrders): ?>
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            No pending orders
                         </td>
                     </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    <?php endif; ?>
+                <?php endif; ?>
+
+            </tbody>
+
+        </table>
+    </div>
+
 </div>
 
 </body>
