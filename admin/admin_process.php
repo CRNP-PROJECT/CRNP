@@ -2,108 +2,159 @@
 include(__DIR__ . "/../config.php");
 include(__DIR__ . "/../firebaseRDB.php");
 
-// Firebase connection
 $rdb = new firebaseRDB($databaseURL);
 
-/* ================= NEW DATA SOURCES ================= */
+/* ================= FETCH DATA ================= */
 
-// ✅ CASHIER ORDER HISTORY
-$orders_raw = $rdb->retrieve("/cashier_orderHistory");
+$orders_raw = $rdb->retrieve("/orders");
 $orders = json_decode($orders_raw, true) ?? [];
 
-// ✅ CASHIER BOOKING HISTORY
-$bookings_raw = $rdb->retrieve("/cashier_bookinghistory");
-$bookings = json_decode($bookings_raw, true) ?? [];
-
-// ✅ KITCHEN HISTORY
 $kitchen_raw = $rdb->retrieve("/kitchen_history");
 $kitchenData = json_decode($kitchen_raw, true) ?? [];
 
+$bookings_raw = $rdb->retrieve("/cashier_bookinghistory");
+$bookings = json_decode($bookings_raw, true) ?? [];
+
 /* ================= KPI ================= */
+
 $kpis = [
     'todayRevenue' => 0,
     'totalRevenue' => 0,
-    'totalSales' => count($orders),
+    'totalSales' => 0,
     'totalUsers' => 0,
     'totalBookings' => count($bookings)
 ];
 
-/* ================= ORDER HISTORY STATUS ================= */
+/* ================= STATUS COUNTS ================= */
+
 $ordersStatus = [
+    'pending' => 0,
     'accepted' => 0,
-    'rejected' => 0
+    'rejected' => 0,
+    'done' => 0
 ];
 
-/* ================= BOOKING HISTORY STATUS ================= */
-$bookingsStatus = [
-    'accepted' => 0,
-    'rejected' => 0
-];
-
-/* ================= KITCHEN STATUS ================= */
 $kitchenStatus = [
     'preparing' => 0,
     'ready' => 0,
     'done' => 0
 ];
 
+$bookingsStatus = [
+    'pending' => 0,
+    'accepted' => 0,
+    'rejected' => 0
+];
+
+/* ================= NEW: BOOKINGS PER DAY ================= */
+$bookingsPerDay = [];
+
+/* ================= BEST SELLING ================= */
+$productSales = [];
+
 $today = date('Y-m-d');
 
-/* ================= PROCESS CASHIER ORDERS ================= */
+/* ================= PROCESS ORDERS ================= */
+
 foreach($orders as $order){
 
-    $status = strtolower($order['final_status'] ?? '');
+    if(!is_array($order)) continue;
 
-    if($status === 'accepted'){
-        $ordersStatus['accepted']++;
+    $status = strtolower($order['status'] ?? 'pending');
+
+    if(isset($ordersStatus[$status])){
+        $ordersStatus[$status]++;
     } else {
-        $ordersStatus['rejected']++;
+        $ordersStatus['pending']++;
     }
 
     $total = floatval($order['total'] ?? 0);
     $kpis['totalRevenue'] += $total;
+    $kpis['totalSales']++;
 
-    if(substr($order['cashier_action_time'] ?? '', 0, 10) === $today){
+    if(substr($order['created_at'] ?? '', 0, 10) === $today){
         $kpis['todayRevenue'] += $total;
     }
-}
 
-/* ================= PROCESS CASHIER BOOKINGS ================= */
-foreach($bookings as $booking){
+    // BEST SELLING
+    foreach(($order['products'] ?? []) as $p){
+        $name = $p['name'] ?? 'Unknown';
+        $qty = intval($p['qty'] ?? 0);
 
-    $status = strtolower($booking['final_status'] ?? '');
+        if(!isset($productSales[$name])){
+            $productSales[$name] = 0;
+        }
 
-    if($status === 'accepted'){
-        $bookingsStatus['accepted']++;
-    } else {
-        $bookingsStatus['rejected']++;
+        $productSales[$name] += $qty;
+    }
+
+    // KITCHEN STATUS
+    $kStatus = strtolower($order['kitchen_status'] ?? '');
+
+    if(isset($kitchenStatus[$kStatus])){
+        $kitchenStatus[$kStatus]++;
     }
 }
 
 /* ================= PROCESS KITCHEN HISTORY ================= */
+
 foreach($kitchenData as $k){
 
-    $status = strtolower($k['kitchen_status'] ?? 'preparing');
+    if(!is_array($k)) continue;
 
-    if(!isset($kitchenStatus[$status])){
-        $status = 'preparing';
+    $kitchenStatus['done']++;
+
+    $kpis['totalRevenue'] += floatval($k['total'] ?? 0);
+}
+
+/* ================= PROCESS BOOKINGS ================= */
+
+foreach($bookings as $b){
+
+    if(!is_array($b)) continue;
+
+    $status = strtolower($b['final_status'] ?? 'pending');
+
+    if(isset($bookingsStatus[$status])){
+        $bookingsStatus[$status]++;
+    } else {
+        $bookingsStatus['pending']++;
     }
 
-    $kitchenStatus[$status]++;
+    /* ================= BOOKINGS PER DAY FIX ================= */
+    $date = $b['cashier_action_time']
+        ?? $b['created_at']
+        ?? '';
+
+    $dateKey = substr($date, 0, 10);
+
+    if($dateKey){
+        if(!isset($bookingsPerDay[$dateKey])){
+            $bookingsPerDay[$dateKey] = 0;
+        }
+        $bookingsPerDay[$dateKey]++;
+    }
 }
 
 /* ================= USERS ================= */
+
 $users_raw = $rdb->retrieve("/user");
 $users = json_decode($users_raw, true) ?? [];
 $kpis['totalUsers'] = count($users);
 
+/* ================= SORT ================= */
+
+arsort($productSales);
+ksort($bookingsPerDay);
+
 /* ================= RETURN ================= */
+
 return [
-    'orders' => $orders,
-    'bookings' => $bookings,
     'kpis' => $kpis,
-    'ordersStatus' => $ordersStatus,        // now = cashier order history
-    'bookingsStatus' => $bookingsStatus,    // now = cashier booking history
-    'kitchenStatus' => $kitchenStatus
+    'ordersStatus' => $ordersStatus,
+    'bookingsStatus' => $bookingsStatus,
+    'kitchenStatus' => $kitchenStatus,
+    'bestSelling' => $productSales,
+    'bookingsPerDay' => $bookingsPerDay
 ];
 ?>

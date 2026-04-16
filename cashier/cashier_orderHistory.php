@@ -13,36 +13,41 @@ date_default_timezone_set("Asia/Manila");
 
 $rdb = new firebaseRDB($databaseURL);
 
-/* ================= FETCH ALL ORDERS ================= */
 $raw = $rdb->retrieve("/orders");
-$data = json_decode($raw, true);
-
-if(!is_array($data)){
-    $data = [];
-}
+$data = json_decode($raw, true) ?? [];
 
 $history = [];
 
-/* ================= FILTER HISTORY ================= */
 foreach($data as $order){
 
     if(!is_array($order)) continue;
 
-    // ONLY COMPLETED ORDERS
-    if(!in_array($order['status'], ['done', 'rejected'])) continue;
+    $status = strtolower($order['status'] ?? '');
+    $type   = strtolower($order['order_type'] ?? '');
 
-    // FIX ORDER TYPE
-    if(empty($order['order_type'])){
-        $order['order_type'] = 'online';
+    // AUTO-DETECT WALK-IN IF MISSING TYPE
+    if($type === ''){
+        if(isset($order['table_number']) || isset($order['cashier'])){
+            $type = 'walkin';
+        } else {
+            $type = 'online';
+        }
     }
 
-    $history[] = $order;
+    // INCLUDE EVERYTHING PROCESSED OR WALK-IN
+    if(
+        $type === 'walkin' ||
+        in_array($status, ['accepted', 'rejected', 'done'])
+    ){
+        $order['order_type'] = $type;
+        $history[] = $order;
+    }
 }
 
-/* ================= SORT LATEST FIRST ================= */
+// SORT NEWEST FIRST
 usort($history, function($a, $b){
-    return strtotime($b['cashier_action_time'] ?? $b['created_at'])
-        <=> strtotime($a['cashier_action_time'] ?? $a['created_at']);
+    return strtotime($b['cashier_action_time'] ?? $b['created_at'] ?? 0)
+        <=> strtotime($a['cashier_action_time'] ?? $a['created_at'] ?? 0);
 });
 ?>
 
@@ -50,13 +55,14 @@ usort($history, function($a, $b){
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Cashier Order History</title>
-<link rel="stylesheet" href="../styles.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order History</title>
+
 </head>
 
 <body>
 
-<h2>🧾 Order History (Walk-in + Online)</h2>
+<h2>🧾 Order History (All Records)</h2>
 
 <?php if(empty($history)): ?>
     <p>No history yet.</p>
@@ -64,32 +70,38 @@ usort($history, function($a, $b){
 
 <?php foreach($history as $order): ?>
 
-<div style="border:1px solid #ccc; padding:12px; margin:10px; border-radius:8px;">
+<div class="card">
 
-    <p><b>Order ID:</b> <?= htmlspecialchars($order['order_id']) ?></p>
+    <p><b>Order ID:</b> <?= htmlspecialchars($order['order_id'] ?? '') ?></p>
 
     <p><b>Type:</b>
         <?php if(($order['order_type'] ?? '') === 'walkin'): ?>
-            <span style="color:blue;">WALK-IN</span>
+            <span class="walkin">WALK-IN</span>
         <?php else: ?>
-            <span style="color:green;">ONLINE</span>
+            <span class="online">ONLINE</span>
         <?php endif; ?>
     </p>
 
     <p><b>Customer:</b>
-        <?= htmlspecialchars($order['full_name'] ?? 'Online Customer') ?>
+        <?= htmlspecialchars($order['full_name'] ?? 'Walk-in Customer') ?>
     </p>
 
     <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
 
     <p><b>Status:</b>
-        <?php if($order['status'] === 'done'): ?>
-            <span style="color:blue;">DONE</span>
-        <?php elseif($order['status'] === 'rejected'): ?>
-            <span style="color:red;">REJECTED</span>
-        <?php else: ?>
-            <span style="color:gray;">UNKNOWN</span>
-        <?php endif; ?>
+        <?php
+        $status = strtolower($order['status'] ?? '');
+
+        if($status === 'accepted'){
+            echo "<span class='accepted'>ACCEPTED</span>";
+        } elseif($status === 'done'){
+            echo "<span class='done'>DONE</span>";
+        } elseif($status === 'rejected'){
+            echo "<span class='rejected'>REJECTED</span>";
+        } else {
+            echo "<span>UNKNOWN</span>";
+        }
+        ?>
     </p>
 
     <p><b>Processed By:</b>
@@ -97,8 +109,10 @@ usort($history, function($a, $b){
     </p>
 
     <p><b>Date:</b>
-        <?= htmlspecialchars($order['cashier_action_time'] ?? $order['created_at']) ?>
+        <?= htmlspecialchars($order['cashier_action_time'] ?? $order['created_at'] ?? '') ?>
     </p>
+
+    
 
 </div>
 

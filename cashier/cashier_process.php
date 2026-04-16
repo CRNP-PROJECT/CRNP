@@ -95,92 +95,25 @@ case 'update_status':
         exit;
     }
 
+    // ================= FIXED LOGIC =================
+    $order['order_type'] = $order['order_type'] ?? 'online';
+
+    $order['status'] = $status;
     $order['final_status'] = $status;
-    $order['cashier_action_time'] = date("M d, Y h:i A");
+
+    // ❌ DO NOT TOUCH kitchen_status anymore
+    // $order['kitchen_status'] = $status;
+
+    $order['cashier_action_time'] = date("Y-m-d H:i:s");
     $order['processed_by'] = $_SESSION['cashier_email'];
 
-    if($status === "accepted"){
-
-        $order['status'] = "accepted";
-        $order['kitchen_status'] = "accepted";
-
-        $rdb->update("/orders", $order_id, $order);
-        $rdb->insert("/cashier_orderhistory", $order);
-    }
-
-    elseif($status === "rejected"){
-
-        $order['status'] = "rejected";
-        $order['kitchen_status'] = "rejected";
-
-        $rdb->delete("/orders", $order_id);
-        $rdb->insert("/cashier_orderhistory", $order);
-    }
-
-    elseif($status === "done"){
-
-        $order['status'] = "done";
-        $order['kitchen_status'] = "done";
-
-        $rdb->delete("/orders", $order_id);
-        $rdb->insert("/cashier_orderhistory", $order);
-    }
+    $rdb->update("/orders", $order_id, $order);
 
     header("Location: view_orders.php");
     exit;
 
 
-// ================= 🆕 BOOKING FIX (IMPORTANT) =================
-case 'update_booking_status':
-
-    if(!isset($_SESSION['cashier_email'])){
-        header("Location: cashier_login.php");
-        exit;
-    }
-
-    $booking_id = $_POST['booking_id'] ?? '';
-    $status = $_POST['status'] ?? '';
-
-    if(!$booking_id || !$status){
-        header("Location: view_bookings.php");
-        exit;
-    }
-
-    if(!in_array($status, ['accepted', 'rejected'])){
-        header("Location: view_bookings.php");
-        exit;
-    }
-
-    $booking = json_decode($rdb->retrieve("/bookings/$booking_id"), true);
-
-    if(!$booking){
-        header("Location: view_bookings.php");
-        exit;
-    }
-
-    $booking['booking_id'] = $booking_id;
-    $booking['status'] = $status;
-    $booking['final_status'] = $status;
-    $booking['processed_by'] = $_SESSION['cashier_email'];
-    $booking['cashier_action_time'] = date("M d, Y h:i A");
-
-    if($status === "accepted"){
-
-        $rdb->update("/bookings", $booking_id, $booking);
-        $rdb->insert("/cashier_bookinghistory", $booking);
-    }
-
-    elseif($status === "rejected"){
-
-        $rdb->delete("/bookings", $booking_id);
-        $rdb->insert("/cashier_bookinghistory", $booking);
-    }
-
-    header("Location: view_bookings.php");
-    exit;
-
-
-// ================= CREATE ORDER =================
+// ================= CREATE WALK-IN ORDER =================
 case 'create_order':
 
     if(!isset($_SESSION['cashier_email'])){
@@ -225,21 +158,69 @@ case 'create_order':
         "products" => $products,
         "total" => $total,
 
+        // ✔ FIXED: kitchen should start as pending
         "status" => "accepted",
-        "kitchen_status" => "accepted",
         "final_status" => "accepted",
+        "kitchen_status" => "pending",
 
         "cashier" => $_SESSION['cashier_email'],
         "processed_by" => $_SESSION['cashier_email'],
 
-        "created_at" => date("M d, Y h:i A"),
-        "cashier_action_time" => date("M d, Y h:i A")
+        "created_at" => date("Y-m-d H:i:s"),
+        "cashier_action_time" => date("Y-m-d H:i:s")
     ];
 
-    $rdb->update("/orders", $order_id, $order);
-    $rdb->insert("/cashier_orderhistory", $order);
+    $rdb->insert("/orders", $order);
 
     header("Location: receipt.php");
+    exit;
+
+
+// ================= BOOKING =================
+case 'update_booking_status':
+
+    if(!isset($_SESSION['cashier_email'])){
+        header("Location: cashier_login.php");
+        exit;
+    }
+
+    $booking_id = $_POST['booking_id'] ?? '';
+    $status = $_POST['status'] ?? '';
+
+    if(!$booking_id || !$status){
+        header("Location: view_bookings.php");
+        exit;
+    }
+
+    if(!in_array($status, ['accepted', 'rejected'])){
+        header("Location: view_bookings.php");
+        exit;
+    }
+
+    $booking = json_decode($rdb->retrieve("/bookings/$booking_id"), true);
+
+    if(!$booking){
+        header("Location: view_bookings.php");
+        exit;
+    }
+
+    $booking['booking_id'] = $booking_id;
+    $booking['status'] = $status;
+    $booking['final_status'] = $status;
+    $booking['processed_by'] = $_SESSION['cashier_email'];
+    $booking['cashier_action_time'] = date("Y-m-d H:i:s");
+
+    if($status === "accepted"){
+        $rdb->update("/bookings", $booking_id, $booking);
+        $rdb->insert("/cashier_bookinghistory", $booking);
+    }
+
+    if($status === "rejected"){
+        $rdb->delete("/bookings", $booking_id);
+        $rdb->insert("/cashier_bookinghistory", $booking);
+    }
+
+    header("Location: view_bookings.php");
     exit;
 
 
