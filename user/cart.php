@@ -47,7 +47,7 @@ $total = 0;
     </div>
 
     <a href="products.php" class="btn-secondary">
-        <i class="fa-solid fa-circle-arrow-left"></i> Continue Shopping
+        <i class="fa-solid fa-chevron-left"></i> Continue Shopping
     </a>
 
     <?php if(empty($cart)): ?>

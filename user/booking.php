@@ -83,7 +83,7 @@ if(!isset($_SESSION['email'])){
                 <label class="form-label">
                     <i class="fa-solid fa-clock"></i> Date & Time
                 </label>
-                <input type="date" name="appointment_time" class="form-input" required>
+                <input type="datetime-local" name="appointment_time" class="form-input" required>
             </div>
 
             <!-- TABLES & CHAIRS ROW -->
@@ -141,7 +141,7 @@ if(!isset($_SESSION['email'])){
 
             <!-- SUBMIT -->
             <button type="submit" class="btn-booking-confirm">
-                <i class="fa-solid fa-check"></i> Confirm Booking
+                <i class=" "></i> Confirm Booking
             </button>
 
         </form>
