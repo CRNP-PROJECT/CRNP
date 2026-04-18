@@ -2064,7 +2064,7 @@
 .kitchen-dashboard .btn {
     flex: 1;
     padding: 6px;
-    font-size: 11px;
+    font-size: 11px; 
     border-radius: 10px;
     border: none;
     cursor: pointer;
