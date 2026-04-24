@@ -58,11 +58,27 @@ usort($history, function($a, $b){
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Order History</title>
 
+<style>
+.card {
+    border: 1px solid #ccc;
+    padding: 12px;
+    margin: 10px;
+    border-radius: 8px;
+}
+
+.walkin { color: blue; font-weight: bold; }
+.online { color: green; font-weight: bold; }
+
+.accepted { color: orange; font-weight: bold; }
+.done { color: blue; font-weight: bold; }
+.rejected { color: red; font-weight: bold; }
+</style>
+
 </head>
 
 <body>
 
-<h2>🧾 Order History (All Records)</h2>
+<h2>🧾 Order History</h2>
 
 <?php if(empty($history)): ?>
     <p>No history yet.</p>
@@ -88,6 +104,24 @@ usort($history, function($a, $b){
 
     <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
 
+    <!-- ✅ DISPLAY ORDERED ITEMS -->
+    <p><b>Orders:</b></p>
+
+    <?php if(!empty($order['products'])): ?>
+        <ul>
+            <?php foreach($order['products'] as $item): ?>
+                <li>
+                    <?= htmlspecialchars($item['name'] ?? 'Item') ?>
+                    (x<?= intval($item['qty'] ?? 0) ?>)
+                    - ₱<?= number_format($item['price'] ?? 0, 2) ?>
+                    = ₱<?= number_format($item['subtotal'] ?? (($item['price'] ?? 0) * ($item['qty'] ?? 0)), 2) ?>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php else: ?>
+        <p>No items</p>
+    <?php endif; ?>
+
     <p><b>Status:</b>
         <?php
         $status = strtolower($order['status'] ?? '');
@@ -111,8 +145,6 @@ usort($history, function($a, $b){
     <p><b>Date:</b>
         <?= htmlspecialchars($order['cashier_action_time'] ?? $order['created_at'] ?? '') ?>
     </p>
-
-    
 
 </div>
 

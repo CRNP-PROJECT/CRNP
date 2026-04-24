@@ -1925,3 +1925,25 @@ aboutus
         opacity: 1;
     }
 }
+/* =========================
+   payment method 
+========================= */
+
+
+.payment-options{
+    display:flex;
+    gap:15px;
+    margin-top:8px;
+}
+
+#gcashBox{
+    display:none;
+    text-align:center;
+    margin-top:10px;
+}
+
+#gcashBox img{
+    width:200px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
