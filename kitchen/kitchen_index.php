@@ -36,6 +36,8 @@ $orders = json_decode($orders_raw, true);
     <a href="kitchen_index.php" class="navbar-brand">
     </a>
     <ul class="navbar-menu">
+        <li><a href="kitchen_index.php">Queue</a></li>
+        <li><a href="kitchen_history.php">History</a></li>
         <li>
             <a href="kitchen_logout.php">
                 <i class="fa-solid fa-right-from-bracket"></i> Logout

@@ -9,9 +9,12 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 
+/* 🔥 FIX: missing variable */
+$username = $_SESSION['username'] ?? "User";
+
 $rdb = new firebaseRDB($databaseURL);
 
-// 🔥 CATEGORY FILTER
+// CATEGORY FILTER
 $filter = $_GET['category'] ?? "All";
 
 $products = [];
@@ -40,15 +43,17 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../styles.css">
+
 <title>Products</title>
 
 <style>
 .filter-btn {
     margin-right: 5px;
-    padding: 8px 15px; /* Slightly adjusted for icons */
+    padding: 8px 15px;
     border: 1px solid #ccc;
     border-radius: 5px;
     text-decoration: none;
@@ -58,32 +63,55 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
 }
 
 .filter-active {
-    background: #80461B; /* Tawny brand color */
+    background: #80461B;
     color: white;
     border-color: #80461B;
 }
 
-/* 2. ADDED: Helper for button icons spacing */
 .btn i {
     margin-right: 5px;
 }
 </style>
 
 </head>
+
 <body class="products-page-body">
 
+<!-- NAVBAR -->
 <nav class="navbar">
     <div class="navbar-brand-container">
         <img src="../img/logo.png" alt="Logo" class="logo">
-        <a href="products.php" class="navbar-brand"></a>
+        <a href="index.php" class="navbar-brand"></a>
     </div>
+
     <ul class="navbar-menu">
+
         <li><a href="index.php"><i class="fa-solid fa-house"></i> Home</a></li>
-        <li><a href="products.php"><i class="fa-solid fa-shop"></i> Products</a></li>
+
+        <li><a href="products.php" class="active"><i class="fa-solid fa-shop"></i> Products</a></li>
+
         <li><a href="booking.php"><i class="fa-solid fa-calendar-check"></i> Booking</a></li>
+
         <li><a href="cart.php"><i class="fa-solid fa-cart-shopping"></i> Cart (<?php echo $cartCount; ?>)</a></li>
+
+        <li><a href="your_orders.php"><i class="fa-solid fa-box-open"></i> Your Order</a></li>
+
         <li><a href="aboutus.php"><i class="fa-solid fa-circle-info"></i> About Us</a></li>
-        <li><a href="../logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+
+        <!-- USER -->
+        <li class="navbar-dropdown">
+            <a href="#">
+                <i class="fa-solid fa-user"></i>
+                <?php echo htmlspecialchars($username); ?> ▼
+            </a>
+
+            <div class="navbar-dropdown-content">
+                <a href="your_profile.php"><i class="fa-solid fa-id-card"></i> My Profile</a>
+                <a href="your_orders.php"><i class="fa-solid fa-box"></i> Your Orders</a>
+                <a href="../logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            </div>
+        </li>
+
     </ul>
 </nav>
 
@@ -119,17 +147,14 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
 
             <?php foreach($products as $id => $product): ?>
             <div class="product-card">
-                <img src="../admin/<?php echo htmlspecialchars($product['image']); ?>"
-                     alt="<?php echo htmlspecialchars($product['name']); ?>">
+
+                <img src="../admin/<?php echo htmlspecialchars($product['image']); ?>">
 
                 <div class="product-card-body">
+
                     <h3 class="product-card-title">
                         <?php echo htmlspecialchars($product['name']); ?>
                     </h3>
-
-                    <small style="color:gray;">
-                        <i class="fa-solid fa-folder-open"></i> <?php echo htmlspecialchars($product['category'] ?? 'Food'); ?>
-                    </small>
 
                     <p class="product-card-price">
                         ₱<?php echo number_format($product['price'], 2); ?>
@@ -139,23 +164,26 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
                         <?php echo htmlspecialchars($product['description']); ?>
                     </p>
 
-                    <div class="product-card-actions">
-                        <form action="process.php" method="POST" style="flex:1;">
-                            <input type="hidden" name="action" value="add_to_cart">
-                            <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-                            <button type="submit" class="btn btn-secondary btn-sm btn-block">
-                                <i class="fa-solid fa-cart-plus"></i> Add to Cart
-                            </button>
-                        </form>
+                    <!-- AJAX FORM -->
+                    <form class="add-to-cart-form" method="POST">
+                        <input type="hidden" name="action" value="add_to_cart">
+                        <input type="hidden" name="product_id" value="<?php echo $id; ?>">
 
-                        <form action="process.php" method="POST" style="flex:1;">
-                            <input type="hidden" name="action" value="buy_now">
-                            <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-                            <button type="submit" class="btn btn-primary btn-sm btn-block">
-                                <i class=" "></i> Buy Now
-                            </button>
-                        </form>
-                    </div>
+                        <button type="submit" class="btn btn-secondary btn-sm btn-block">
+                            <i class="fa-solid fa-cart-plus"></i> Add to Cart
+                        </button>
+                    </form>
+
+                    <!-- BUY NOW -->
+                    <form action="process.php" method="POST">
+                        <input type="hidden" name="action" value="buy_now">
+                        <input type="hidden" name="product_id" value="<?php echo $id; ?>">
+
+                        <button type="submit" class="btn btn-primary btn-sm btn-block">
+                            Buy Now
+                        </button>
+                    </form>
+
                 </div>
             </div>
             <?php endforeach; ?>
@@ -163,6 +191,64 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
         </div>
     <?php endif; ?>
 </div>
+
+<!-- AJAX + TOAST -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll(".add-to-cart-form").forEach(form => {
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            fetch("process.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.text())
+            .then(data => {
+                console.log(data);
+
+                if (data.trim() === "success") {
+                    showToast("🛒 Added to cart!");
+                } else {
+                    showToast("⚠️ Failed to add item");
+                }
+            })
+            .catch(() => {
+                showToast("❌ Server error");
+            });
+        });
+    });
+
+    function showToast(message) {
+        let toast = document.createElement("div");
+        toast.innerText = message;
+
+        toast.style.position = "fixed";
+        toast.style.bottom = "20px";
+        toast.style.right = "20px";
+        toast.style.background = "#80461B";
+        toast.style.color = "white";
+        toast.style.padding = "12px 18px";
+        toast.style.borderRadius = "8px";
+        toast.style.zIndex = "9999";
+        toast.style.opacity = "0";
+        toast.style.transition = "0.3s";
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => toast.style.opacity = "1", 50);
+
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
+
+});
+</script>
 
 </body>
 </html>

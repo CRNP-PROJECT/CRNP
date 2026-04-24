@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if(!isset($_SESSION['user_id'])){
+if (!isset($_SESSION['user_id'])) {
     header("Location: user_login.php");
     exit;
 }
@@ -13,7 +13,10 @@ $rdb = new firebaseRDB($databaseURL);
 $user_id = $_SESSION['user_id'];
 
 $data = $rdb->retrieve("/user/$user_id");
-$user = json_decode($data, true);
+$user = json_decode($data, true) ?? [];
+
+$username = $user['name'] ?? $_SESSION['username'] ?? "User";
+$email = $user['email'] ?? '';
 ?>
 
 <!DOCTYPE html>
@@ -22,10 +25,7 @@ $user = json_decode($data, true);
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ICONS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<!-- YOUR CSS -->
 <link rel="stylesheet" href="../styles.css">
 
 <title>Your Profile</title>
@@ -41,60 +41,117 @@ $user = json_decode($data, true);
     </div>
 
     <ul class="navbar-menu">
-        <li><a href="index.php"><i class="fa-solid fa-house"></i> Home</a></li>
-        <li><a href="products.php"><i class="fa-solid fa-shop"></i> Products</a></li>
-        <li><a href="booking.php"><i class="fa-solid fa-calendar-check"></i> Booking</a></li>
-        <li><a href="profile.php" class="active"><i class="fa-solid fa-user"></i> Profile</a></li>
-        <li><a href="../logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+
+        <li>
+            <a href="index.php">
+                <i class="fa-solid fa-house"></i> Home
+            </a>
+        </li>
+
+        <li>
+            <a href="products.php">
+                <i class="fa-solid fa-shop"></i> Products
+            </a>
+        </li>
+
+        <li>
+            <a href="booking.php">
+                <i class="fa-solid fa-calendar-check"></i> Booking
+            </a>
+        </li>
+
+        <li>
+            <a href="cart.php">
+                <i class="fa-solid fa-cart-shopping"></i> Cart
+            </a>
+        </li>
+
+        <li>
+            <a href="your_orders.php">
+                <i class="fa-solid fa-box-open"></i> Your Order
+            </a>
+        </li>
+
+        <li>
+            <a href="aboutus.php">
+                <i class="fa-solid fa-circle-info"></i> About Us
+            </a>
+        </li>
+
+        <!-- USER DROPDOWN -->
+        <li class="navbar-dropdown">
+            <a href="#">
+                <i class="fa-solid fa-user"></i>
+                <?= htmlspecialchars($username) ?> ▼
+            </a>
+
+            <div class="navbar-dropdown-content">
+                <a href="your_profile.php" class="active">
+                    <i class="fa-solid fa-id-card"></i> My Profile
+                </a>
+
+                <a href="your_orders.php">
+                    <i class="fa-solid fa-box"></i> Your Orders
+                </a>
+
+                <a href="../logout.php">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </a>
+            </div>
+        </li>
+
     </ul>
 </nav>
 
-<!-- PROFILE CONTAINER -->
-<div class="profile-container">
+<!-- PROFILE SECTION -->
+<div class="profile-wrapper">
+
     <div class="profile-card">
 
-        <h2><i class="fa-solid fa-user"></i> Edit Profile</h2>
+        <!-- HEADER -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
 
-        <!-- STATUS MESSAGE -->
-        <?php
-        if(isset($_GET['status'])){
-            if($_GET['status'] == "success"){
-                echo "<p class='profile-message success'><i class='fa-solid fa-circle-check'></i> Profile updated successfully!</p>";
-            } elseif($_GET['status'] == "error"){
-                echo "<p class='profile-message error'><i class='fa-solid fa-circle-xmark'></i> Update failed. Please try again.</p>";
-            }
-        }
-        ?>
+            <h2><?= htmlspecialchars($username) ?></h2>
+            <p class="profile-sub">Manage your account information</p>
+        </div>
+
+        <!-- MESSAGE -->
+        <?php if(isset($_GET['status'])): ?>
+            <div class="profile-message <?= $_GET['status'] == 'success' ? 'success' : 'error' ?>">
+                <?= $_GET['status'] == 'success' ? 'Profile updated successfully!' : 'Update failed. Try again.' ?>
+            </div>
+        <?php endif; ?>
 
         <!-- FORM -->
         <form action="process.php" method="POST">
 
             <input type="hidden" name="action" value="update_profile">
 
-            <!-- NAME -->
             <div class="input-group">
                 <i class="fa-solid fa-user"></i>
                 <input type="text" name="name"
-                    value="<?php echo htmlspecialchars($user['name'] ?? ''); ?>" required>
+                    value="<?= htmlspecialchars($user['name'] ?? '') ?>"
+                    placeholder="Full Name" required>
             </div>
 
-            <!-- EMAIL -->
             <div class="input-group">
                 <i class="fa-solid fa-envelope"></i>
                 <input type="email" name="email"
-                    value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" required>
+                    value="<?= htmlspecialchars($email) ?>"
+                    placeholder="Email Address" required>
             </div>
 
-            <!-- PASSWORD -->
             <div class="input-group">
                 <i class="fa-solid fa-lock"></i>
                 <input type="password" name="password"
-                    placeholder="New Password (leave blank if no change)">
+                    placeholder="New Password (optional)">
             </div>
 
-            <!-- BUTTON -->
             <button type="submit">
-                <i class=" "> </i> Update Profile
+                <i class="fa-solid fa-pen-to-square"></i> Update Profile
             </button>
 
         </form>
