@@ -25,7 +25,11 @@ $history = json_decode($history_raw, true) ?? [];
 <title>Kitchen History</title>
 </head>
 
+<<<<<<< HEAD
 <body class="kitchen-history-page">
+=======
+<body>
+>>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
 
 <nav class="navbar">
     <a href="kitchen_index.php" class="navbar-brand">Kitchen Dashboard</a>
@@ -39,10 +43,14 @@ $history = json_decode($history_raw, true) ?? [];
 
 <div class="container">
 
+<<<<<<< HEAD
 <h1 class="page-title">Completed Orders</h1>
 
 <!-- ✅ IMPORTANT: wrap everything -->
 <div id="history-container">
+=======
+<h1 class="page-title">🍽 Completed Orders</h1>
+>>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
 
 <?php if(empty($history)): ?>
 
@@ -56,6 +64,10 @@ $history = json_decode($history_raw, true) ?? [];
 
         <div class="card mb-2">
 
+<<<<<<< HEAD
+=======
+            <!-- ORDER HEADER -->
+>>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
             <div class="mb-2">
                 <strong>
                     <?= htmlspecialchars($order['full_name'] ?? $order['customer_name'] ?? 'N/A') ?>
@@ -63,8 +75,14 @@ $history = json_decode($history_raw, true) ?? [];
 
                 <br>
 
+<<<<<<< HEAD
                 <small class="text-muted">
                     <?= htmlspecialchars($order['email'] ?? 'Cashier') ?>
+=======
+                <!-- EMAIL DISPLAY (IMPORTANT FIX) -->
+                <small class="text-muted">
+                    📧 <?= htmlspecialchars($order['email'] ?? 'Cashier') ?>
+>>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
                 </small>
 
                 <br>
@@ -72,12 +90,23 @@ $history = json_decode($history_raw, true) ?? [];
                 <span class="badge badge-success">DONE</span>
             </div>
 
+<<<<<<< HEAD
             <p><b>Order ID:</b> <?= htmlspecialchars($order['order_id'] ?? $id) ?></p>
             <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
+=======
+            <!-- ORDER INFO -->
+            <p><b>Order ID:</b> <?= htmlspecialchars($order['order_id'] ?? $id) ?></p>
+            <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
+
+>>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
             <p><b>Completed:</b> <?= htmlspecialchars($order['completed_at'] ?? $order['created_at'] ?? '') ?></p>
 
             <hr>
 
+<<<<<<< HEAD
+=======
+            <!-- ITEMS -->
+>>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
             <b>Items:</b>
 
             <?php
@@ -90,7 +119,14 @@ $history = json_decode($history_raw, true) ?? [];
                     <?= htmlspecialchars($item['name'] ?? 'Unknown') ?>
                     × <?= intval($item['qty'] ?? 0) ?>
                 </div>
+<<<<<<< HEAD
             <?php endforeach; else: ?>
+=======
+            <?php
+                endforeach;
+            else:
+            ?>
+>>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
                 <p>No items found</p>
             <?php endif; ?>
 
@@ -100,6 +136,7 @@ $history = json_decode($history_raw, true) ?? [];
 
 <?php endif; ?>
 
+<<<<<<< HEAD
 </div> <!-- END history-container -->
 
 </div>
@@ -170,5 +207,9 @@ async function loadHistory() {
 setInterval(loadHistory, 3000);
 </script>
 
+=======
+</div>
+
+>>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
 </body>
 </html>

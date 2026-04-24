@@ -1,16 +1,21 @@
 <?php
-// ✅ Ensure session is started
+session_start();
+
 include(__DIR__ . "/../config.php");
 include(__DIR__ . "/../firebaseRDB.php");
 
 $rdb = new firebaseRDB($databaseURL);
+
+date_default_timezone_set("Asia/Manila");
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 switch($action) {
 
-    // ===== ADD TO CART =====
+    // ================= ADD TO CART =================
     case 'add_to_cart':
         $product_id = $_POST['product_id'] ?? '';
+
         if ($product_id == "") {
             header("Location: products.php");
             exit;
@@ -20,81 +25,88 @@ switch($action) {
             $_SESSION['cart'] = [];
         }
 
-        // Increment quantity if already in cart
-        if (isset($_SESSION['cart'][$product_id])) {
-            $_SESSION['cart'][$product_id] += 1;
-        } else {
-            $_SESSION['cart'][$product_id] = 1;
-        }
+        $_SESSION['cart'][$product_id] = ($_SESSION['cart'][$product_id] ?? 0) + 1;
 
-        //header("Location: cart.php");// ging change ko kay everytime ga click ko sa add to cart ga redirect ko sa cart
         header("Location: products.php");
         exit;
 
-    // ===== BUY NOW =====
+
+    // ================= BUY NOW (FIXED) =================
     case 'buy_now':
         $product_id = $_POST['product_id'] ?? '';
+
         if ($product_id == "") {
             header("Location: products.php");
             exit;
         }
 
-        $_SESSION['buy_now'] = [
-            "product_id" => $product_id,
-            "quantity" => 1
+        // 🔥 FIX: overwrite cart with single item
+        $_SESSION['cart'] = [
+            $product_id => 1
         ];
 
         header("Location: checkout.php");
         exit;
 
-    // ===== UPDATE CART QUANTITY =====
+
+    // ================= UPDATE CART =================
     case 'update_cart':
         $product_id = $_POST['product_id'] ?? '';
         $qty = intval($_POST['quantity'] ?? 1);
 
-        if ($product_id != '' && $qty > 0) {
+        if ($product_id && $qty > 0) {
             $_SESSION['cart'][$product_id] = $qty;
         }
 
         header("Location: cart.php");
         exit;
 
-    // ===== REMOVE FROM CART =====
+
+    // ================= REMOVE CART =================
     case 'remove_cart':
         $id = $_GET['id'] ?? '';
-        if ($id != '' && isset($_SESSION['cart'][$id])) {
+
+        if ($id && isset($_SESSION['cart'][$id])) {
             unset($_SESSION['cart'][$id]);
         }
 
         header("Location: cart.php");
         exit;
 
-    // ===== CONFIRM CHECKOUT =====
+
+    // ================= CONFIRM CHECKOUT =================
     case 'confirm_checkout':
-        if(!isset($_SESSION['email'])){
+
+        if (!isset($_SESSION['email'])) {
             header("Location: user_login.php");
             exit;
         }
 
-        // Validate cart
-        if(empty($_SESSION['cart'])){
+        if (empty($_SESSION['cart'])) {
             header("Location: cart.php");
             exit;
         }
 
-        // Get form data
         $full_name = $_POST['full_name'] ?? '';
         $contact_number = $_POST['contact_number'] ?? '';
         $num_people = intval($_POST['num_people'] ?? 1);
-        $appointment_time = $_POST['appointment_time'] ?? '';
+
+        $raw_time = $_POST['appointment_time'] ?? '';
+        $timestamp = strtotime($raw_time);
+
+        $appointment_time = $timestamp
+            ? date("M d, Y h:i A", $timestamp)
+            : $raw_time;
 
         $cart = $_SESSION['cart'];
         $total = 0;
         $products_detail = [];
 
-        foreach($cart as $id => $qty){
+        foreach ($cart as $id => $qty) {
+
             $product = json_decode($rdb->retrieve("/products/$id"), true);
-            if($product){
+
+            if ($product) {
                 $subtotal = floatval($product['price']) * $qty;
                 $total += $subtotal;
 
@@ -108,77 +120,77 @@ switch($action) {
         }
 
         $order_data = [
-    'user_email' => $_SESSION['email'],
-    'full_name' => $full_name,
-    'contact_number' => $contact_number,
-    'num_people' => $num_people,
-    'appointment_time' => $appointment_time,
-    'products' => $products_detail,
-    'total' => $total,
-    'status' => 'pending',   // <-- new
-    'created_at' => date('Y-m-d H:i:s')
-];
-$rdb->insert("/orders", $order_data);
+            'user_email' => $_SESSION['email'],
+            'full_name' => $full_name,
+            'contact_number' => $contact_number,
+            'num_people' => $num_people,
+            'appointment_time' => $appointment_time,
+            'products' => $products_detail,
+            'total' => $total,
+            'status' => 'pending',
+            'created_at' => date("M d, Y h:i A")
+        ];
 
-        // Clear cart & buy_now
+        $rdb->insert("/orders", $order_data);
+
         unset($_SESSION['cart']);
-        unset($_SESSION['buy_now']);
 
-        // Redirect to success page
         header("Location: checkout_success.php");
         exit;
 
-    // ===== BOOKING / RESERVATION =====
-case 'booking':
-    if(!isset($_SESSION['email'])) { 
-        header("Location: user_login.php"); 
-        exit; 
-    }
 
-    // Get form data
-    $full_name = $_POST['full_name'] ?? '';
-    $contact_number = $_POST['contact_number'] ?? '';
-    $address = $_POST['address'] ?? '';
-    $appointment_time = $_POST['appointment_time'] ?? '';
-    $tables_qty = intval($_POST['tables_qty'] ?? 0);
-    $chairs_qty = intval($_POST['chairs_qty'] ?? 0);
+    // ================= BOOKING =================
+    case 'booking':
 
-    // Handle multiple skirting colors and quantities
-    $skirting = [];
-    if(isset($_POST['skirting_color']) && is_array($_POST['skirting_color'])){
-        foreach($_POST['skirting_color'] as $index => $color){
-            $qty = intval($_POST['skirting_qty'][$index] ?? 0);
-            if($qty > 0){
-                $skirting[] = [
-                    'color' => $color,
-                    'qty' => $qty
-                ];
+        if (!isset($_SESSION['email'])) {
+            header("Location: user_login.php");
+            exit;
+        }
+
+        $full_name = $_POST['full_name'] ?? '';
+        $contact_number = $_POST['contact_number'] ?? '';
+        $address = $_POST['address'] ?? '';
+        $appointment_time = $_POST['appointment_time'] ?? '';
+        $tables_qty = intval($_POST['tables_qty'] ?? 0);
+        $chairs_qty = intval($_POST['chairs_qty'] ?? 0);
+
+        $skirting = [];
+
+        if (isset($_POST['skirting_color']) && is_array($_POST['skirting_color'])) {
+            foreach ($_POST['skirting_color'] as $i => $color) {
+                $qty = intval($_POST['skirting_qty'][$i] ?? 0);
+
+                if ($qty > 0) {
+                    $skirting[] = [
+                        'color' => $color,
+                        'qty' => $qty
+                    ];
+                }
             }
         }
-    }
 
-    // Save booking to Firebase
-    $booking_data = [
-        'user_email' => $_SESSION['email'],
-        'full_name' => $full_name,
-        'contact_number' => $contact_number,
-        'address' => $address,
-        'appointment_time' => $appointment_time,
-        'tables_qty' => $tables_qty,
-        'chairs_qty' => $chairs_qty,
-        'skirting' => $skirting,  // store all colors with qty
-        'created_at' => date('Y-m-d H:i:s')
-    ];
+        $booking_data = [
+            'user_email' => $_SESSION['email'],
+            'full_name' => $full_name,
+            'contact_number' => $contact_number,
+            'address' => $address,
+            'appointment_time' => $appointment_time,
+            'tables_qty' => $tables_qty,
+            'chairs_qty' => $chairs_qty,
+            'skirting' => $skirting,
+            'created_at' => date("M d, Y h:i A")
+        ];
 
-    $rdb->insert("/bookings", $booking_data);
+        $rdb->insert("/bookings", $booking_data);
 
-    header("Location: booking_success.php");
-    exit;
-    
-        // ===== UPDATE PROFILE =====
+        header("Location: booking_success.php");
+        exit;
+
+
+    // ================= UPDATE PROFILE =================
     case 'update_profile':
 
-        if(!isset($_SESSION['user_id'])){
+        if (!isset($_SESSION['user_id'])) {
             header("Location: user_login.php");
             exit;
         }
@@ -189,42 +201,31 @@ case 'booking':
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
 
-        // Validate
-        if($name == "" || $email == ""){
+        if ($name == "" || $email == "") {
             header("Location: your_profile.php?status=error");
             exit;
         }
 
-        // Prepare update data
         $updateData = [
             "name" => $name,
             "email" => $email
         ];
 
-        // Update password only if provided
-        if(!empty($password)){
+        if (!empty($password)) {
             $updateData["password"] = password_hash($password, PASSWORD_DEFAULT);
         }
 
-        try {
-            // Update Firebase
-            $result = $rdb->update("/user", $user_id, $updateData);
+        $result = $rdb->update("/user", $user_id, $updateData);
 
-            if($result){
-                // Optional: update session
-                $_SESSION['email'] = $email;
-                $_SESSION['user_name'] = $name;
+        if ($result) {
+            $_SESSION['email'] = $email;
+            $_SESSION['user_name'] = $name;
 
-                header("Location: your_profile.php?status=success");
-                exit;
-            } else {
-                header("Location: your_profile.php?status=error");
-                exit;
-            }
-
-        } catch(Exception $e){
-            header("Location: your_profile.php?status=error");
+            header("Location: your_profile.php?status=success");
             exit;
         }
-        break;
+
+        header("Location: your_profile.php?status=error");
+        exit;
 }
+?>

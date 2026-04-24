@@ -2,18 +2,21 @@
 include(__DIR__ . "/../config.php");
 include(__DIR__ . "/../firebaseRDB.php");
 
-// Firebase connection
 $rdb = new firebaseRDB($databaseURL);
 
-// ----- FETCH ORDERS -----
+/* ================= FETCH DATA ================= */
+
 $orders_raw = $rdb->retrieve("/orders");
 $orders = json_decode($orders_raw, true) ?? [];
 
-// ----- FETCH BOOKINGS -----
-$bookings_raw = $rdb->retrieve("/bookings");
+$kitchen_raw = $rdb->retrieve("/kitchen_history");
+$kitchenData = json_decode($kitchen_raw, true) ?? [];
+
+$bookings_raw = $rdb->retrieve("/cashier_bookinghistory");
 $bookings = json_decode($bookings_raw, true) ?? [];
 
-// ----- KPI COUNTERS -----
+/* ================= KPI ================= */
+
 $kpis = [
     'todayRevenue' => 0,
     'totalRevenue' => 0,
@@ -22,126 +25,136 @@ $kpis = [
     'totalBookings' => count($bookings)
 ];
 
-// Orders Status
+/* ================= STATUS COUNTS ================= */
+
 $ordersStatus = [
     'pending' => 0,
     'accepted' => 0,
-    'rejected' => 0
+    'rejected' => 0,
+    'done' => 0
 ];
 
-// Kitchen Status
 $kitchenStatus = [
     'preparing' => 0,
     'ready' => 0,
     'done' => 0
 ];
 
-// Bookings Status
 $bookingsStatus = [
-    "pending" => 0,
-    "accepted" => 0,
-    "rejected" => 0
+    'pending' => 0,
+    'accepted' => 0,
+    'rejected' => 0
 ];
 
-// Today's date
+/* ================= NEW: BOOKINGS PER DAY ================= */
+$bookingsPerDay = [];
+
+/* ================= BEST SELLING ================= */
+$productSales = [];
+
 $today = date('Y-m-d');
 
-// ----- CALCULATE ORDER KPI AND STATUS -----
+/* ================= PROCESS ORDERS ================= */
+
 foreach($orders as $order){
-    $status = $order['status'] ?? 'pending';
-    if(!isset($ordersStatus[$status])) $status = 'pending';
-    $ordersStatus[$status]++;
+
+    if(!is_array($order)) continue;
+
+    $status = strtolower($order['status'] ?? 'pending');
+
+    if(isset($ordersStatus[$status])){
+        $ordersStatus[$status]++;
+    } else {
+        $ordersStatus['pending']++;
+    }
 
     $total = floatval($order['total'] ?? 0);
     $kpis['totalRevenue'] += $total;
+    $kpis['totalSales']++;
 
-    if(substr($order['created_at'] ?? '',0,10) === $today){
+    if(substr($order['created_at'] ?? '', 0, 10) === $today){
         $kpis['todayRevenue'] += $total;
     }
 
-    $kpis['totalSales']++;
+    // BEST SELLING
+    foreach(($order['products'] ?? []) as $p){
+        $name = $p['name'] ?? 'Unknown';
+        $qty = intval($p['qty'] ?? 0);
 
-    // Kitchen status
-    $kitchen = $order['kitchen_status'] ?? 'preparing';
-    if(!isset($kitchenStatus[$kitchen])) $kitchen = 'preparing';
-    $kitchenStatus[$kitchen]++;
+        if(!isset($productSales[$name])){
+            $productSales[$name] = 0;
+        }
+
+        $productSales[$name] += $qty;
+    }
+
+    // KITCHEN STATUS
+    $kStatus = strtolower($order['kitchen_status'] ?? '');
+
+    if(isset($kitchenStatus[$kStatus])){
+        $kitchenStatus[$kStatus]++;
+    }
 }
 
-// ----- TOTAL USERS -----
+/* ================= PROCESS KITCHEN HISTORY ================= */
+
+foreach($kitchenData as $k){
+
+    if(!is_array($k)) continue;
+
+    $kitchenStatus['done']++;
+
+    $kpis['totalRevenue'] += floatval($k['total'] ?? 0);
+}
+
+/* ================= PROCESS BOOKINGS ================= */
+
+foreach($bookings as $b){
+
+    if(!is_array($b)) continue;
+
+    $status = strtolower($b['final_status'] ?? 'pending');
+
+    if(isset($bookingsStatus[$status])){
+        $bookingsStatus[$status]++;
+    } else {
+        $bookingsStatus['pending']++;
+    }
+
+    /* ================= BOOKINGS PER DAY FIX ================= */
+    $date = $b['cashier_action_time']
+        ?? $b['created_at']
+        ?? '';
+
+    $dateKey = substr($date, 0, 10);
+
+    if($dateKey){
+        if(!isset($bookingsPerDay[$dateKey])){
+            $bookingsPerDay[$dateKey] = 0;
+        }
+        $bookingsPerDay[$dateKey]++;
+    }
+}
+
+/* ================= USERS ================= */
+
 $users_raw = $rdb->retrieve("/user");
 $users = json_decode($users_raw, true) ?? [];
 $kpis['totalUsers'] = count($users);
 
-// ----- BOOKINGS PER DAY -----
-$bookingsPerDay = [];
-foreach($bookings as $b){
-    $date = substr($b['created_at'] ?? '',0,10);
-    if(!isset($bookingsPerDay[$date])){
-        $bookingsPerDay[$date] = 0;
-    }
-    $bookingsPerDay[$date]++;
-}
+/* ================= SORT ================= */
 
-// ----- BEST SELLING PRODUCTS -----
-$bestSelling = [];
-foreach($orders as $order){
-    if(isset($order['products']) && is_array($order['products'])){
-        foreach($order['products'] as $p){
-            $name = $p['name'] ?? 'Unknown';
-            $qty = intval($p['qty'] ?? 0);
+arsort($productSales);
+ksort($bookingsPerDay);
 
-            if(!isset($bestSelling[$name])) $bestSelling[$name] = 0;
-            $bestSelling[$name] += $qty;
-        }
-    }
-}
+/* ================= RETURN ================= */
 
-// ----- BOOKINGS STATUS COUNT -----
-if(!empty($bookings)){
-    foreach($bookings as $id => $booking){
-        $status = strtolower($booking['status'] ?? 'pending');
-
-        if($status === "pending"){
-            $bookingsStatus['pending']++;
-        } elseif($status === "accepted"){
-            $bookingsStatus['accepted']++;
-        } elseif($status === "rejected"){
-            $bookingsStatus['rejected']++;
-        }
-    }
-}
-
-// ----- BOOKING ITEMS PER DAY -----
-$bookingItemsPerDay = [];
-foreach($bookings as $b){
-    $date = substr($b['created_at'] ?? '',0,10);
-    if(!isset($bookingItemsPerDay[$date])) $bookingItemsPerDay[$date] = 0;
-
-    $tables = intval($b['tables_qty'] ?? 0);
-    $chairs = intval($b['chairs_qty'] ?? 0);
-
-    $skirtingTotal = 0;
-    if(isset($b['skirting']) && is_array($b['skirting'])){
-        foreach($b['skirting'] as $s){
-            $skirtingTotal += intval($s['qty'] ?? 0);
-        }
-    } else {
-        $skirtingTotal = intval($b['skirting_qty'] ?? 0);
-    }
-
-    $bookingItemsPerDay[$date] += ($tables + $chairs + $skirtingTotal);
-}
-
-// ----- RETURN ALL DATA -----
 return [
-    'orders' => $orders,
-    'bookings' => $bookings,
     'kpis' => $kpis,
     'ordersStatus' => $ordersStatus,
+    'bookingsStatus' => $bookingsStatus,
     'kitchenStatus' => $kitchenStatus,
-    'bookingsPerDay' => $bookingsPerDay,
-    'bestSelling' => $bestSelling,
-    'bookingItemsPerDay' => $bookingItemsPerDay,
-    'bookingsStatus' => $bookingsStatus
+    'bestSelling' => $productSales,
+    'bookingsPerDay' => $bookingsPerDay
 ];
 ?>

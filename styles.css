@@ -1999,6 +1999,7 @@ body.success-page .btn-primary:hover {
         opacity: 1;
     }
 }
+<<<<<<< HEAD
 
 /*Your Profile*/
 
@@ -2772,4 +2773,29 @@ body.your_profile::before {
     .kitchen-history-page .page-title {
         font-size: 1.8rem;
     }
+=======
+/* =========================
+   payment method 
+=========================git add .
+git commit -m "update"
+git push */
+
+
+.payment-options{
+    display:flex;
+    gap:15px;
+    margin-top:8px;
+}
+
+#gcashBox{
+    display:none;
+    text-align:center;
+    margin-top:10px;
+}
+
+#gcashBox img{
+    width:200px;
+    border-radius:10px;
+    margin-bottom:10px;
+>>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
 }
