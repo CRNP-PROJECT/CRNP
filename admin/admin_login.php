@@ -3,38 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="css/style.css">
 <title>Admin Login</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body>
 
-<div class="container-sm" style="padding-top: 80px;">
-    <div class="auth-card">
-        <h1 class="auth-title">Admin Login</h1>
-        <p class="auth-subtitle">Sign in to admin panel</p>
+<body class="admin-auth-body">
+
+<div class="admin-auth-container">
+
+    <div class="admin-auth-card">
+
+        <h1 class="admin-auth-title">Admin Login</h1>
+        <p class="admin-auth-subtitle">Sign in to admin panel</p>
 
         <?php if(isset($_GET['success'])): ?>
-            <div class="alert alert-success">Admin account created! Please login.</div>
+            <div class="admin-auth-alert admin-auth-alert-success">
+                Admin account created! Please login.
+            </div>
         <?php endif; ?>
 
         <?php if(isset($_GET['error'])): ?>
-            <div class="alert alert-error"><?php echo htmlspecialchars($_GET['error']); ?></div>
+            <div class="admin-auth-alert admin-auth-alert-error">
+                <?php echo htmlspecialchars($_GET['error']); ?>
+            </div>
         <?php endif; ?>
 
         <form action="admin_B.php" method="POST">
-            <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" name="email" class="form-input" required>
-            </div>
 
-            <div class="form-group">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-input" required>
-            </div>
+            <input type="email" name="email" placeholder="Email" required>
 
-            <button type="submit" name="login" class="btn btn-primary btn-block">Login</button>
+            <input type="password" name="password" placeholder="Password" required>
+
+            <button type="submit" name="login">Login</button>
+
         </form>
+
+        <div class="admin-auth-link">
+            <p>Don’t have an account? <a href="admin_signup.php">Sign up</a></p>
+        </div>
+
     </div>
+
 </div>
 
 </body>
