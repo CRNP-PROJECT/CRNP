@@ -1999,13 +1999,9 @@ body.success-page .btn-primary:hover {
         opacity: 1;
     }
 }
-<<<<<<< HEAD
 
 /*Your Profile*/
 
-/* =========================
-   ROOT VARIABLES (CONSISTENT)
-========================= */
 :root {
     --nav-height: 90px;
     --accent: #f3e5ab;
@@ -2222,9 +2218,7 @@ body.your_profile::before {
 }
 
 
-
 /*Kitchen login and signup*/
-
 
 .kitchen-auth-body {
     margin: 0;
@@ -2446,15 +2440,16 @@ body.your_profile::before {
     transform: scale(1.2);
     background: #ffcc80;
 }
+
 /* ===============================
-   KITCHEN DASHBOARD
+   KITCHEN DASHBOARD FINAL UI
    =============================== */
 
 .kitchen-dashboard {
-    position: relative;
-    min-height: 100vh;
     font-family: 'Inter', sans-serif;
-    color: #f5e6d3;
+    min-height: 100vh;
+    color: #fff;
+    background: #120b08;
 }
 
 /* BACKGROUND */
@@ -2463,8 +2458,7 @@ body.your_profile::before {
     position: fixed;
     inset: 0;
     background: url(img/k.png) center/cover no-repeat;
-    filter: blur(1px);
-    transform: scale(1.05);
+    filter: blur(3px) brightness(0.4);
     z-index: -2;
 }
 
@@ -2472,14 +2466,14 @@ body.your_profile::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(25, 18, 12, 0.7);
+    background: rgba(15,10,8,0.75);
     z-index: -1;
 }
 
 /* CONTAINER */
 .kitchen-dashboard .container {
-    max-width: 1100px;
-    margin: 120px auto 40px;
+    max-width: 1200px;
+    margin: 90px auto;
     padding: 20px;
 }
 
@@ -2491,311 +2485,1114 @@ body.your_profile::before {
 
 .kitchen-dashboard .page-title {
     font-size: 32px;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .kitchen-dashboard .page-subtitle {
-    color: #bcaaa4;
+    color: #cbb7a8;
+    font-size: 14px;
 }
 
 /* GRID */
 .kitchen-dashboard .orders-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, 260px);
-    justify-content: center;
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 18px;
 }
 
 /* CARD */
 .kitchen-dashboard .card {
-    width: 260px;
-    height: 260px;
-    background: rgba(255, 248, 240, 0.08);
-    border-radius: 15px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 16px;
     padding: 15px;
-    border: 1px solid rgba(255,255,255,0.1);
     backdrop-filter: blur(10px);
-
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
-    transition: all 0.25s ease;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: 0.3s;
 }
 
-/* HOVER */
 .kitchen-dashboard .card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    transform: translateY(-5px);
 }
 
 /* HEADER */
 .kitchen-dashboard .card-header {
     display: flex;
     justify-content: space-between;
-    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* TYPE TAG */
+.type-tag {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: #6d4c41;
+    margin-top: 4px;
+    display: inline-block;
 }
 
 /* PRODUCTS */
-.kitchen-dashboard .products {
-    flex: 1;
-    overflow-y: auto;
-    margin: 10px 0;
-}
-
 .kitchen-dashboard .product-item {
-    font-size: 12px;
-    padding: 3px 0;
+    font-size: 13px;
+    padding: 4px 0;
     border-bottom: 1px dashed rgba(255,255,255,0.1);
 }
 
 /* BUTTONS */
 .kitchen-dashboard .card-actions {
     display: flex;
-    gap: 5px;
+    gap: 6px;
+    margin-top: 10px;
 }
 
 .kitchen-dashboard .btn {
     flex: 1;
-    padding: 6px;
-    font-size: 11px; 
+    padding: 7px;
+    font-size: 11px;
     border-radius: 10px;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-.kitchen-dashboard .btn:hover {
-    transform: scale(1.05);
+/* STATUS COLORS */
+.badge {
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
 }
+
+.badge-accepted { background: #6d4c41; }
+.badge-preparing { background: #ffb74d; color: #000; }
+.badge-ready { background: #ffd54f; color: #000; }
+.badge-done { background: #66bb6a; }
 
 /* BUTTON COLORS */
-.kitchen-dashboard .btn-secondary {
-    background: #8d6e63;
-    color: white;
-}
-
-.kitchen-dashboard .btn-primary {
-    background: #c89b6d;
-    color: #2e1f1c;
-}
-
-.kitchen-dashboard .btn-success {
-    background: #4caf50;
-    color: white;
-}
-
-/* BADGE */
-.kitchen-dashboard .badge {
-    font-size: 10px;
-    padding: 3px 8px;
-    border-radius: 12px;
-}
-
-.kitchen-dashboard .badge-pending { background: #6d4c41; }
-.kitchen-dashboard .badge-preparing { background: #a47148; }
-.kitchen-dashboard .badge-ready { background: #c89b6d; color: #2e1f1c; }
-.kitchen-dashboard .badge-done { background: #4caf50; }
-
-/* COMPLETED */
-.kitchen-dashboard .card-complete {
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: #81c784;
-    padding: 6px;
-    border-radius: 10px;
-    background: rgba(76, 175, 80, 0.15);
-}
+.btn-secondary { background: #a1887f; }
+.btn-primary { background: #d7a86e; }
+.btn-success { background: #4caf50; }
 
 /* TEXT */
-.kitchen-dashboard .text-muted {
-    color: #a1887f;
+.text-muted {
+    color: #bfa79a;
 }
 
-/*kitchen history*/
+/*Kitchen History*/
 
-/* =========================================
-   BASE PAGE
-========================================= */
+/* ===============================
+   KITCHEN HISTORY PAGE UI
+   =============================== */
+
 .kitchen-history-page {
-    margin: 0;
     font-family: 'Inter', sans-serif;
-    background: #1c120d;
-    color: #f5e6d3;
     min-height: 100vh;
+    color: #f5e6d3;
+    position: relative;
 }
 
-/* =========================================
-   CONTAINER
-========================================= */
+/* BACKGROUND (same kitchen theme) */
+.kitchen-history-page::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: url(img/k.png) center/cover no-repeat;
+    filter: blur(3px) brightness(0.4);
+    transform: scale(1.05);
+    z-index: -2;
+}
+
+.kitchen-history-page::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 14, 10, 0.78);
+    z-index: -1;
+}
+
+/* CONTAINER */
 .kitchen-history-page .container {
-    max-width: 900px;
-    margin: auto;
-    padding: 40px 20px 60px;
+    max-width: 1100px;
+    margin: 100px auto;
+    padding: 20px;
 }
 
-/* =========================================
-   TITLE
-========================================= */
+/* TITLE */
 .kitchen-history-page .page-title {
     text-align: center;
-    font-size: 2.3rem;
-    color: #d2a679;
-
-    margin-top: 70px;
-    margin-bottom: 40px;
-
-    letter-spacing: 1px;
-    animation: fadeDown 0.5s ease;
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 25px;
 }
 
-/* =========================================
-   CARD
-========================================= */
+/* GRID STYLE (same as kitchen system) */
+.kitchen-history-page #history-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+}
+
+/* CARD */
 .kitchen-history-page .card {
-    background: linear-gradient(145deg, #2b1b12, #1f140f);
-    border: 1px solid rgba(210,166,121,0.2);
-
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 16px;
-    padding: 18px;
-
-    margin-bottom: 16px;
-
-    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-
-    transition: 0.25s;
-    animation: fadeUp 0.4s ease;
+    padding: 16px;
+    backdrop-filter: blur(10px);
+    transition: 0.3s ease;
 }
 
 .kitchen-history-page .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 14px 30px rgba(0,0,0,0.7);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.4);
 }
 
-/* =========================================
-   TEXT STYLING
-========================================= */
-.kitchen-history-page strong {
-    font-size: 1.1rem;
-    color: #f3e5ab;
+/* HEADER INSIDE CARD */
+.kitchen-history-page .card strong {
+    font-size: 15px;
 }
 
 .kitchen-history-page .text-muted {
-    font-size: 0.8rem;
-    color: #bca58c;
+    color: #c7b8ad;
+    font-size: 13px;
 }
 
-/* =========================================
-   BADGE
-========================================= */
-.kitchen-history-page .badge-success {
+/* BADGE */
+.kitchen-history-page .badge {
     display: inline-block;
-    margin-top: 6px;
-
-    background: #2e7d32;
-    color: #fff;
-
+    margin-top: 5px;
+    font-size: 10px;
     padding: 4px 10px;
-    font-size: 0.7rem;
-
     border-radius: 20px;
-    letter-spacing: 1px;
+    font-weight: 700;
 }
 
-/* =========================================
-   INFO TEXT
-========================================= */
+/* DONE STATUS */
+.kitchen-history-page .badge-success {
+    background: #4caf50;
+    color: #fff;
+}
+
+/* ORDER DETAILS */
 .kitchen-history-page p {
     margin: 6px 0;
-    font-size: 0.9rem;
-    color: #e6c199;
+    font-size: 13px;
 }
 
-.kitchen-history-page p b {
-    color: #d2a679;
+/* ITEMS LIST */
+.kitchen-history-page .card div {
+    font-size: 13px;
 }
 
-/* =========================================
-   ITEMS LIST
-========================================= */
-.kitchen-history-page .card hr {
+/* HR STYLE */
+.kitchen-history-page hr {
     border: none;
-    border-top: 1px solid rgba(210,166,121,0.2);
-    margin: 12px 0;
+    border-top: 1px dashed rgba(255,255,255,0.2);
+    margin: 10px 0;
 }
 
-.kitchen-history-page .card b {
-    display: block;
-    margin-bottom: 5px;
+/*Cashier login/signup*/
+
+.cashier-auth-body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    color: #fbe9e7;
 }
 
-/* =========================================
-   EMPTY STATE
-========================================= */
-.kitchen-history-page .card .text-muted {
+/* BACKGROUND */
+.cashier-auth-body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url(img/cash.png) center/cover no-repeat;
+    filter: blur(2px) brightness(0.45);
+    transform: scale(1.05);
+    z-index: -2;
+}
+
+.cashier-auth-body::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(25, 18, 12, 0.65);
+    z-index: -1;
+}
+
+/* LAYOUT */
+.cashier-auth-body .split-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* LEFT FORM */
+.cashier-auth-body .form-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeSlide 1s ease;
+}
+
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* CARD */
+.cashier-auth-body .auth-card {
+    width: 380px;
     text-align: center;
 }
 
-/* =========================================
-   ANIMATIONS
-========================================= */
-@keyframes fadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+/* TITLE */
+.cashier-auth-body .auth-title {
+    font-size: 34px;
+    font-weight: 800;
+}
+
+/* SUBTITLE */
+.cashier-auth-body .auth-subtitle {
+    font-size: 14px;
+    color: #d7ccc8;
+    margin-bottom: 25px;
+}
+
+/* FORM */
+.cashier-auth-body .form-group {
+    text-align: left;
+    margin-bottom: 14px;
+}
+
+.cashier-auth-body .form-label {
+    font-size: 12px;
+    color: #ffcc80;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.cashier-auth-body .form-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #8d6e63;
+    background: transparent;
+    color: #ffffff !important;   /* typed text */
+    caret-color: #ffcc80; 
+    transition: 0.3s;
+}
+
+.cashier-auth-body .form-input:focus {
+    border-color: #ffcc80;
+    box-shadow: 0 0 10px rgba(255,204,128,0.3);
+    outline: none;
+}
+
+/* BUTTON */
+.cashier-auth-body .btn-auth {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    background: linear-gradient(135deg, #8b5e34, #563719);
+    color: #fff;
+    transition: 0.3s;
+}
+
+.cashier-auth-body .btn-auth:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(200,155,109,0.3);
+}
+
+/* FOOTER */
+.cashier-auth-body .auth-footer {
+    margin-top: 20px;
+    font-size: 13px;
+}
+
+.cashier-auth-body .auth-footer a {
+    color: #ffcc80;
+}
+
+/* RIGHT VISUAL */
+.cashier-auth-body .visual-side {
+    flex: 1;
+    position: relative;
+}
+
+/* FLOATING EFFECT */
+.cashier-auth-body .visual-side::before {
+    content: "";
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: #5d4037;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: float 4s ease-in-out infinite;
+}
+
+.cashier-auth-body .visual-side::after {
+    content: "💰";
+    font-size: 110px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%,100% { transform: translate(-50%, -50%); }
+    50% { transform: translate(-50%, -60%); }
+}
+
+/*Casshier Dashboard*/
+
+
+.cashier-dashboard {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: #0f0f0f;
+    color: #f5f5f5;
+}
+
+/* CONTAINER */
+.cashier-dashboard .container {
+    max-width: 1100px;
+    margin: 100px auto 40px;
+    padding: 20px;
+}
+
+/* MAIN CARD */
+.cashier-dashboard .card {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    transition: 0.3s ease;
+}
+
+.cashier-dashboard .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+/* TITLE */
+.cashier-dashboard .card-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* TEXT */
+.cashier-dashboard .text-muted {
+    color: #aaa;
+    font-size: 14px;
+}
+
+/* GRID */
+.cashier-dashboard .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+/* KPI CARDS */
+.cashier-dashboard .kpi-grid .card {
+    text-align: center;
+    cursor: pointer;
+    padding: 25px 15px;
+}
+
+/* KPI VALUE */
+.cashier-dashboard .kpi-value {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+/* KPI LABEL */
+.cashier-dashboard .kpi-label {
+    font-size: 13px;
+    color: #bbb;
+}
+
+/* ICON STYLE */
+.cashier-dashboard .kpi-value i {
+    font-size: 18px;
+    color: #c89b6d;
+    transition: 0.3s ease;
+}
+
+/* HOVER EFFECT */
+.cashier-dashboard .kpi-grid .card:hover .kpi-value i {
+    transform: scale(1.2);
+    color: #ffcc80;
+}
+
+/* SPACING */
+.cashier-dashboard .mt-1 { margin-top: 5px; }
+.cashier-dashboard .mt-3 { margin-top: 20px; }
+
+/* LINK FIX */
+.cashier-dashboard a.card {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+    .cashier-dashboard .card-title {
+        font-size: 20px;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+
+    .cashier-dashboard .kpi-value {
+        font-size: 18px;
     }
 }
 
-@keyframes fadeDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* =========================================
-   RESPONSIVE
-========================================= */
-@media (max-width: 768px) {
-    .kitchen-history-page .container {
-        padding: 25px 15px;
-    }
-
-    .kitchen-history-page .page-title {
-        font-size: 1.8rem;
-    }
-=======
+/**Cahier create order/
 /* =========================
-   payment method 
-=========================git add .
-git commit -m "update"
-git push */
+   CASHIER POS ONLY (SAFE SCOPE)
+========================= */
 
-
-.payment-options{
-    display:flex;
-    gap:15px;
-    margin-top:8px;
+.cashier-pos {
+    background: #0f0f10;
+    color: #f5f5f5;
+    font-family: Arial, sans-serif;
 }
 
-#gcashBox{
-    display:none;
-    text-align:center;
-    margin-top:10px;
+/* =========================
+   HEADER
+========================= */
+.cashier-pos .pos-header {
+    text-align: center;
+    margin-top: 90px;
+    margin-bottom: 20px;
 }
 
-#gcashBox img{
-    width:200px;
-    border-radius:10px;
-    margin-bottom:10px;
->>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
+.cashier-pos .pos-header h1 {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.cashier-pos .pos-header p {
+    color: #aaa;
+    font-size: 14px;
+}
+
+/* =========================
+   FILTERS
+========================= */
+.cashier-pos .pos-filters {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.cashier-pos .filter-btn {
+    padding: 8px 14px;
+    border-radius: 20px;
+    text-decoration: none;
+    background: #1c1c1f;
+    color: #fff;
+    transition: 0.3s;
+    font-size: 13px;
+}
+
+.cashier-pos .filter-btn:hover {
+    background: #333;
+}
+
+.cashier-pos .filter-btn.active {
+    background: #d7a86e;
+    color: #1a1a1a;
+}
+
+/* =========================
+   MAIN LAYOUT
+========================= */
+.cashier-pos .pos-container {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* =========================
+   PRODUCTS GRID
+========================= */
+.cashier-pos .products {
+    width: 65%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 15px;
+}
+
+/* PRODUCT CARD */
+.cashier-pos .product-card {
+    background: #1a1a1d;
+    padding: 15px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+    text-align: center;
+}
+
+.cashier-pos .product-card:hover {
+    transform: translateY(-5px);
+    background: #222;
+}
+
+/* =========================
+   CIRCLE IMAGE FIX
+========================= */
+.cashier-pos .product-img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #d7a86e;
+    margin-bottom: 10px;
+}
+
+/* PRODUCT TEXT */
+.cashier-pos .product-info {
+    text-align: center;
+}
+
+.cashier-pos .product-info strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.cashier-pos .product-info p {
+    margin: 0;
+    font-size: 13px;
+    color: #d7a86e;
+}
+
+.cashier-pos .product-info small {
+    font-size: 11px;
+    color: #aaa;
+}
+
+/* =========================
+   CART PANEL
+========================= */
+.cashier-pos .cart {
+    width: 35%;
+    background: #151518;
+    padding: 15px;
+    border-radius: 15px;
+    height: 80vh;
+    overflow-y: auto;
+}
+
+/* CART ITEMS */
+.cashier-pos .cart-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.cashier-pos .cart-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* DELETE ICON ONLY */
+.cashier-pos .remove-btn {
+    background: transparent;
+    border: none;
+    color: #ff4d4d;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* TOTAL */
+.cashier-pos .total {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 15px;
+    color: #d7a86e;
+}
+
+/* INPUTS */
+.cashier-pos input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 8px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: #222;
+    color: #fff;
+}
+
+/* BUTTON */
+.cashier-pos button[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #d7a86e;
+    color: #1a1a1a;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.cashier-pos button[type="submit"]:hover {
+    background: #c9975c;
+}
+
+
+/*cashier history*/
+
+.cashier-history {
+    background: #0f0f0f;
+    color: #f5f5f5;
+    font-family: Arial, sans-serif;
+}
+/* HEADER */
+.cashier-history .history-header {
+    text-align: center;
+    padding: 100px 15px 25px; /* ⬅️ adds space for fixed navbar */
+    margin-top: 0;
+}
+
+/* TITLE */
+.cashier-history .history-header h1 {
+    font-size: 30px;
+    margin: 0 0 20px 0; /* ⬅️ proper bottom spacing */
+    letter-spacing: 5px;
+    line-height: 1.2;
+}
+
+/* SUBTEXT */
+.cashier-history .history-header p {
+    color: #aaa;
+    font-size: 14px;
+    margin: 0;
+}
+
+/* GRID CONTAINER */
+.cashier-history .history-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 20px;
+}
+
+/* CARD DESIGN */
+.cashier-history .history-card {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 16px;
+    transition: 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.cashier-history .history-card:hover {
+    transform: translateY(-6px);
+    border-color: #444;
+}
+
+/* TOP SECTION */
+.cashier-history .history-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cashier-history .history-top h3 {
+    font-size: 16px;
+    color: #fff;
+}
+
+/* TYPE BADGE */
+.cashier-history .type {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.cashier-history .type.walkin {
+    background: #2563eb;
+    color: #fff;
+}
+
+.cashier-history .type.online {
+    background: #16a34a;
+    color: #fff;
+}
+
+/* STATUS BADGE */
+.cashier-history .status {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.cashier-history .status.done {
+    background: #22c55e;
+    color: #fff;
+}
+
+.cashier-history .status.accepted {
+    background: #f59e0b;
+    color: #000;
+}
+
+.cashier-history .status.rejected {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* TEXT */
+.cashier-history p {
+    margin: 6px 0;
+    font-size: 13px;
+    color: #ddd;
+}
+
+/* ITEMS LIST */
+.cashier-history .items ul {
+    margin: 6px 0 0 18px;
+    font-size: 13px;
+    color: #ccc;
+}
+
+/* DATE */
+.cashier-history .date {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #888;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+/* EMPTY STATE */
+.cashier-history .history-empty {
+    text-align: center;
+    padding: 40px;
+    color: #777;
+    font-size: 14px;
+}
+
+/*view order cashier*/
+
+.cashier-view-orders {
+    background: #0f0f0f;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+/* HEADER */
+.cashier-view-orders .history-header {
+    text-align: center;
+    margin-top: 50px;
+    margin-bottom: 25px;
+}
+
+.cashier-view-orders .history-header h1 {
+    margin-bottom: 10px;
+}
+
+/* TABLE CONTAINER */
+.cashier-view-orders .orders-container {
+    padding: 20px;
+}
+
+/* TABLE */
+.cashier-view-orders .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a1a1a;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.cashier-view-orders .orders-table th,
+.cashier-view-orders .orders-table td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #333;
+}
+
+.cashier-view-orders .orders-table th {
+    background: #222;
+}
+
+/* TYPE */
+.walkin { color: #4da6ff; font-weight: bold; }
+.online { color: #4dff88; font-weight: bold; }
+
+/* BADGE */
+.badge.pending {
+    background: orange;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+/* BUTTONS */
+.btn {
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+    margin: 2px;
+    display: inline-block;
+}
+
+.btn.accept { background: #28a745; }
+.btn.reject { background: #dc3545; }
+.btn.view { background: #007bff; }
+
+/* EMPTY */
+.empty {
+    padding: 20px;
+    color: #aaa;
+}
+
+/* INLINE */
+.inline {
+    display: inline;
+}
+
+/*cashier booking*/
+
+
+/* BODY */
+body.cashier-booking {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: radial-gradient(circle at top, #1b1b1b, #0f0f0f);
+    color: #fff;
+}
+
+/* PAGE HEADER (CENTERED + CLEAN SPACING) */
+.cashier-booking-page-header {
+    padding: 100px 30px 20px 30px;
+    text-align: center;
+}
+
+/* TITLE FIX */
+.cashier-booking-page-title {
+    font-size: 30px;
+    margin: 0; /* FIXED: removed 80px */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* SUBTITLE FIX */
+.cashier-booking-page-subtitle {
+    margin-top: 10px;
+    margin-bottom: 0;
+    color: #a9a9a9;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* MAIN CONTAINER */
+.cashier-booking-container {
+    padding: 20px 30px 40px 30px;
+}
+
+/* EMPTY STATE */
+.cashier-booking-empty-box {
+    text-align: center;
+    padding: 70px 20px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #aaa;
+    animation: cashier-booking-fadeIn 0.5s ease;
+}
+
+.cashier-booking-empty-box i {
+    font-size: 45px;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+/* TABLE WRAPPER */
+.cashier-booking-table-wrapper {
+    overflow-x: auto;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    animation: cashier-booking-fadeIn 0.5s ease;
+}
+
+/* TABLE */
+.cashier-booking-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+}
+
+/* TABLE HEADER (CHANGED TO WHITE) */
+.cashier-booking-table thead {
+    background: rgba(255,255,255,0.05);
+}
+
+.cashier-booking-table th {
+    padding: 14px;
+    text-align: left;
+    font-size: 13px;
+    color: #ffffff; /* FIXED: WHITE LABELS */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* TABLE CELLS */
+.cashier-booking-table td {
+    padding: 14px;
+    font-size: 13px;
+    color: #e0e0e0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: top;
+}
+
+/* ROW HOVER */
+.cashier-booking-table tr:hover {
+    background: rgba(255,255,255,0.04);
+    transition: 0.3s;
+}
+
+/* STATUS BADGE */
+.cashier-booking-badge {
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    letter-spacing: 0.5px;
+}
+
+.cashier-booking-badge.pending {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+    border: 1px solid #ffc107;
+}
+
+/* ACTION BUTTONS */
+.cashier-booking-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.cashier-booking-btn {
+    border: none;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.25s ease;
+    color: #fff;
+}
+
+/* ACCEPT */
+.cashier-booking-btn-accept {
+    background: #28a745;
+}
+
+.cashier-booking-btn-accept:hover {
+    background: #2ecc71;
+    transform: scale(1.05);
+}
+
+/* REJECT */
+.cashier-booking-btn-reject {
+    background: #dc3545;
+}
+
+.cashier-booking-btn-reject:hover {
+    background: #ff4d4d;
+    transform: scale(1.05);
+}
+
+/* SKIRTING TEXT */
+.cashier-booking-skirting {
+    font-size: 12px;
+    color: #ccc;
+    line-height: 1.4;
+}
+
+/* SCROLLBAR */
+.cashier-booking-table-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.cashier-booking-table-wrapper::-webkit-scrollbar-thumb {
+    background: #00d4ff;
+    border-radius: 10px;
+}
+
+.cashier-booking-table-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ANIMATION */
+@keyframes cashier-booking-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+
+    .cashier-booking-page-title {
+        font-size: 22px;
+    }
+
+    .cashier-booking-table {
+        min-width: 800px;
+    }
+
+    .cashier-booking-container {
+        padding: 15px;
+    }
 }

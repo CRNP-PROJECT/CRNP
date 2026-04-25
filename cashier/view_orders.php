@@ -19,24 +19,52 @@ $orders = json_decode($orders_raw, true) ?? [];
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>View Orders</title>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="../styles.css">
+
+<title>Cashier Orders</title>
 </head>
-<body>
 
-<nav>
-    <a href="cashier_index.php">Dashboard</a> |
-    <a href="view_orders.php">View Orders</a> |
-    <a href="cashier_orderHistory.php">History</a>
+<body class="cashier-view-orders">
+
+<!-- NAVBAR -->
+<nav class="navbar">
+
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo" alt="Logo">
+    </div>
+
+    <ul class="navbar-menu">
+
+        <li><a href="cashier_index.php"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+        <li><a href="create_order.php"><i class="fa-solid fa-bag-shopping"></i> New Order</a></li>
+        <li class="active"><a href="view_orders.php"><i class="fa-solid fa-receipt"></i> Orders</a></li>
+        <li><a href="cashier_orderHistory.php"><i class="fa-solid fa-clock-rotate-left"></i> History</a></li>
+        <li><a href="cashier_logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+
+    </ul>
 </nav>
 
-<h2>📦 Pending Orders Only</h2>
+<!-- HEADER -->
+<div class="cashier-history">
 
-<table >
+    <div class="history-header">
+        <h1><i class="fa-solid fa-box"></i> Pending Orders</h1>
+        <p>Manage all incoming orders</p>
+    </div>
+
+</div>
+
+<!-- TABLE -->
+<div class="orders-container">
+
+<table class="orders-table">
+
     <thead>
         <tr>
             <th>Order ID</th>
@@ -46,6 +74,7 @@ $orders = json_decode($orders_raw, true) ?? [];
             <th>Date</th>
             <th>Status</th>
             <th>Action</th>
+            <th>View</th>
         </tr>
     </thead>
 
@@ -59,16 +88,11 @@ $orders = json_decode($orders_raw, true) ?? [];
         if(!is_array($order)) continue;
 
         $status = strtolower($order['status'] ?? '');
-
-        // 🔥 ONLY PENDING HERE
         if($status !== 'pending') continue;
 
         $hasOrders = true;
 
-        // FIX TYPE SAFELY
         $type = strtolower($order['order_type'] ?? '');
-
-        // if missing, detect walk-in
         if($type === ''){
             $type = isset($order['table_number']) ? 'walkin' : 'online';
         }
@@ -80,42 +104,45 @@ $orders = json_decode($orders_raw, true) ?? [];
 
         <tr>
 
-            <td><?= htmlspecialchars($id); ?></td>
+            <td><?= htmlspecialchars($id) ?></td>
 
             <td>
-                <?php if($type === 'walkin'): ?>
-                    <span style="color:blue;font-weight:bold;">WALK-IN</span>
-                <?php else: ?>
-                    <span style="color:green;font-weight:bold;">ONLINE</span>
-                <?php endif; ?>
+                <span class="<?= $type ?>">
+                    <?= strtoupper($type) ?>
+                </span>
             </td>
 
-            <td><?= htmlspecialchars($customer); ?></td>
+            <td><?= htmlspecialchars($customer) ?></td>
 
-            <td>₱<?= number_format($total, 2); ?></td>
+            <td>₱<?= number_format($total, 2) ?></td>
 
-            <td><?= htmlspecialchars($date ?: 'N/A'); ?></td>
+            <td><?= htmlspecialchars($date ?: 'N/A') ?></td>
 
-            <td>
-                <span class="badge badge-pending">PENDING</span>
-            </td>
+            <td><span class="badge pending">PENDING</span></td>
 
             <td>
 
-                <form action="cashier_process.php" method="POST" style="display:inline;">
+                <form method="POST" action="cashier_process.php" class="inline">
                     <input type="hidden" name="action" value="update_status">
-                    <input type="hidden" name="order_id" value="<?= $id; ?>">
+                    <input type="hidden" name="order_id" value="<?= $id ?>">
                     <input type="hidden" name="status" value="accepted">
-                    <button>Accept</button>
+                    <button class="btn accept"><i class="fa-solid fa-check"></i></button>
                 </form>
 
-                <form action="cashier_process.php" method="POST" style="display:inline;">
+                <form method="POST" action="cashier_process.php" class="inline">
                     <input type="hidden" name="action" value="update_status">
-                    <input type="hidden" name="order_id" value="<?= $id; ?>">
+                    <input type="hidden" name="order_id" value="<?= $id ?>">
                     <input type="hidden" name="status" value="rejected">
-                    <button>Reject</button>
+                    <button class="btn reject"><i class="fa-solid fa-xmark"></i></button>
                 </form>
 
+            </td>
+
+            <!-- VIEW BUTTON -->
+            <td>
+                <a href="cashier_view_order.php?id=<?= $id ?>" class="btn view">
+                    <i class="fa-solid fa-eye"></i>
+                </a>
             </td>
 
         </tr>
@@ -124,12 +151,14 @@ $orders = json_decode($orders_raw, true) ?? [];
 
     <?php if(!$hasOrders): ?>
         <tr>
-            <td colspan="7">No pending orders</td>
+            <td colspan="8" class="empty">No pending orders</td>
         </tr>
     <?php endif; ?>
 
     </tbody>
 </table>
+
+</div>
 
 </body>
 </html>

@@ -16,122 +16,179 @@ $bookings = json_decode($bookings_raw, true) ?? [];
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="../styles.css">
-<title>View Bookings</title>
-</head>
-<body>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="../styles.css">
+
+<title>Cashier Bookings</title>
+</head>
+
+<body class="cashier-booking">
+
+<!-- ================= NAVBAR (KEPT AS YOU REQUESTED) ================= -->
 <nav class="navbar">
-    <a href="cashier_index.php" class="navbar-brand">Cashier Dashboard</a>
+
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo" alt="Logo">
+    </div>
+
     <ul class="navbar-menu">
-        <li><a href="view_bookings.php">View Bookings</a></li>
-        <li><a href="booking_history.php">History</a></li>
+
+        <li>
+            <a href="cashier_index.php">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+        </li>
+
+        <li>
+            <a href="create_order.php">
+                <i class="fa-solid fa-bag-shopping"></i> New Order
+            </a>
+        </li>
+
+        <li>
+            <a href="view_orders.php">
+                <i class="fa-solid fa-receipt"></i> Orders
+            </a>
+        </li>
+
+        <li>
+            <a href="view_bookings.php" class="active">
+                <i class="fa-solid fa-calendar-days"></i> Bookings
+            </a>
+        </li>
+
+        <li>
+            <a href="cashier_logout.php">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </li>
+
     </ul>
 </nav>
 
-<div class="container">
+<!-- ================= HEADER ================= -->
+<div class="cashier-booking-page-header">
 
-    <div class="page-header flex-between">
-        <div>
-            <h1 class="page-title">Booking Reservations</h1>
-        </div>
-        <a href="cashier_index.php" class="btn btn-secondary btn-sm">← Back</a>
+    <h1 class="cashier-booking-page-title">
+        <i class="fa-solid fa-calendar-check"></i> Cashier Bookings
+    </h1>
+
+    <p class="cashier-booking-page-subtitle">
+        Manage all reservation requests
+    </p>
+
+</div>
+
+<!-- ================= CONTENT ================= -->
+<div class="cashier-booking-container">
+
+<?php if(empty($bookings)): ?>
+
+    <div class="cashier-booking-empty-box">
+        <i class="fa-regular fa-folder-open"></i>
+        <p>No bookings found</p>
     </div>
 
-    <?php if(empty($bookings)): ?>
-        <div class="card">
-            <p class="text-center text-muted">No bookings found.</p>
+<?php else: ?>
+
+<div class="cashier-booking-table-wrapper">
+
+<table class="cashier-booking-table">
+
+<thead>
+<tr>
+    <th>Email</th>
+    <th>Name</th>
+    <th>Contact</th>
+    <th>Date & Time</th>
+    <th>Tables</th>
+    <th>Chairs</th>
+    <th>Skirting</th>
+    <th>Status</th>
+    <th>Action</th>
+    <th>Created</th>
+</tr>
+</thead>
+
+<tbody>
+
+<?php foreach($bookings as $id => $b):
+
+    $status = $b['status'] ?? 'pending';
+    if($status !== 'pending') continue;
+?>
+
+<tr>
+
+    <td><?= htmlspecialchars($b['user_email'] ?? '') ?></td>
+    <td><?= htmlspecialchars($b['full_name'] ?? '') ?></td>
+    <td><?= htmlspecialchars($b['contact_number'] ?? '') ?></td>
+    <td><?= htmlspecialchars($b['appointment_time'] ?? '') ?></td>
+    <td><?= intval($b['tables_qty'] ?? 0) ?></td>
+    <td><?= intval($b['chairs_qty'] ?? 0) ?></td>
+
+    <td class="cashier-booking-skirting">
+        <?php 
+        if(isset($b['skirting']) && is_array($b['skirting'])){
+            foreach($b['skirting'] as $s){
+                echo htmlspecialchars($s['color']) . " (x" . intval($s['qty']) . ")<br>";
+            }
+        } else {
+            echo "-";
+        }
+        ?>
+    </td>
+
+    <td>
+        <span class="cashier-booking-badge pending">PENDING</span>
+    </td>
+
+    <td>
+        <div class="cashier-booking-actions">
+
+            <form method="POST" action="cashier_process.php">
+                <input type="hidden" name="action" value="update_booking_status">
+                <input type="hidden" name="booking_id" value="<?= $id ?>">
+                <input type="hidden" name="status" value="accepted">
+
+                <button class="cashier-booking-btn cashier-booking-btn-accept" type="submit">
+                    <i class="fa-solid fa-check"></i>
+                </button>
+            </form>
+
+            <form method="POST" action="cashier_process.php">
+                <input type="hidden" name="action" value="update_booking_status">
+                <input type="hidden" name="booking_id" value="<?= $id ?>">
+                <input type="hidden" name="status" value="rejected">
+
+                <button class="cashier-booking-btn cashier-booking-btn-reject" type="submit">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </form>
+
         </div>
-    <?php else: ?>
+    </td>
 
-        <div class="table-wrapper">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>User Email</th>
-                        <th>Full Name</th>
-                        <th>Contact</th>
-                        <th>Address</th>
-                        <th>Date & Time</th>
-                        <th>Tables</th>
-                        <th>Chairs</th>
-                        <th>Skirting</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                        <th>Created</th>
-                    </tr>
-                </thead>
+    <td><?= htmlspecialchars($b['created_at'] ?? '') ?></td>
 
-                <tbody>
-                    <?php foreach($bookings as $id => $b): 
+</tr>
 
-                        $status = $b['status'] ?? 'pending';
+<?php endforeach; ?>
 
-                        // 🔥 ONLY SHOW PENDING
-                        if($status !== 'pending'){
-                            continue;
-                        }
-                    ?>
-                    <tr>
+</tbody>
 
-                        <td><?php echo htmlspecialchars($b['user_email'] ?? ''); ?></td>
-                        <td><?php echo htmlspecialchars($b['full_name'] ?? ''); ?></td>
-                        <td><?php echo htmlspecialchars($b['contact_number'] ?? ''); ?></td>
-                        <td><?php echo htmlspecialchars($b['address'] ?? ''); ?></td>
-                        <td><?php echo htmlspecialchars($b['appointment_time'] ?? ''); ?></td>
-                        <td><?php echo intval($b['tables_qty'] ?? 0); ?></td>
-                        <td><?php echo intval($b['chairs_qty'] ?? 0); ?></td>
+</table>
 
-                        <td>
-                            <?php 
-                            if(isset($b['skirting']) && is_array($b['skirting'])){
-                                foreach($b['skirting'] as $s){
-                                    echo htmlspecialchars($s['color']) . " (x" . intval($s['qty']) . ")<br>";
-                                }
-                            } else {
-                                echo "-";
-                            }
-                            ?>
-                        </td>
+</div>
 
-                        <!-- STATUS -->
-                        <td>
-                            <span style="color:orange;">PENDING</span>
-                        </td>
-
-                        <!-- ACTION -->
-                        <td>
-                            <form action="cashier_process.php" method="POST" style="display:inline;">
-                                <input type="hidden" name="action" value="update_booking_status">
-                                <input type="hidden" name="booking_id" value="<?php echo $id; ?>">
-                                <input type="hidden" name="status" value="accepted">
-                                <button type="submit">Accept</button>
-                            </form>
-
-                            <form action="cashier_process.php" method="POST" style="display:inline;">
-                                <input type="hidden" name="action" value="update_booking_status">
-                                <input type="hidden" name="booking_id" value="<?php echo $id; ?>">
-                                <input type="hidden" name="status" value="rejected">
-                                <button type="submit">Reject</button>
-                            </form>
-                        </td>
-
-                        <td><?php echo htmlspecialchars($b['created_at'] ?? ''); ?></td>
-
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-
-            </table>
-        </div>
-
-    <?php endif; ?>
+<?php endif; ?>
 
 </div>
 
 </body>
-</html> 
+</html>

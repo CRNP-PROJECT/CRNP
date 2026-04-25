@@ -11,19 +11,52 @@ if(!isset($_SESSION['cashier_email'])){
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="../styles.css">
 <title>Cashier Dashboard</title>
 </head>
-<body>
+<body class="cashier-dashboard">
 
 <nav class="navbar">
-    <a href="cashier_index.php" class="navbar-brand">Cashier Dashboard</a>
+
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo" alt="Logo">
+    </div>
+
     <ul class="navbar-menu">
-        <li><a href="create_order.php">New Order</a></li> <!-- this is for ordering when there is a customer that usually walking in in crnp -->
-        <li><a href="view_orders.php">View Orders</a></li>
-        <li><a href="view_bookings.php">View Bookings</a></li>
-        <li><a href="cashier_logout.php">Logout</a></li>
+
+        <li>
+            <a href="cashier_index.php">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+        </li>
+
+        <li>
+            <a href="create_order.php">
+                <i class="fa-solid fa-bag-shopping"></i> New Order
+            </a>
+        </li>
+
+        <li>
+            <a href="view_orders.php">
+                <i class="fa-solid fa-file-invoice"></i> Orders
+            </a>
+        </li>
+
+        <li>
+            <a href="view_bookings.php">
+                <i class="fa-solid fa-calendar-days"></i> Bookings
+            </a>
+        </li>
+
+        <li>
+            <a href="cashier_logout.php">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </a>
+        </li>
+
     </ul>
+
 </nav>
 
 <div class="container">
@@ -37,7 +70,7 @@ if(!isset($_SESSION['cashier_email'])){
         <!--  NEW WALK-IN ORDER FOR CRNP  -->
         <a href="create_order.php" class="card" style="text-decoration: none;">
             <div class="kpi-value">New Order</div>
-            <div class="kpi-label">Walk-in Customer</div>
+            <div class="kpi-label">Walk-in and Online</div>
         </a>
 
         

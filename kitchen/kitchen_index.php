@@ -25,7 +25,7 @@ foreach($orders as $id => $order){
 
     $kitchen_status = $order['kitchen_status'] ?? 'accepted';
 
-    // 🚨 IMPORTANT FIX: hide completed orders
+    // hide completed
     if($kitchen_status === 'done') continue;
 
     // normalize bad data
@@ -49,7 +49,6 @@ foreach($orders as $id => $order){
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link rel="stylesheet" href="../styles.css">
@@ -57,14 +56,34 @@ foreach($orders as $id => $order){
 <title>Kitchen Dashboard</title>
 </head>
 
+<script>
+async function loadKitchenOrders() {
+    try {
+        const res = await fetch("kitchen_fetch_orders.php");
+        const data = await res.json();
+
+        document.getElementById("walkin").innerHTML = data.walkin;
+        document.getElementById("online").innerHTML = data.online;
+
+    } catch (err) {
+        console.log("Kitchen refresh error:", err);
+    }
+}
+
+/* refresh every 3 seconds */
+setInterval(loadKitchenOrders, 3000);
+</script>
+
 <body class="kitchen-dashboard">
 
+<!-- NAVBAR (KEPT ONLY ONCE) -->
 <nav class="navbar">
     <div class="navbar-brand-container">
         <img src="../img/logo.png" alt="Logo" class="logo">
     </div>
-    <a href="kitchen_index.php" class="navbar-brand">
-    </a>
+
+    <a href="kitchen_index.php" class="navbar-brand"></a>
+
     <ul class="navbar-menu">
         <li><a href="kitchen_index.php">Queue</a></li>
         <li><a href="kitchen_history.php">History</a></li>
@@ -124,7 +143,6 @@ foreach($orders as $id => $order){
                 <?php endforeach; ?>
             </div>
 
-            <!-- ✅ SHOW BUTTONS ONLY IF NOT DONE -->
             <?php if($kitchen_status !== 'done'): ?>
             <form method="POST" action="kitchen_process.php" class="card-actions">
                 <input type="hidden" name="action" value="update_status">
@@ -144,7 +162,6 @@ foreach($orders as $id => $order){
             </form>
 
             <?php else: ?>
-            <!-- ✅ COMPLETED STATE -->
             <div class="card-complete">
                 <i class="fa-solid fa-circle-check"></i> Completed
             </div>
@@ -157,23 +174,8 @@ foreach($orders as $id => $order){
     <?php endif; ?>
 
     </div>
-=======
-<title>Kitchen Queue</title>
-<link rel="stylesheet" href="../styles.css">
-</head>
 
-<body>
-
-<h1>🍽 Kitchen Queue</h1>
-<nav class="navbar"> 
-    <a href="kitchen_index.php" 
-    class="navbar-brand">Kitchen Dashboard</a>
-     <ul class="navbar-menu"> 
-        <li><a href="kitchen_index.php">Queue</a></li> 
-        <li><a href="kitchen_history.php">History</a></li>
-         <li><a href="kitchen_logout.php">Logout</a></li> 
-        </ul> 
-    </nav>
+</div>
 
 <!-- ================= WALK-IN ================= -->
 <h2>🧾 Walk-in Orders</h2>
@@ -220,7 +222,6 @@ foreach($orders as $id => $order){
 
     </form>
 
->>>>>>> 784d58b7356ff90b699f7f25dfe2dd02149d3401
 </div>
 
 <?php endforeach; ?>
