@@ -5,45 +5,51 @@ include(__DIR__ . "/../config.php");
 include(__DIR__ . "/../firebaseRDB.php");
 
 $rdb = new firebaseRDB($databaseURL);
-
 date_default_timezone_set("Asia/Manila");
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+/* 🔥 ALWAYS INIT CART */
+if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
+    $_SESSION['cart'] = [];
+}
+
 switch($action) {
 
-    // ================= ADD TO CART =================
-    case 'add_to_cart':
-        $product_id = $_POST['product_id'] ?? '';
+   case 'add_to_cart':
 
-        if ($product_id == "") {
-            header("Location: products.php");
-            exit;
-        }
+    $product_id = $_POST['product_id'] ?? '';
 
-        if (!isset($_SESSION['cart'])) {
-            $_SESSION['cart'] = [];
-        }
-
-        $_SESSION['cart'][$product_id] = ($_SESSION['cart'][$product_id] ?? 0) + 1;
-
-        header("Location: products.php");
+    if ($product_id == "") {
+        echo "error";
         exit;
+    }
 
+    if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
+        $_SESSION['cart'] = [];
+    }
 
-    // ================= BUY NOW (FIXED) =================
+    if (isset($_SESSION['cart'][$product_id])) {
+        $_SESSION['cart'][$product_id]++;
+    } else {
+        $_SESSION['cart'][$product_id] = 1;
+    }
+
+    echo "success";
+    exit;
+
+    // ================= BUY NOW =================
     case 'buy_now':
-        $product_id = $_POST['product_id'] ?? '';
+
+        $product_id = $_POST['product_id'] ?? $_GET['product_id'] ?? '';
 
         if ($product_id == "") {
             header("Location: products.php");
             exit;
         }
 
-        // 🔥 FIX: overwrite cart with single item
-        $_SESSION['cart'] = [
-            $product_id => 1
-        ];
+        $_SESSION['cart'] = [];
+        $_SESSION['cart'][$product_id] = 1;
 
         header("Location: checkout.php");
         exit;
@@ -51,10 +57,11 @@ switch($action) {
 
     // ================= UPDATE CART =================
     case 'update_cart':
+
         $product_id = $_POST['product_id'] ?? '';
         $qty = intval($_POST['quantity'] ?? 1);
 
-        if ($product_id && $qty > 0) {
+        if ($product_id != "" && $qty > 0) {
             $_SESSION['cart'][$product_id] = $qty;
         }
 
@@ -64,9 +71,10 @@ switch($action) {
 
     // ================= REMOVE CART =================
     case 'remove_cart':
+
         $id = $_GET['id'] ?? '';
 
-        if ($id && isset($_SESSION['cart'][$id])) {
+        if ($id != "" && isset($_SESSION['cart'][$id])) {
             unset($_SESSION['cart'][$id]);
         }
 
@@ -74,7 +82,7 @@ switch($action) {
         exit;
 
 
-    // ================= CONFIRM CHECKOUT =================
+    // ================= CHECKOUT =================
     case 'confirm_checkout':
 
         if (!isset($_SESSION['email'])) {
@@ -87,17 +95,40 @@ switch($action) {
             exit;
         }
 
-        $full_name = $_POST['full_name'] ?? '';
-        $contact_number = $_POST['contact_number'] ?? '';
-        $num_people = intval($_POST['num_people'] ?? 1);
+        $payment_method = $_POST['payment_method'] ?? 'counter';
+        $gcash_number = $_POST['gcash_number'] ?? '';
+        $gcash_receipt = null;
 
-        $raw_time = $_POST['appointment_time'] ?? '';
-        $timestamp = strtotime($raw_time);
+        // GCASH UPLOAD
+        if ($payment_method === "gcash") {
 
-        $appointment_time = $timestamp
-            ? date("M d, Y h:i A", $timestamp)
-            : $raw_time;
+            if (!empty($_FILES['gcash_receipt']['name'])) {
 
+                $uploadDir = __DIR__ . "/uploads/";
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+                $fileName = time() . "_" . basename($_FILES["gcash_receipt"]["name"]);
+                $targetFile = $uploadDir . $fileName;
+
+                $fileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+                $allowed = ['jpg','jpeg','png','webp'];
+
+                if (!in_array($fileType, $allowed)) {
+                    die("Invalid file type.");
+                }
+
+                if (move_uploaded_file($_FILES["gcash_receipt"]["tmp_name"], $targetFile)) {
+                    $gcash_receipt = "uploads/" . $fileName;
+                } else {
+                    die("Upload failed.");
+                }
+
+            } else {
+                die("GCash receipt is required.");
+            }
+        }
+
+        // TOTAL COMPUTATION
         $cart = $_SESSION['cart'];
         $total = 0;
         $products_detail = [];
@@ -107,12 +138,14 @@ switch($action) {
             $product = json_decode($rdb->retrieve("/products/$id"), true);
 
             if ($product) {
-                $subtotal = floatval($product['price']) * $qty;
+
+                $price = floatval($product['price']);
+                $subtotal = $price * $qty;
                 $total += $subtotal;
 
                 $products_detail[$id] = [
                     'name' => $product['name'],
-                    'price' => $product['price'],
+                    'price' => $price,
                     'qty' => $qty,
                     'subtotal' => $subtotal
                 ];
@@ -121,12 +154,20 @@ switch($action) {
 
         $order_data = [
             'user_email' => $_SESSION['email'],
-            'full_name' => $full_name,
-            'contact_number' => $contact_number,
-            'num_people' => $num_people,
-            'appointment_time' => $appointment_time,
-            'products' => $products_detail,
+            'full_name' => $_POST['full_name'] ?? '',
+            'contact_number' => $_POST['contact_number'] ?? '',
             'total' => $total,
+            'products' => $products_detail,
+
+            'payment_method' => $payment_method,
+            'gcash_number' => $gcash_number,
+            'gcash_receipt' => $gcash_receipt,
+
+            'payment_status' => ($payment_method === "gcash")
+                ? "pending_verification"
+                : "no_payment_required",
+
+            'payment_verified' => false,
             'status' => 'pending',
             'created_at' => date("M d, Y h:i A")
         ];
@@ -147,37 +188,79 @@ switch($action) {
             exit;
         }
 
-        $full_name = $_POST['full_name'] ?? '';
-        $contact_number = $_POST['contact_number'] ?? '';
-        $address = $_POST['address'] ?? '';
-        $appointment_time = $_POST['appointment_time'] ?? '';
-        $tables_qty = intval($_POST['tables_qty'] ?? 0);
-        $chairs_qty = intval($_POST['chairs_qty'] ?? 0);
+        $payment_method = $_POST['payment_method'] ?? 'counter';
+        $gcash_number = $_POST['gcash_number'] ?? '';
+        $booking_receipt = null;
 
-        $skirting = [];
+        $rent_items_raw = json_decode($rdb->retrieve("/rent_items"), true) ?? [];
+        $selected_items = $_POST['rent_items'] ?? [];
 
-        if (isset($_POST['skirting_color']) && is_array($_POST['skirting_color'])) {
-            foreach ($_POST['skirting_color'] as $i => $color) {
-                $qty = intval($_POST['skirting_qty'][$i] ?? 0);
+        $booking_total = 0;
+        $booking_details = [];
 
-                if ($qty > 0) {
-                    $skirting[] = [
-                        'color' => $color,
-                        'qty' => $qty
-                    ];
+        foreach ($selected_items as $id => $qty) {
+
+            $qty = intval($qty);
+            if ($qty <= 0) continue;
+
+            if (isset($rent_items_raw[$id])) {
+
+                $item = $rent_items_raw[$id];
+                $price = floatval($item['price'] ?? 0);
+
+                $subtotal = $price * $qty;
+                $booking_total += $subtotal;
+
+                $booking_details[$id] = [
+                    'name' => $item['display_name'] ?? $item['name'],
+                    'price' => $price,
+                    'qty' => $qty,
+                    'subtotal' => $subtotal
+                ];
+            }
+        }
+
+        // UPLOAD RECEIPT
+        if ($payment_method === "gcash") {
+
+            if (!empty($_FILES['gcash_receipt']['name'])) {
+
+                $uploadDir = __DIR__ . "/bookings/";
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+                $fileName = time() . "_" . basename($_FILES["gcash_receipt"]["name"]);
+                $targetFile = $uploadDir . $fileName;
+
+                if (move_uploaded_file($_FILES["gcash_receipt"]["tmp_name"], $targetFile)) {
+                    $booking_receipt = "bookings/" . $fileName;
+                } else {
+                    die("Upload failed.");
                 }
+
+            } else {
+                die("GCash receipt is required.");
             }
         }
 
         $booking_data = [
             'user_email' => $_SESSION['email'],
-            'full_name' => $full_name,
-            'contact_number' => $contact_number,
-            'address' => $address,
-            'appointment_time' => $appointment_time,
-            'tables_qty' => $tables_qty,
-            'chairs_qty' => $chairs_qty,
-            'skirting' => $skirting,
+            'full_name' => $_POST['full_name'] ?? '',
+            'contact_number' => $_POST['contact_number'] ?? '',
+            'address' => $_POST['address'] ?? '',
+            'appointment_time' => $_POST['appointment_time'] ?? '',
+            'items' => $booking_details,
+            'booking_total' => $booking_total,
+
+            'payment_method' => $payment_method,
+            'gcash_number' => $gcash_number,
+            'gcash_receipt' => $booking_receipt,
+
+            'payment_status' => ($payment_method === "gcash")
+                ? "pending_verification"
+                : "no_payment_required",
+
+            'payment_verified' => false,
+            'status' => 'pending',
             'created_at' => date("M d, Y h:i A")
         ];
 
@@ -187,45 +270,8 @@ switch($action) {
         exit;
 
 
-    // ================= UPDATE PROFILE =================
-    case 'update_profile':
-
-        if (!isset($_SESSION['user_id'])) {
-            header("Location: user_login.php");
-            exit;
-        }
-
-        $user_id = $_SESSION['user_id'];
-
-        $name = $_POST['name'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
-
-        if ($name == "" || $email == "") {
-            header("Location: your_profile.php?status=error");
-            exit;
-        }
-
-        $updateData = [
-            "name" => $name,
-            "email" => $email
-        ];
-
-        if (!empty($password)) {
-            $updateData["password"] = password_hash($password, PASSWORD_DEFAULT);
-        }
-
-        $result = $rdb->update("/user", $user_id, $updateData);
-
-        if ($result) {
-            $_SESSION['email'] = $email;
-            $_SESSION['user_name'] = $name;
-
-            header("Location: your_profile.php?status=success");
-            exit;
-        }
-
-        header("Location: your_profile.php?status=error");
+    default:
+        header("Location: index.php");
         exit;
 }
 ?>

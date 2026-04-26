@@ -53,6 +53,24 @@ usort($history, function($a, $b){
 <link rel="stylesheet" href="../styles.css">
 
 <title>Cashier History</title>
+
+<style>
+.status {
+    padding:5px 10px;
+    border-radius:5px;
+    color:#fff;
+    font-size:12px;
+}
+
+.accepted { background:green; }
+.rejected { background:red; }
+.done { background:blue; }
+
+.paid { background:green; }
+.notpaid { background:red; }
+.pending { background:orange; }
+</style>
+
 </head>
 
 <body class="cashier-history">
@@ -62,33 +80,21 @@ usort($history, function($a, $b){
 
     <div class="navbar-brand-container">
         <img src="../img/logo.png" class="logo" alt="Logo">
-        <span class="brand-text"> </span>
     </div>
 
     <ul class="navbar-menu">
 
-        <li><a href="cashier_index.php">
-            <i class="fa-solid fa-chart-line"></i> Dashboard
-        </a></li>
-
-        <li><a href="create_order.php">
-            <i class="fa-solid fa-cart-plus"></i> Orders
-        </a></li>
-
-        <li><a class="active" href="cashier_history.php">
-            <i class="fa-solid fa-clock-rotate-left"></i> History
-        </a></li>
-
-        <li><a href="cashier_logout.php">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </a></li>
+        <li><a href="cashier_index.php">Dashboard</a></li>
+        <li><a href="view_orders.php">Orders</a></li>
+        <li><a class="active" href="cashier_orderHistory.php">History</a></li>
+        <li><a href="cashier_logout.php">Logout</a></li>
 
     </ul>
 </nav>
 
 <!-- HEADER -->
 <div class="history-header">
-    <h1><i></i> Cashier History</h1>
+    <h1>Cashier History</h1>
     <p>All processed orders (walk-in & online)</p>
 </div>
 
@@ -116,12 +122,37 @@ usort($history, function($a, $b){
     <p><b>Customer:</b> <?= htmlspecialchars($order['full_name'] ?? 'Walk-in') ?></p>
     <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
 
+    <!-- ORDER STATUS -->
     <p><b>Status:</b>
         <span class="status <?= strtolower($order['status'] ?? '') ?>">
             <?= strtoupper($order['status'] ?? 'unknown') ?>
         </span>
     </p>
 
+    <!-- PAYMENT STATUS -->
+    <p><b>Payment Status:</b>
+        <?php
+            $payment = $order['payment_status'] ?? '';
+
+            if($payment === "paid"){
+                echo '<span class="status paid">PAID</span>';
+            }
+            elseif($payment === "not_paid"){
+                echo '<span class="status notpaid">NOT PAID</span>';
+            }
+            elseif($payment === "pending_verification"){
+                echo '<span class="status pending">PENDING</span>';
+            }
+            elseif($payment === "no_payment_required"){
+                echo '<span class="status pending">OVER THE COUNTER</span>';
+            }
+            else{
+                echo '<span class="status pending">NO PAYMENT</span>';
+            }
+        ?>
+    </p>
+
+    <!-- ITEMS -->
     <div class="items">
         <b>Items:</b>
         <ul>
@@ -135,6 +166,7 @@ usort($history, function($a, $b){
         </ul>
     </div>
 
+    <!-- DATE -->
     <p class="date">
         <i class="fa-regular fa-calendar"></i>
         <?= htmlspecialchars($order['cashier_action_time'] ?? $order['created_at'] ?? '') ?>

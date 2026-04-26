@@ -20,15 +20,18 @@ $online_orders = [];
 
 foreach($orders as $id => $order){
 
-    // only accepted orders
-    if(($order['status'] ?? '') !== 'accepted') continue;
+    $status = strtolower($order['status'] ?? '');
+    $payment_status = strtolower($order['payment_status'] ?? '');
+    $payment_method = strtolower($order['payment_method'] ?? '');
 
-    $kitchen_status = $order['kitchen_status'] ?? 'accepted';
+    // ❌ only reject rejected orders
+    if($status === 'rejected') continue;
 
-    // hide completed
+    // kitchen status
+    $kitchen_status = strtolower($order['kitchen_status'] ?? 'accepted');
+
     if($kitchen_status === 'done') continue;
 
-    // normalize bad data
     if(!in_array($kitchen_status, ['accepted','preparing','ready'])){
         $kitchen_status = 'accepted';
     }
@@ -36,7 +39,8 @@ foreach($orders as $id => $order){
     $order['_id'] = $id;
     $order['_kitchen_status'] = $kitchen_status;
 
-    if(!empty($order['cashier'])){
+    // classify
+    if($payment_method === 'over the counter' || $payment_method === 'over_the_counter'){
         $walkin_orders[$id] = $order;
     } else {
         $online_orders[$id] = $order;
@@ -56,226 +60,127 @@ foreach($orders as $id => $order){
 <title>Kitchen Dashboard</title>
 </head>
 
-<script>
-async function loadKitchenOrders() {
-    try {
-        const res = await fetch("kitchen_fetch_orders.php");
-        const data = await res.json();
-
-        document.getElementById("walkin").innerHTML = data.walkin;
-        document.getElementById("online").innerHTML = data.online;
-
-    } catch (err) {
-        console.log("Kitchen refresh error:", err);
-    }
-}
-
-/* refresh every 3 seconds */
-setInterval(loadKitchenOrders, 3000);
-</script>
-
 <body class="kitchen-dashboard">
 
-<!-- NAVBAR (KEPT ONLY ONCE) -->
 <nav class="navbar">
     <div class="navbar-brand-container">
-        <img src="../img/logo.png" alt="Logo" class="logo">
+        <img src="../img/logo.png" class="logo">
     </div>
-
-    <a href="kitchen_index.php" class="navbar-brand"></a>
 
     <ul class="navbar-menu">
         <li><a href="kitchen_index.php">Queue</a></li>
         <li><a href="kitchen_history.php">History</a></li>
-        <li>
-            <a href="kitchen_logout.php">
-                <i class="fa-solid fa-right-from-bracket"></i> Logout
-            </a>
-        </li>
+        <li><a href="kitchen_logout.php">Logout</a></li>
     </ul>
 </nav>
 
 <div class="container">
 
-    <div class="page-header">
-        <h1 class="page-title">
-            <i class="fa-solid fa-fire-burner"></i> Kitchen Orders
-        </h1>
+<h1>🍳 Kitchen Orders</h1>
 
-        <p class="page-subtitle">
-            <?php echo htmlspecialchars($_SESSION['kitchen_email']); ?>
-        </p>
+<!-- 🔥 IMPORTANT: LIVE UPDATE TARGETS -->
+<div class="orders-grid">
+
+    <h2>🧾 Walk-in Orders</h2>
+    <div id="walkin">
+
+        <?php foreach($walkin_orders as $id => $order): ?>
+
+        <div class="card" style="border-left:5px solid orange; margin-bottom:10px; padding:10px;">
+
+            <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
+            <br>
+            <small>🧾 WALK-IN</small>
+
+            <br><br>
+
+            <b>Status:</b> <?= strtoupper($order['_kitchen_status']) ?>
+            <br><br>
+
+            <?php foreach(($order['products'] ?? []) as $p): ?>
+                • <?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?><br>
+            <?php endforeach; ?>
+
+        </div>
+
+        <?php endforeach; ?>
+
     </div>
 
-    <div class="orders-grid">
+    <hr>
 
-    <?php if(empty($orders)): ?>
-        <div class="card full">
-            <p class="text-center text-muted">No orders found.</p>
-        </div>
-    <?php else: ?>
+    <h2>👤 Online Orders</h2>
+    <div id="online">
 
-        <?php foreach($orders as $id => $order): 
-            if(($order['status'] ?? '') === 'accepted'):
-                $kitchen_status = $order['kitchen_status'] ?? 'pending';
-        ?>
+        <?php foreach($online_orders as $id => $order): ?>
 
-        <div class="card">
+        <div class="card" style="border-left:5px solid blue; margin-bottom:10px; padding:10px;">
 
-            <div class="card-header">
-                <strong>
-                    <i class="fa-solid fa-user"></i>
-                    <?php echo htmlspecialchars($order['full_name']); ?>
-                </strong>
+            <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
+            <br>
+            <small>👤 ONLINE</small>
 
-                <span class="badge badge-<?php echo $kitchen_status; ?>">
-                    <?php echo strtoupper($kitchen_status); ?>
-                </span>
-            </div>
+            <br><br>
 
-            <div class="products">
-                <?php foreach($order['products'] as $p): ?>
-                    <div class="product-item">
-                        <i class="fa-solid fa-bowl-food"></i>
-                        <?php echo htmlspecialchars($p['name']); ?>
-                        <span class="text-muted"> × <?php echo intval($p['qty']); ?></span>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+            <b>Status:</b> <?= strtoupper($order['_kitchen_status']) ?>
+            <br><br>
 
-            <?php if($kitchen_status !== 'done'): ?>
-            <form method="POST" action="kitchen_process.php" class="card-actions">
-                <input type="hidden" name="action" value="update_status">
-                <input type="hidden" name="order_id" value="<?php echo $id; ?>">
-
-                <button type="submit" name="status" value="preparing" class="btn btn-secondary">
-                    Preparing
-                </button>
-
-                <button type="submit" name="status" value="ready" class="btn btn-primary">
-                    Ready
-                </button>
-
-                <button type="submit" name="status" value="done" class="btn btn-success">
-                    Done
-                </button>
-            </form>
-
-            <?php else: ?>
-            <div class="card-complete">
-                <i class="fa-solid fa-circle-check"></i> Completed
-            </div>
-            <?php endif; ?>
+            <?php foreach(($order['products'] ?? []) as $p): ?>
+                • <?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?><br>
+            <?php endforeach; ?>
 
         </div>
 
-        <?php endif; endforeach; ?>
-
-    <?php endif; ?>
+        <?php endforeach; ?>
 
     </div>
 
 </div>
 
-<!-- ================= WALK-IN ================= -->
-<h2>🧾 Walk-in Orders</h2>
-
-<?php if(empty($walkin_orders)): ?>
-    <p>No walk-in orders.</p>
-<?php endif; ?>
-
-<?php foreach($walkin_orders as $id => $order): ?>
-
-<div class="card" style="border-left:5px solid orange; padding:10px; margin-bottom:10px;">
-
-    <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
-    <br>
-    <small>🧾 WALK-IN</small>
-    <br>
-    <small>📧 <?= htmlspecialchars($order['cashier'] ?? 'Cashier') ?></small>
-    <br>
-
-    <b>Status:</b> <?= strtoupper($order['_kitchen_status']) ?>
-    <br><br>
-
-    <?php foreach(($order['products'] ?? []) as $p): ?>
-        • <?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?><br>
-    <?php endforeach; ?>
-
-    <br>
-
-    <form method="POST" action="kitchen_process.php">
-        <input type="hidden" name="action" value="update_status">
-        <input type="hidden" name="order_id" value="<?= $id ?>">
-
-        <?php if($order['_kitchen_status'] === 'accepted'): ?>
-            <button name="status" value="preparing">Preparing</button>
-        <?php endif; ?>
-
-        <?php if($order['_kitchen_status'] === 'preparing'): ?>
-            <button name="status" value="ready">Ready</button>
-        <?php endif; ?>
-
-        <?php if($order['_kitchen_status'] === 'ready'): ?>
-            <button name="status" value="done">Done</button>
-        <?php endif; ?>
-
-    </form>
-
 </div>
 
-<?php endforeach; ?>
+<!-- ================= SAFE LIVE UPDATE ================= -->
+<script>
+let lastWalkin = "";
+let lastOnline = "";
 
-<hr>
+async function loadKitchenOrders() {
+    try {
+        const res = await fetch("kitchen_fetch_orders.php");
 
-<!-- ================= ONLINE ================= -->
-<h2>👤 Online Orders</h2>
+        if(!res.ok) return;
 
-<?php if(empty($online_orders)): ?>
-    <p>No online orders.</p>
-<?php endif; ?>
+        const data = await res.json();
 
-<?php foreach($online_orders as $id => $order): ?>
+        const walkin = document.getElementById("walkin");
+        const online = document.getElementById("online");
 
-<div class="card" style="border-left:5px solid blue; padding:10px; margin-bottom:10px;">
+        if(walkin && data.walkin !== undefined){
+            walkin.innerHTML = data.walkin;
+            lastWalkin = data.walkin;
+        }
 
-    <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
-    <br>
-    <small>👤 ONLINE</small>
-    <br>
-    <small>📧 <?= htmlspecialchars($order['user_email'] ?? 'N/A') ?></small>
-    <br>
+        if(online && data.online !== undefined){
+            online.innerHTML = data.online;
+            lastOnline = data.online;
+        }
 
-    <b>Status:</b> <?= strtoupper($order['_kitchen_status']) ?>
-    <br><br>
+    } catch (err) {
+        console.log("Refresh error:", err);
 
-    <?php foreach(($order['products'] ?? []) as $p): ?>
-        • <?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?><br>
-    <?php endforeach; ?>
+        // prevent vanishing
+        if(document.getElementById("walkin")){
+            document.getElementById("walkin").innerHTML = lastWalkin;
+        }
 
-    <br>
+        if(document.getElementById("online")){
+            document.getElementById("online").innerHTML = lastOnline;
+        }
+    }
+}
 
-    <form method="POST" action="kitchen_process.php">
-        <input type="hidden" name="action" value="update_status">
-        <input type="hidden" name="order_id" value="<?= $id ?>">
-
-        <?php if($order['_kitchen_status'] === 'accepted'): ?>
-            <button name="status" value="preparing">Preparing</button>
-        <?php endif; ?>
-
-        <?php if($order['_kitchen_status'] === 'preparing'): ?>
-            <button name="status" value="ready">Ready</button>
-        <?php endif; ?>
-
-        <?php if($order['_kitchen_status'] === 'ready'): ?>
-            <button name="status" value="done">Done</button>
-        <?php endif; ?>
-
-    </form>
-
-</div>
-
-<?php endforeach; ?>
+setInterval(loadKitchenOrders, 5000);
+</script>
 
 </body>
 </html>

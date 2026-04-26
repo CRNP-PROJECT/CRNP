@@ -11,9 +11,19 @@ if(!isset($_SESSION['kitchen_email'])){
 
 $rdb = new firebaseRDB($databaseURL);
 
-// ================= GET HISTORY =================
-$history_raw = $rdb->retrieve("/kitchen_history");
-$history = json_decode($history_raw, true) ?? [];
+// ================= GET ORDERS =================
+$history_raw = $rdb->retrieve("/orders");
+$orders = json_decode($history_raw, true) ?? [];
+
+// ================= FILTER DONE ONLY =================
+$history = [];
+
+foreach($orders as $id => $order){
+
+    if(strtolower($order['kitchen_status'] ?? '') !== 'done') continue;
+
+    $history[$id] = $order;
+}
 ?>
 
 <!DOCTYPE html>
@@ -28,76 +38,54 @@ $history = json_decode($history_raw, true) ?? [];
 
 <body class="kitchen-history-page">
 
-<nav class="navbar kitchen-navbar">
-    <div class="navbar-brand-container">
-        <img src="../img/logo.png" alt="Logo" class="logo">
-        <span class="brand-text"> </span>
-    </div>
-
+<nav class="navbar">
     <ul class="navbar-menu">
-        <li><a href="kitchen_index.php"><i class="fa-solid fa-fire-burner"></i> Queue</a></li>
-        <li><a href="kitchen_history.php"><i class="fa-solid fa-clock-rotate-left"></i> History</a></li>
-        <li><a href="kitchen_logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+        <li><a href="kitchen_index.php">Queue</a></li>
+        <li><a href="kitchen_history.php">History</a></li>
+        <li><a href="kitchen_logout.php">Logout</a></li>
     </ul>
 </nav>
 
 <div class="container">
 
-<h1 class="page-title">🍽 Completed Orders</h1>
+<h1>🍽 Completed Orders</h1>
 
+<!-- ================= HISTORY CONTAINER ================= -->
 <div id="history-container">
 
 <?php if(empty($history)): ?>
 
     <div class="card">
-        <p class="text-muted">No completed orders yet.</p>
+        <p>No completed orders yet.</p>
     </div>
 
 <?php else: ?>
 
     <?php foreach($history as $id => $order): ?>
 
-        <div class="card mb-2">
+    <div class="card">
 
-            <div class="mb-2">
-                <strong>
-                    <?= htmlspecialchars($order['full_name'] ?? $order['customer_name'] ?? 'N/A') ?>
-                </strong>
+        <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong><br>
+        <small><?= htmlspecialchars($order['email'] ?? 'Cashier') ?></small><br>
 
-                <br>
+        <span class="badge badge-success">DONE</span>
 
-                <small class="text-muted">
-                    📧 <?= htmlspecialchars($order['email'] ?? 'Cashier') ?>
-                </small>
+        <hr>
 
-                <br>
+        <p><b>Order ID:</b> <?= htmlspecialchars($id) ?></p>
+        <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
+        <p><b>Completed:</b> <?= htmlspecialchars($order['completed_at'] ?? '') ?></p>
 
-                <span class="badge badge-success">DONE</span>
-            </div>
+        <hr>
 
-            <p><b>Order ID:</b> <?= htmlspecialchars($order['order_id'] ?? $id) ?></p>
-            <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
-            <p><b>Completed:</b> <?= htmlspecialchars($order['completed_at'] ?? $order['created_at'] ?? '') ?></p>
+        <b>Items:</b><br>
 
-            <hr>
+        <?php foreach(($order['products'] ?? []) as $item): ?>
+            • <?= htmlspecialchars($item['name'] ?? 'Unknown') ?> 
+            × <?= intval($item['qty'] ?? 0) ?><br>
+        <?php endforeach; ?>
 
-            <b>Items:</b>
-
-            <?php
-            $items = $order['products'] ?? $order['items'] ?? [];
-
-            if(!empty($items)):
-                foreach($items as $item):
-            ?>
-                <div style="padding:4px 0;">
-                    <?= htmlspecialchars($item['name'] ?? 'Unknown') ?>
-                    × <?= intval($item['qty'] ?? 0) ?>
-                </div>
-            <?php endforeach; else: ?>
-                <p>No items found</p>
-            <?php endif; ?>
-
-        </div>
+    </div>
 
     <?php endforeach; ?>
 
@@ -107,69 +95,36 @@ $history = json_decode($history_raw, true) ?? [];
 
 </div>
 
-<!-- ================= LIVE UPDATE ================= -->
+<!-- ================= SAFE LIVE UPDATE ================= -->
 <script>
+let lastHTML = document.getElementById("history-container").innerHTML;
+
 async function loadHistory() {
     try {
         const res = await fetch("fetch_kitchen_history.php");
+
+        if(!res.ok) return;
+
         const data = await res.json();
 
         const container = document.getElementById("history-container");
 
-        if (!data || Object.keys(data).length === 0) {
-            container.innerHTML = `
-                <div class="card">
-                    <p class="text-muted">No completed orders yet.</p>
-                </div>`;
-            return;
+        // ✅ ONLY UPDATE IF VALID DATA EXISTS
+        if(data && data.html && data.html.trim() !== ""){
+            container.innerHTML = data.html;
+            lastHTML = data.html;
         }
 
-        let html = "";
-
-        Object.keys(data).reverse().forEach(id => {
-            const order = data[id];
-
-            let itemsHTML = "";
-            const items = order.products || order.items || [];
-
-            items.forEach(item => {
-                itemsHTML += `
-                    <div style="padding:4px 0;">
-                        ${item.name || 'Unknown'} × ${item.qty || 0}
-                    </div>
-                `;
-            });
-
-            html += `
-                <div class="card mb-2">
-
-                    <div class="mb-2">
-                        <strong>${order.full_name || order.customer_name || 'N/A'}</strong><br>
-                        <small class="text-muted">${order.email || 'Cashier'}</small><br>
-                        <span class="badge badge-success">DONE</span>
-                    </div>
-
-                    <p><b>Order ID:</b> ${order.order_id || id}</p>
-                    <p><b>Total:</b> ₱${parseFloat(order.total || 0).toFixed(2)}</p>
-                    <p><b>Completed:</b> ${order.completed_at || order.created_at || ''}</p>
-
-                    <hr>
-
-                    <b>Items:</b>
-                    ${itemsHTML || "<p>No items found</p>"}
-
-                </div>
-            `;
-        });
-
-        container.innerHTML = html;
-
     } catch (err) {
-        console.error("Fetch error:", err);
+        console.log("History fetch error:", err);
+
+        // ❗ RESTORE LAST STATE (PREVENT VANISH)
+        document.getElementById("history-container").innerHTML = lastHTML;
     }
 }
 
-setInterval(loadHistory, 3000);
+// slower refresh = stable system
+setInterval(loadHistory, 5000);
 </script>
 
 </body>

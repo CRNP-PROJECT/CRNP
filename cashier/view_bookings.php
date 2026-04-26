@@ -29,7 +29,7 @@ $bookings = json_decode($bookings_raw, true) ?? [];
 
 <body class="cashier-booking">
 
-<!-- ================= NAVBAR (KEPT AS YOU REQUESTED) ================= -->
+<!-- ================= NAVBAR ================= -->
 <nav class="navbar">
 
     <div class="navbar-brand-container">
@@ -38,35 +38,15 @@ $bookings = json_decode($bookings_raw, true) ?? [];
 
     <ul class="navbar-menu">
 
-        <li>
-            <a href="cashier_index.php">
-                <i class="fa-solid fa-chart-line"></i> Dashboard
-            </a>
-        </li>
+        <li><a href="cashier_index.php"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
 
-        <li>
-            <a href="create_order.php">
-                <i class="fa-solid fa-bag-shopping"></i> New Order
-            </a>
-        </li>
+        <li><a href="booking_history.php">Booking History</a></li>
 
-        <li>
-            <a href="view_orders.php">
-                <i class="fa-solid fa-receipt"></i> Orders
-            </a>
-        </li>
+        <li><a href="view_orders.php"><i class="fa-solid fa-receipt"></i> Orders</a></li>
 
-        <li>
-            <a href="view_bookings.php" class="active">
-                <i class="fa-solid fa-calendar-days"></i> Bookings
-            </a>
-        </li>
+        <li><a href="booking_payment.php" class="active"><i class="fa-solid fa-calendar-days"></i> Booking Status</a></li>
 
-        <li>
-            <a href="cashier_logout.php">
-                <i class="fa-solid fa-right-from-bracket"></i> Logout
-            </a>
-        </li>
+        <li><a href="cashier_logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
 
     </ul>
 </nav>
@@ -106,9 +86,10 @@ $bookings = json_decode($bookings_raw, true) ?? [];
     <th>Name</th>
     <th>Contact</th>
     <th>Date & Time</th>
-    <th>Tables</th>
-    <th>Chairs</th>
-    <th>Skirting</th>
+
+    <th>Items</th>
+    <th>Total</th>
+
     <th>Status</th>
     <th>Action</th>
     <th>Created</th>
@@ -129,14 +110,15 @@ $bookings = json_decode($bookings_raw, true) ?? [];
     <td><?= htmlspecialchars($b['full_name'] ?? '') ?></td>
     <td><?= htmlspecialchars($b['contact_number'] ?? '') ?></td>
     <td><?= htmlspecialchars($b['appointment_time'] ?? '') ?></td>
-    <td><?= intval($b['tables_qty'] ?? 0) ?></td>
-    <td><?= intval($b['chairs_qty'] ?? 0) ?></td>
 
-    <td class="cashier-booking-skirting">
+    <!-- ITEMS -->
+    <td>
         <?php 
-        if(isset($b['skirting']) && is_array($b['skirting'])){
-            foreach($b['skirting'] as $s){
-                echo htmlspecialchars($s['color']) . " (x" . intval($s['qty']) . ")<br>";
+        if(isset($b['items']) && is_array($b['items'])) {
+            foreach($b['items'] as $item){
+                echo htmlspecialchars($item['name']) . 
+                     " (x" . intval($item['qty']) . 
+                     ") - ₱" . number_format($item['subtotal'], 2) . "<br>";
             }
         } else {
             echo "-";
@@ -144,10 +126,17 @@ $bookings = json_decode($bookings_raw, true) ?? [];
         ?>
     </td>
 
+    <!-- TOTAL -->
+    <td>
+        <b>₱<?= number_format($b['booking_total'] ?? 0, 2) ?></b>
+    </td>
+
+    <!-- STATUS -->
     <td>
         <span class="cashier-booking-badge pending">PENDING</span>
     </td>
 
+    <!-- ACTION -->
     <td>
         <div class="cashier-booking-actions">
 
