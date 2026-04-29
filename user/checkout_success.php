@@ -14,7 +14,7 @@ $user_email = $_SESSION['email'] ?? '';
     <link rel="stylesheet" href="../styles.css">
     <title>Order Confirmation</title>
 </head>
-<body class="order-confirmation-body">
+<body class="checkout-success-page">
 
 <nav class="navbar">
     <div class="navbar-brand-container">
@@ -22,33 +22,45 @@ $user_email = $_SESSION['email'] ?? '';
     </div>
 
     <ul class="navbar-menu">
-        <li><a href="index.php"><i class="fa-solid fa-house"></i> Home</a></li>
-        <li><a href="products.php"><i class="fa-solid fa-shop"></i> Products</a></li>
-        <li><a href="booking.php"><i class="fa-solid fa-calendar-check"></i> Booking</a></li>
-        <li><a href="cart.php"><i class="fa-solid fa-cart-shopping"></i> Cart</a></li>
-        <li><a href="../logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+        <li><a href="index.php">Home</a></li>
+        <li><a href="products.php">Products</a></li>
+        <li><a href="booking.php">Booking</a></li>
+        <li><a href="cart.php">Cart</a></li>
+        <li><a href="../logout.php">Logout</a></li>
     </ul>
 </nav>
 
-<div class="confirmation-wrapper">
-    <div class="container-sm">
-        <div class="card text-center confirmation-card">
-            <div class="success-icon">
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
-            
-            <h1 class="auth-title" style="color: #f3e5ab;">Thank you for your order!</h1>
-            <p class="text-muted mt-2">Your reservation/order has been successfully placed.</p>
-            
-            <?php if($user_email): ?>
-                <p class="text-muted"><i class="fa-solid fa-envelope"></i> Confirmation sent to: <strong><?php echo htmlspecialchars($user_email); ?></strong></p>
-            <?php endif; ?>
-            
-            <a href="products.php" class="btn btn-primary mt-3">
-                <i class="fa-solid fa-arrow-left"></i> Continue Shopping
+<div class="checkout-success-wrapper">
+
+    <div class="checkout-success-card">
+
+        <div class="checkout-success-icon">
+            ✓
+        </div>
+
+        <h1 class="checkout-success-title">
+            Order Confirmed
+        </h1>
+
+        <p class="checkout-success-text">
+            Your reservation/order has been successfully placed.
+        </p>
+
+        <?php if($user_email): ?>
+            <p class="checkout-success-email">
+                Confirmation sent to:<br>
+                <strong><?php echo htmlspecialchars($user_email); ?></strong>
+            </p>
+        <?php endif; ?>
+
+        <div class="checkout-success-actions">
+            <a href="products.php" class="checkout-success-btn">
+                Continue Shopping
             </a>
         </div>
+
     </div>
+
 </div>
 
 </body>

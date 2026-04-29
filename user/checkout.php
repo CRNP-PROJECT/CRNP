@@ -8,6 +8,8 @@ if(!isset($_SESSION['email'])){
     exit;
 }
 
+$username = $_SESSION['username'] ?? 'User';
+
 $rdb = new firebaseRDB($databaseURL);
 $cart = $_SESSION['cart'] ?? [];
 
@@ -35,134 +37,150 @@ foreach($cart as $id => $qty){
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Checkout | CRNP</title>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="../styles.css">
 <link rel="stylesheet" href="checkout_styles.css">
+
 </head>
 
 <body class="checkout-page">
 
-<!-- NAVBAR (UNCHANGED) -->
-<nav class="navbar">
+<!-- ✅ NAVBAR -->
+<header class="navbar">
     <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo"> 
+        <img src="../img/logo.png" class="logo">
     </div>
 
-    <ul class="navbar-menu">
-        <li><a href="index.php"><i class="fa-solid fa-house"></i> Home</a></li>
-        <li><a href="products.php"><i class="fa-solid fa-shop"></i> Products</a></li>
-        <li><a href="cart.php"><i class="fa-solid fa-cart-shopping"></i> Cart</a></li>
-        <li><a href="../logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
-    </ul>
-</nav>
+    <div class="navbar-right">
+        <ul class="navbar-menu">
+            <li><a href="index.php">Home</a></li>
+            <li><a href="products.php">Products</a></li>
+            <li><a href="booking.php">Booking</a></li>
+            <li><a href="cart.php" class="active">Cart</a></li>
+            <li><a href="your_orders.php">Orders</a></li>
+            <li><a href="aboutus.php">About</a></li>
+        </ul>
 
-<!-- TOP BAR (UNCHANGED) -->
-<div class="checkout-topbar">
-    <div class="checkout-back-wrapper">
-        <a href="cart.php" class="btn-back-nav">
-            <i class="fa-solid fa-arrow-left"></i> Back
-        </a>
+        <div class="navbar-dropdown">
+            <span class="navbar-user-btn">
+                <?php echo htmlspecialchars($username); ?> ▼
+            </span>
+
+            <div class="navbar-dropdown-content">
+                <a href="your_profile.php">My Profile</a>
+                <a href="your_orders.php">Your Orders</a>
+                <a href="../logout.php">Logout</a>
+            </div>
+        </div>
     </div>
+</header>
 
-    <h1 class="page-title">
-        <i class="fa-solid fa-credit-card"></i> Checkout & Reservation
-    </h1>
+<!-- ✅ HEADER -->
+<div class="checkout-header">
+    <a href="cart.php" class="checkout-back">Back</a>
+    <h1>Checkout & Reservation</h1>
 </div>
 
-<div class="container">
+<div class="checkout-container">
 <div class="checkout-grid">
 
-    <!-- ORDER SUMMARY (UNCHANGED) -->
-    <div class="card summary-card">
-        <h3 class="card-title"><i class="fa-solid fa-list-check"></i> Order Summary</h3>
+    <!-- ================= LEFT: ORDER SUMMARY ================= -->
+    <div class="checkout-card checkout-summary">
 
-        <div class="summary-list">
+        <h2 class="checkout-title">Order Summary</h2>
+
+        <div class="checkout-items">
             <?php foreach($cart_items as $item): ?>
-            <div class="summary-item">
+            <div class="checkout-item">
                 <div>
-                    <strong><?php echo htmlspecialchars($item['name']); ?></strong>
-                    <span class="qty">x<?php echo $item['qty']; ?></span>
+                    <strong><?= htmlspecialchars($item['name']); ?></strong>
+                    <span>x<?= $item['qty']; ?></span>
                 </div>
-                <div>₱<?php echo number_format($item['subtotal'], 2); ?></div>
+                <div>₱<?= number_format($item['subtotal'],2); ?></div>
             </div>
             <?php endforeach; ?>
         </div>
 
-        <div class="total-section">
-            <span>Total</span>
-            <span class="grand-total">₱<?php echo number_format($total, 2); ?></span>
+        <div class="checkout-total">
+            TOTAL: ₱<?= number_format($total,2); ?>
         </div>
+
     </div>
 
-    <!-- FORM (ONLY ADDITION INSIDE GCASH SECTION) -->
-    <div class="card form-card">
+    <!-- ================= RIGHT: FORM ================= -->
+    <div class="checkout-card checkout-form">
 
-        <h3 class="card-title"><i class="fa-solid fa-pen-to-square"></i> Reservation Details</h3>
+        <h2 class="checkout-title">Reservation Details</h2>
 
         <form action="process.php" method="POST" enctype="multipart/form-data">
 
-            <input type="hidden" name="action" value="confirm_checkout">
+                <input type="hidden" name="action" value="confirm_checkout">
 
-            <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" name="full_name" class="form-input" required>
+           <!-- FULL NAME -->
+            <div class="checkout-row full">
+                <input type="text" name="full_name" placeholder="Full Name" required>
             </div>
 
-            <div class="form-group">
-                <label>Contact Number</label>
-                <input type="text" name="contact_number" class="form-input" required>
+            <!-- CONTACT + GUEST -->
+            <div class="checkout-row two">
+                <input type="text" name="contact_number" placeholder="Contact Number" required>
+                <input type="number" name="num_people" placeholder="Guest Count" required>
             </div>
 
-            <div class="form-group">
-                <label>Guest Count</label>
-                <input type="number" name="num_people" class="form-input" required>
-            </div>
+          <!-- DATE -->
+                <div class="checkout-row full">
+                <input type="datetime-local" name="appointment_time" required>
+                </div>
 
-            <div class="form-group">
-                <label>Date & Time</label>
-                <input type="datetime-local" name="appointment_time" class="form-input" required>
-            </div>
+            <!-- ================= PAYMENT ================= -->
+            <div class="checkout-payment">
 
-            <!-- PAYMENT -->
-            <div class="form-group">
-                <label>Payment Method</label>
-
-                <label>
+                <label class="checkout-pay-option">
                     <input type="radio" name="payment_method" value="counter" checked onclick="togglePayment('counter')">
                     Over the Counter
                 </label>
 
-                <label>
+                <label class="checkout-pay-option checkout-gcash-option">
                     <input type="radio" name="payment_method" value="gcash" onclick="togglePayment('gcash')">
+                    <img src="../img/gcash.png" alt="GCash">
                     GCash
                 </label>
+
             </div>
 
-            <!-- GCASH SECTION (ONLY CHANGE = ADD FIELD) -->
-            <div id="gcashSection" style="display:none; margin-top:10px;">
+            <!-- ================= GCASH ================= -->
+            <div id="gcashBox" class="checkout-gcash">
 
-                <div style="text-align:center; margin-bottom:10px;">
-                    <img src="../img/2.jpg" style="max-width:200px;">
+                <!-- LEFT QR -->
+                <div class="checkout-gcash-left">
+                    <p class="checkout-gcash-text">Scan to Pay</p>
+
+                    <img src="../img/qr.png" alt="QR Code">
+
+                    <span class="checkout-gcash-number">0912 345 6789</span>
+
+                    <button type="button" class="checkout-download" onclick="downloadQR()">
+                        Download QR
+                    </button>
                 </div>
 
-                <label>GCash Number</label>
-                <input type="text" name="gcash_number" class="form-input" placeholder="Enter GCash Number">
-
-                <label>Upload Receipt</label>
-                <input type="file" name="gcash_receipt" class="form-input" accept="image/*">
+                <!-- RIGHT INPUTS -->
+                <div class="checkout-gcash-right">
+                    <input type="text" name="gcash_number" placeholder="Enter GCash Number">
+                    <input type="file" name="gcash_receipt" accept="image/*">
+                </div>
 
             </div>
 
-            <button type="submit" class="btn-confirm">
+            <!-- BUTTON -->
+            <button type="submit" class="checkout-btn">
                 Confirm & Reserve
             </button>
 
         </form>
+
     </div>
 
 </div>
@@ -170,8 +188,15 @@ foreach($cart as $id => $qty){
 
 <script>
 function togglePayment(type){
-    document.getElementById("gcashSection").style.display =
-        (type === "gcash") ? "block" : "none";
+    document.getElementById("gcashBox").style.display =
+        (type === "gcash") ? "flex" : "none";
+}
+
+function downloadQR(){
+    const link = document.createElement('a');
+    link.href = "../img/qr.png";
+    link.download = "gcash-qr.png";
+    link.click();
 }
 </script>
 

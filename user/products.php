@@ -9,16 +9,16 @@ if (!isset($_SESSION['email'])) {
     exit;
 }
 
-/* 🔥 FIX: missing variable */
 $username = $_SESSION['username'] ?? "User";
 
 $rdb = new firebaseRDB($databaseURL);
 
-// CATEGORY FILTER
 $filter = $_GET['category'] ?? "All";
 
 $products = [];
+$productNames = [];
 
+// FETCH PRODUCTS
 try {
     $retrieve = $rdb->retrieve("/products");
     $data = json_decode($retrieve, true);
@@ -26,8 +26,10 @@ try {
     if (is_array($data)) {
         foreach ($data as $id => $product) {
             $category = $product['category'] ?? 'Food';
+
             if ($filter === "All" || $category === $filter) {
                 $products[$id] = $product;
+                $productNames[] = $product['name'];
             }
         }
     }
@@ -49,205 +51,226 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
 <link rel="stylesheet" href="../styles.css">
 
 <title>Products</title>
-
-<style>
-.filter-btn {
-    margin-right: 5px;
-    padding: 8px 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.filter-active {
-    background: #80461B;
-    color: white;
-    border-color: #80461B;
-}
-
-.btn i {
-    margin-right: 5px;
-}
-</style>
-
 </head>
 
 <body class="products-page-body">
 
 <!-- NAVBAR -->
-<nav class="navbar">
+<header class="navbar">
+
     <div class="navbar-brand-container">
-        <img src="../img/logo.png" alt="Logo" class="logo">
-        <a href="index.php" class="navbar-brand"></a>
+        <img src="../img/logo.png" class="logo">
     </div>
 
-    <ul class="navbar-menu">
+    <div class="navbar-right">
 
-        <li><a href="index.php"><i class="fa-solid fa-house"></i> Home</a></li>
+        <ul class="navbar-menu">
+            <li><a href="index.php">Home</a></li>
+            <li><a href="products.php" class="active">Products</a></li>
+            <li><a href="booking.php">Booking</a></li>
 
-        <li><a href="products.php" class="active"><i class="fa-solid fa-shop"></i> Products</a></li>
+            <!-- 🔥 REALTIME CART COUNT -->
+            <li>
+                <a href="cart.php">
+                    Cart (<span id="cart-count"><?php echo $cartCount; ?></span>)
+                </a>
+            </li>
 
-        <li><a href="booking.php"><i class="fa-solid fa-calendar-check"></i> Booking</a></li>
+            <li><a href="your_orders.php">Orders</a></li>
+            <li><a href="aboutus.php">About</a></li>
+        </ul>
 
-        <li><a href="cart.php"><i class="fa-solid fa-cart-shopping"></i> Cart (<?php echo $cartCount; ?>)</a></li>
+        <!-- SEARCH -->
+        <form action="products.php" method="GET" class="search-box" style="position: relative;">
+            <button type="submit" style="background:none; border:none; cursor:pointer; color:inherit;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
 
-        <li><a href="your_orders.php"><i class="fa-solid fa-box-open"></i> Your Order</a></li>
+            <input type="text" name="search" placeholder="Search..." class="navbar-search" autocomplete="off">
 
-        <li><a href="aboutus.php"><i class="fa-solid fa-circle-info"></i> About Us</a></li>
+            <div id="suggestion-box"></div>
+        </form>
 
         <!-- USER -->
-        <li class="navbar-dropdown">
-            <a href="#">
-                <i class="fa-solid fa-user"></i>
-                <?php echo htmlspecialchars($username); ?> ▼
-            </a>
+        <div class="navbar-dropdown">
+            <span class="navbar-user-btn">
+                <i class="fa-regular fa-user"></i>
+                <?php echo htmlspecialchars($username); ?>
+            </span>
 
             <div class="navbar-dropdown-content">
-                <a href="your_profile.php"><i class="fa-solid fa-id-card"></i> My Profile</a>
-                <a href="your_orders.php"><i class="fa-solid fa-box"></i> Your Orders</a>
-                <a href="../logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                <a href="your_profile.php">My Profile</a>
+                <a href="your_orders.php">Your Orders</a>
+                <a href="../logout.php">Logout</a>
             </div>
-        </li>
+        </div>
 
-    </ul>
-</nav>
+    </div>
+</header>
 
-<div class="container">
+<!-- PRODUCTS -->
+<div class="product-scoped">
 
     <div class="page-header">
-        <h1 class="page-title"><i class="fa-solid fa-store"></i> Available Products</h1>
-        <p class="page-subtitle">Browse our selection of products</p>
+        <h1 class="page-title">Available Products</h1>
 
-        <div style="margin-top:10px;">
-            <a href="?category=All" class="filter-btn <?php echo ($filter=='All')?'filter-active':''; ?>">
-                <i class="fa-solid fa-border-all"></i> All
-            </a>
-            <a href="?category=Food" class="filter-btn <?php echo ($filter=='Food')?'filter-active':''; ?>">
-                <i class="fa-solid fa-utensils"></i> Food
-            </a>
-            <a href="?category=Drinks" class="filter-btn <?php echo ($filter=='Drinks')?'filter-active':''; ?>">
-                <i class="fa-solid fa-glass-water"></i> Drinks
-            </a>
-            <a href="?category=Beverages" class="filter-btn <?php echo ($filter=='Beverages')?'filter-active':''; ?>">
-                <i class="fa-solid fa-mug-hot"></i> Beverages
-            </a>
+        <div class="filter-container">
+            <a href="?category=All" class="filter-btn <?php echo ($filter=='All')?'filter-active':''; ?>">All</a>
+            <a href="?category=Food" class="filter-btn <?php echo ($filter=='Food')?'filter-active':''; ?>">Food</a>
+            <a href="?category=Drinks" class="filter-btn <?php echo ($filter=='Drinks')?'filter-active':''; ?>">Drinks</a>
+            <a href="?category=Beverages" class="filter-btn <?php echo ($filter=='Beverages')?'filter-active':''; ?>">Beverages</a>
         </div>
     </div>
 
-    <?php if(empty($products)): ?>
-        <div class="card">
-            <p class="text-center text-muted">No products available.</p>
-        </div>
-    <?php else: ?>
+    <div class="product-grid">
 
-        <div class="product-grid">
+        <?php foreach($products as $id => $product): ?>
+        <div class="product-card">
 
-            <?php foreach($products as $id => $product): ?>
-            <div class="product-card">
+            <img src="../admin/<?php echo htmlspecialchars($product['image']); ?>">
 
-                <img src="../admin/<?php echo htmlspecialchars($product['image']); ?>">
+            <div class="product-card-body">
 
-                <div class="product-card-body">
+                <h3><?php echo htmlspecialchars($product['name']); ?></h3>
+                <p>₱<?php echo number_format($product['price'], 2); ?></p>
 
-                    <h3 class="product-card-title">
-                        <?php echo htmlspecialchars($product['name']); ?>
-                    </h3>
+                <!-- ADD TO CART -->
+                <form class="add-to-cart-form" method="POST">
+                    <input type="hidden" name="action" value="add_to_cart">
+                    <input type="hidden" name="product_id" value="<?php echo $id; ?>">
 
-                    <p class="product-card-price">
-                        ₱<?php echo number_format($product['price'], 2); ?>
-                    </p>
+                    <button type="submit" class="btn">
+                        <i class="fa-solid fa-cart-plus"></i> Add to Cart
+                    </button>
+                </form>
 
-                    <p class="product-card-desc">
-                        <?php echo htmlspecialchars($product['description']); ?>
-                    </p>
+                <!-- BUY NOW -->
+                <form action="process.php" method="POST">
+                    <input type="hidden" name="action" value="buy_now">
+                    <input type="hidden" name="product_id" value="<?php echo $id; ?>">
 
-                    <!-- AJAX FORM -->
-                    <form class="add-to-cart-form" method="POST">
-                        <input type="hidden" name="action" value="add_to_cart">
-                        <input type="hidden" name="product_id" value="<?php echo $id; ?>">
+                    <button type="submit" class="btn">
+                        Buy Now
+                    </button>
+                </form>
 
-                        <button type="submit" class="btn btn-secondary btn-sm btn-block">
-                            <i class="fa-solid fa-cart-plus"></i> Add to Cart
-                        </button>
-                    </form>
-
-                    <!-- BUY NOW -->
-                    <form action="process.php" method="POST">
-                        <input type="hidden" name="action" value="buy_now">
-                        <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-
-                        <button type="submit" class="btn btn-primary btn-sm btn-block">
-                            Buy Now
-                        </button>
-                    </form>
-
-                </div>
             </div>
-            <?php endforeach; ?>
-
         </div>
-    <?php endif; ?>
+        <?php endforeach; ?>
+
+    </div>
 </div>
 
-<!-- AJAX + TOAST -->
+<!-- TOAST STYLE -->
+<style>
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #c5a072;
+    color: #000;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-weight: 500;
+    z-index: 9999;
+    opacity: 0;
+    transition: 0.3s;
+}
+</style>
+
+<!-- SCRIPT -->
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+const allProducts = <?php echo json_encode($productNames); ?>;
+const input = document.querySelector('.navbar-search');
+const box = document.getElementById('suggestion-box');
 
-    document.querySelectorAll(".add-to-cart-form").forEach(form => {
-        form.addEventListener("submit", function (e) {
-            e.preventDefault();
+// SEARCH
+input.addEventListener('input', function () {
+    const val = this.value.trim().toLowerCase();
+    box.innerHTML = '';
 
-            const formData = new FormData(this);
-
-            fetch("process.php", {
-                method: "POST",
-                body: formData
-            })
-            .then(res => res.text())
-            .then(data => {
-                console.log(data);
-
-                if (data.trim() === "success") {
-                    showToast("🛒 Added to cart!");
-                } else {
-                    showToast("⚠️ Failed to add item");
-                }
-            })
-            .catch(() => {
-                showToast("❌ Server error");
-            });
-        });
-    });
-
-    function showToast(message) {
-        let toast = document.createElement("div");
-        toast.innerText = message;
-
-        toast.style.position = "fixed";
-        toast.style.bottom = "20px";
-        toast.style.right = "20px";
-        toast.style.background = "#80461B";
-        toast.style.color = "white";
-        toast.style.padding = "12px 18px";
-        toast.style.borderRadius = "8px";
-        toast.style.zIndex = "9999";
-        toast.style.opacity = "0";
-        toast.style.transition = "0.3s";
-
-        document.body.appendChild(toast);
-
-        setTimeout(() => toast.style.opacity = "1", 50);
-
-        setTimeout(() => {
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 300);
-        }, 2000);
+    if (val.length < 2) {
+        box.style.display = 'none';
+        return;
     }
 
+    const matches = allProducts.filter(p => p.toLowerCase().includes(val));
+
+    matches.forEach(m => {
+        const item = document.createElement('div');
+        item.innerText = m;
+        item.style.padding = "8px";
+        item.style.cursor = "pointer";
+        item.style.background = "white";
+        item.style.color = "black";
+
+        item.onclick = () => {
+            input.value = m;
+            input.form.submit();
+        };
+
+        box.appendChild(item);
+    });
+
+    box.style.display = matches.length ? 'block' : 'none';
 });
+
+// CLOSE DROPDOWN
+document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !box.contains(e.target)) {
+        box.style.display = 'none';
+    }
+});
+
+// AJAX ADD TO CART (REALTIME COUNT)
+document.querySelectorAll(".add-to-cart-form").forEach(form => {
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        fetch("process.php", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.text())
+        .then(data => {
+
+            if (data.trim() === "success") {
+
+                let cart = document.getElementById("cart-count");
+                if (cart) {
+                    cart.innerText = parseInt(cart.innerText || 0) + 1;
+                }
+
+                showToast("🛒 Added to cart!");
+
+            } else {
+                showToast("⚠️ Failed to add item");
+            }
+
+        })
+        .catch(() => {
+            showToast("❌ Server error");
+        });
+    });
+});
+
+// TOAST
+function showToast(msg) {
+    let t = document.createElement("div");
+    t.className = "toast";
+    t.innerText = msg;
+
+    document.body.appendChild(t);
+
+    setTimeout(() => t.style.opacity = "1", 50);
+
+    setTimeout(() => {
+        t.style.opacity = "0";
+        setTimeout(() => t.remove(), 300);
+    }, 2000);
+}
 </script>
 
 </body>

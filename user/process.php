@@ -180,7 +180,7 @@ switch($action) {
         exit;
 
 
-    // ================= BOOKING =================
+     // ================= BOOKING =================
     case 'booking':
 
         if (!isset($_SESSION['email'])) {
@@ -220,7 +220,6 @@ switch($action) {
             }
         }
 
-        // UPLOAD RECEIPT
         if ($payment_method === "gcash") {
 
             if (!empty($_FILES['gcash_receipt']['name'])) {
@@ -270,8 +269,72 @@ switch($action) {
         exit;
 
 
+    // ================= UPDATE PROFILE =================
+    case 'update_profile':
+
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: user_login.php");
+            exit;
+        }
+
+        $user_id = $_SESSION['user_id'];
+
+        $existing = json_decode($rdb->retrieve("/user/".$user_id), true) ?? [];
+
+        $name = $_POST['name'] ?? $existing['name'] ?? '';
+        $email = $_POST['email'] ?? $existing['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+
+        $profile_image = $existing['profile_image'] ?? null;
+
+        if (!empty($_FILES['profile_image']['name'])) {
+
+            $uploadDir = __DIR__ . "/../profile/";
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $fileName = time() . "_" . basename($_FILES["profile_image"]["name"]);
+            $targetFile = $uploadDir . $fileName;
+
+            $fileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+            $allowed = ['jpg','jpeg','png','webp'];
+
+            if (in_array($fileType, $allowed)) {
+
+                if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $targetFile)) {
+                    $profile_image = "../profile/" . $fileName;
+                } else {
+                    die("Image upload failed.");
+                }
+
+            } else {
+                die("Invalid image format.");
+            }
+        }
+
+        $update_data = [
+            'name' => $name,
+            'email' => $email,
+            'profile_image' => $profile_image
+        ];
+
+        if (!empty($password)) {
+            $update_data['password'] = password_hash($password, PASSWORD_DEFAULT);
+        }
+
+        $rdb->update("user", $user_id, $update_data); // ✅ CORRECT
+
+        $_SESSION['username'] = $name;
+
+        header("Location: your_profile.php?status=success");
+        exit;
+
+
+    // ================= DEFAULT =================
     default:
         header("Location: index.php");
         exit;
 }
+
 ?>

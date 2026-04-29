@@ -14,7 +14,7 @@ $email = $_SESSION['email'];
 
 $rdb = new firebaseRDB($databaseURL);
 
-// 🔥 GET RENT ITEMS FROM FIREBASE
+// GET RENT ITEMS
 $items_raw = $rdb->retrieve("/rent_items");
 $rent_items = json_decode($items_raw, true);
 
@@ -37,44 +37,39 @@ if(!is_array($rent_items)){
 
 <body class="booking-page-body">
 
-<!-- NAVBAR -->
-<nav class="navbar">
+<header class="navbar">
     <div class="navbar-brand-container">
-        <img src="../img/logo.png" alt="Logo" class="logo">
+        <img src="../img/logo.png" class="logo">
     </div>
+    <div class="navbar-right">
+        <ul class="navbar-menu">
+            <li><a href="index.php">Home</a></li>
+            <li><a href="products.php">Products</a></li>
+            <li><a href="booking.php" class="active">Booking</a></li>
+            <li><a href="cart.php">Cart</a></li>
+            <li><a href="your_orders.php">Orders</a></li>
+            <li><a href="aboutus.php">About</a></li>
+        </ul>
 
-    <ul class="navbar-menu">
-
-        <li><a href="index.php"><i class="fa-solid fa-house"></i> Home</a></li>
-        <li><a href="products.php"><i class="fa-solid fa-shop"></i> Products</a></li>
-        <li><a href="booking.php" class="active"><i class="fa-solid fa-calendar-check"></i> Booking</a></li>
-        <li><a href="cart.php"><i class="fa-solid fa-cart-shopping"></i> Cart</a></li>
-        <li><a href="your_orders.php"><i class="fa-solid fa-box-open"></i> Your Order</a></li>
-        <li><a href="aboutus.php"><i class="fa-solid fa-circle-info"></i> About Us</a></li>
-
-        <li class="navbar-dropdown">
-            <a href="#">
-                <i class="fa-solid fa-user"></i>
+        <div class="navbar-dropdown">
+            <span class="navbar-user-btn">
                 <?php echo htmlspecialchars($username); ?> ▼
-            </a>
-
+            </span>
             <div class="navbar-dropdown-content">
-                <a href="your_profile.php"><i class="fa-solid fa-id-card"></i> My Profile</a>
-                <a href="your_orders.php"><i class="fa-solid fa-box"></i> Your Orders</a>
-                <a href="../logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                <a href="your_profile.php">My Profile</a>
+                <a href="your_orders.php">Your Orders</a>
+                <a href="../logout.php">Logout</a>
             </div>
-        </li>
-
-    </ul>
-</nav>
+        </div>
+    </div>
+</header>
 
 <!-- MAIN -->
 <div class="booking-main-container">
-
 <div class="booking-card">
 
 <h1 class="page-title-centered">
-    <i class="fa-solid fa-file-signature"></i> Booking / Reservation
+    Booking &  Reservation
 </h1>
 
 <form action="process.php" method="POST" enctype="multipart/form-data" class="booking-form">
@@ -83,32 +78,32 @@ if(!is_array($rent_items)){
 
 <!-- NAME -->
 <div class="form-group">
-<label class="form-label"><i class="fa-solid fa-user"></i> Full Name</label>
+<label class="form-label">Full Name</label>
 <input type="text" name="full_name" class="form-input" required>
 </div>
 
 <!-- CONTACT -->
 <div class="form-group">
-<label class="form-label"><i class="fa-solid fa-phone"></i> Contact Number</label>
+<label class="form-label">Contact Number</label>
 <input type="text" name="contact_number" class="form-input" required>
 </div>
 
 <!-- ADDRESS -->
 <div class="form-group">
-<label class="form-label"><i class="fa-solid fa-location-dot"></i> Address</label>
+<label class="form-label">Address</label>
 <input type="text" name="address" class="form-input" required>
 </div>
 
 <!-- DATE -->
 <div class="form-group">
-<label class="form-label"><i class="fa-solid fa-clock"></i> Date & Time</label>
+<label class="form-label">Date & Time</label>
 <input type="datetime-local" name="appointment_time" class="form-input" required>
 </div>
 
-<!-- 🔥 RENT ITEMS -->
+<!-- RENT ITEMS -->
 <div class="booking-group">
 
-<h3><i class="fa-solid fa-box"></i> Rental Items</h3>
+<h3>Rental Items</h3>
 
 <?php if(empty($rent_items)): ?>
     <p>No rental items available.</p>
@@ -126,9 +121,7 @@ if(!is_array($rent_items)){
                     <img src="../admin/<?php echo htmlspecialchars($item['image']); ?>" 
                          style="width:60px;height:60px;object-fit:cover;border-radius:10px;">
                 <?php else: ?>
-                    <div style="width:60px;height:60px;background:#ddd;border-radius:10px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fa-solid fa-image"></i>
-                    </div>
+                    <div style="width:60px;height:60px;background:#ddd;border-radius:10px;"></div>
                 <?php endif; ?>
             </div>
 
@@ -159,16 +152,16 @@ if(!is_array($rent_items)){
 
 </div>
 
-<!-- 🔥 TOTAL -->
+<!-- TOTAL -->
 <div class="booking-group" style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:10px;">
-    <h3><i class="fa-solid fa-receipt"></i> Total</h3>
+    <h3>Total</h3>
     <h2>₱ <span id="totalDisplay">0.00</span></h2>
 </div>
 
 <!-- PAYMENT -->
 <div class="booking-group">
 
-<h3><i class="fa-solid fa-money-bill"></i> Payment Method</h3>
+<h3>Payment Method</h3>
 
 <label>
 <input type="radio" name="payment_method" value="counter" checked onclick="togglePayment('counter')">
@@ -177,28 +170,40 @@ Over the Counter
 
 <label>
 <input type="radio" name="payment_method" value="gcash" onclick="togglePayment('gcash')">
+<img src="../img/gcash.png" style="width:20px; vertical-align:middle; margin-right:5px;">
 GCash
 </label>
 
-<div id="gcashSection" style="display:none; margin-top:10px;">
+<div id="gcashSection">
 
-    <div style="text-align:center;">
-        <img src="../img/2.jpg" style="max-width:200px;">
+    <div class="gcash-container">
+
+        <!-- QR AREA -->
+        <div class="gcash-image">
+            <p class="gcash-scan">Scan Me to Pay</p>
+
+            <img src="../img/qr.png" id="gcashQR" alt="GCash QR">
+
+            <p class="gcash-number">0912 345 6789</p>
+
+            <button type="button" class="gcash-download" onclick="downloadQR()">
+                Download QR
+            </button>
+        </div>
+
+        <!-- INPUTS -->
+        <div class="gcash-fields">
+            <input type="text" name="gcash_number" class="form-input" placeholder="Enter GCash Number">
+            <input type="file" name="gcash_receipt" class="form-input" accept="image/*">
+        </div>
+
     </div>
-
-    <label>GCash Number</label>
-    <input type="text" name="gcash_number" class="form-input">
-
-    <label>Upload Receipt</label>
-    <input type="file" name="gcash_receipt" class="form-input" accept="image/*">
-
-</div>
 
 </div>
 
 <!-- SUBMIT -->
 <button type="submit" class="btn-booking-confirm">
-<i class="fa-solid fa-check"></i> Confirm Booking
+Confirm Booking
 </button>
 
 </form>
@@ -213,7 +218,7 @@ function togglePayment(type){
         (type === "gcash") ? "block" : "none";
 }
 
-// 🔥 LIVE TOTAL CALCULATION
+// LIVE TOTAL
 const prices = <?php echo json_encode(array_map(fn($i) => floatval($i['price'] ?? 0), $rent_items)); ?>;
 
 function updateTotal() {

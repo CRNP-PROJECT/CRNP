@@ -9,8 +9,6 @@ if (!isset($_SESSION['email'])) {
 }
 
 $username = $_SESSION['username'] ?? "User";
-
-/* 🔥 AUTO ACTIVE NAV */
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
@@ -32,133 +30,108 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <body class="about-page-body">
 
 <!-- NAVBAR -->
-<nav class="navbar">
+<header class="navbar">
     <div class="navbar-brand-container">
-        <img src="../img/logo.png" alt="Logo" class="logo">
+        <img src="../img/logo.png" class="logo">
     </div>
 
-    <ul class="navbar-menu">
+    <div class="navbar-right">
+        <ul class="navbar-menu">
+            <li><a href="index.php" class="<?= $current_page == 'index.php' ? 'active' : '' ?>">Home</a></li>
+            <li><a href="products.php" class="<?= $current_page == 'products.php' ? 'active' : '' ?>">Products</a></li>
+            <li><a href="booking.php" class="<?= $current_page == 'booking.php' ? 'active' : '' ?>">Booking</a></li>
+            <li><a href="cart.php" class="<?= $current_page == 'cart.php' ? 'active' : '' ?>">Cart</a></li>
+            <li><a href="your_orders.php" class="<?= $current_page == 'your_orders.php' ? 'active' : '' ?>">Orders</a></li>
+            <li><a href="aboutus.php" class="<?= $current_page == 'aboutus.php' ? 'active' : '' ?>">About</a></li>
+        </ul>
 
-        <li>
-            <a href="index.php" class="<?= $current_page == 'index.php' ? 'active' : '' ?>">
-                <i class="fa-solid fa-house"></i> Home
-            </a>
-        </li>
+        <div class="navbar-dropdown">
+            <span class="navbar-user-btn">
+                <i class="fa-regular fa-user"></i>
+                <?php echo htmlspecialchars($username); ?> ▼
+            </span>
 
-        <li>
-            <a href="products.php" class="<?= $current_page == 'products.php' ? 'active' : '' ?>">
-                <i class="fa-solid fa-shop"></i> Products
-            </a>
-        </li>
-
-        <li>
-            <a href="booking.php" class="<?= $current_page == 'booking.php' ? 'active' : '' ?>">
-                <i class="fa-solid fa-calendar-check"></i> Booking
-            </a>
-        </li>
-
-        <li>
-            <a href="cart.php" class="<?= $current_page == 'cart.php' ? 'active' : '' ?>">
-                <i class="fa-solid fa-cart-shopping"></i> Cart
-            </a>
-        </li>
-
-        <li>
-            <a href="aboutus.php" class="<?= $current_page == 'aboutus.php' ? 'active' : '' ?>">
-                <i class="fa-solid fa-circle-info"></i> About Us
-            </a>
-        </li>
-
-        <li>
-            <a href="../logout.php">
-                <i class="fa-solid fa-right-from-bracket"></i> Logout
-            </a>
-        </li>
-
-    </ul>
-</nav>
+            <div class="navbar-dropdown-content">
+                <a href="your_profile.php">My Profile</a>
+                <a href="your_orders.php">Your Orders</a>
+                <a href="../logout.php">Logout</a>
+            </div>
+        </div>
+    </div>
+</header>
 
 <!-- CONTENT -->
 <div class="about-container">
 
-    <div class="about-card main-reveal">
+    <div class="about-card">
 
-        <h1 class="about-header">
-            <span class="glitch-text">About Us</span>
-            <i class="fa-solid fa-dna floating-icon"></i>
-        </h1>
+        <!-- LEFT SIDE -->
+        <div class="about-left">
 
-        <p class="about-subtitle">
-            Your trusted partner for events and celebrations.
-        </p>
+            <h1 class="about-header">About Us</h1>
 
-        <!-- KPI -->
-        <div class="kpi-grid">
+            <p class="about-subtitle">
+                Your trusted partner for events and celebrations.
+            </p>
 
-            <div class="kpi-card" style="--delay: 1;">
-                <div class="kpi-icon"><i class="fa-solid fa-hourglass-start"></i></div>
-                <div class="kpi-value">10+</div>
-                <div class="kpi-label">Years Experience</div>
+            <!-- KPI -->
+            <div class="about-kpi-grid">
+
+                <div class="about-kpi-card">
+                    <div class="about-kpi-value">10+</div>
+                    <div class="about-kpi-label">Years Experience</div>
+                </div>
+
+                <div class="about-kpi-card">
+                    <div class="about-kpi-value">500+</div>
+                    <div class="about-kpi-label">Events Served</div>
+                </div>
+
+                <div class="about-kpi-card">
+                    <div class="about-kpi-value">100%</div>
+                    <div class="about-kpi-label">Satisfaction</div>
+                </div>
+
             </div>
 
-            <div class="kpi-card" style="--delay: 2;">
-                <div class="kpi-icon"><i class="fa-solid fa-clover"></i></div>
-                <div class="kpi-value">500+</div>
-                <div class="kpi-label">Events Served</div>
+            <!-- SECTION 1 -->
+            <div class="about-section">
+                <h2 class="about-section-title">Curated Essentials</h2>
+                <p>
+                    We provide quality rental equipment for your special occasions including tables,
+                    chairs, and skirting cloths. Our commitment is to make your events memorable and hassle-free.
+                </p>
             </div>
 
-            <div class="kpi-card" style="--delay: 3;">
-                <div class="kpi-icon"><i class="fa-solid fa-heart-pulse"></i></div>
-                <div class="kpi-value">100%</div>
-                <div class="kpi-label">Satisfaction</div>
+            <!-- SECTION 2 -->
+            <div class="about-section">
+                <h2 class="about-section-title">Let's Connect</h2>
+                <p>
+                    For inquiries and reservations, feel free to contact us anytime.
+                </p>
+            </div>
+
+            <!-- SECTION 3 -->
+            <div class="about-section">
+                <h2 class="about-section-title">Visit Our Location</h2>
+                <p>
+                    Mabolo, Iloilo City Proper, Iloilo City, Philippines.
+                </p>
             </div>
 
         </div>
 
-        <!-- SECTION 1 -->
-        <div class="about-content-section">
-            <h2 class="section-title">
-                <i class="fa-solid fa-star"></i> Curated Essentials
-            </h2>
+        <!-- RIGHT SIDE -->
+        <div class="about-right">
 
-            <p>
-                We provide quality rental equipment for your special occasions including tables,
-                chairs, and skirting cloths. Our commitment is to make your events memorable and hassle-free.
-            </p>
-        </div>
-
-        <!-- SECTION 2 -->
-        <div class="about-content-section">
-            <h2 class="section-title">
-                <i class="fa-solid fa-envelope-open-text"></i> Let's Connect
-            </h2>
-
-            <p>
-                For inquiries and reservations, please don't hesitate to reach out. We're here to help
-                you plan the perfect event.
-            </p>
-        </div>
-
-        <!-- SECTION 3 -->
-        <div class="about-content-section">
-            <h2 class="section-title">
-                <i class="fa-solid fa-map-location-dot"></i> Visit Our Location
-            </h2>
-
-            <p>
-                Mabolo, Iloilo City Proper, Iloilo City, Philippines.
-            </p>
-
-            <div class="map-wrapper">
+            <div class="about-map-wrapper">
                 <iframe 
                     src="https://www.google.com/maps?q=Crates%20N'%20Plates%20Diner%20Iloilo&output=embed"
-                    width="100%" 
-                    height="350" 
-                    style="border:0;" 
-                    allowfullscreen="" 
+                    allowfullscreen=""
                     loading="lazy">
                 </iframe>
             </div>
+
         </div>
 
     </div>

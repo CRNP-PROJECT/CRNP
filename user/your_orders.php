@@ -15,7 +15,7 @@ if(!$user_email){
 }
 
 /* ================= FILTER INPUTS ================= */
-$type_filter = $_GET['type'] ?? 'orders'; // orders | bookings
+$type_filter = $_GET['type'] ?? 'orders';
 $status_filter = $_GET['status'] ?? 'all';
 
 /* ================= FETCH DATA ================= */
@@ -24,7 +24,6 @@ $bookings = json_decode($rdb->retrieve("/bookings"), true) ?? [];
 
 /* ================= FILTER FUNCTION ================= */
 function filterData($data, $email, $status_filter){
-
     $result = [];
 
     foreach($data as $id => $item){
@@ -59,98 +58,108 @@ $data = ($type_filter === 'bookings') ? $user_bookings : $user_orders;
 <head>
 <meta charset="UTF-8">
 <title>Your Orders</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 <link rel="stylesheet" href="../styles.css">
 
-<style>
-.filter-bar{
-    margin:20px 0;
-}
-
-.filter-bar a{
-    padding:8px 12px;
-    margin-right:8px;
-    text-decoration:none;
-    border-radius:6px;
-    background:#eee;
-    color:#333;
-}
-
-.filter-bar a.active{
-    background:#333;
-    color:#fff;
-}
-</style>
 </head>
 
-<body>
+<body class="your-order-page-body">
 
-<!-- NAV -->
-<nav class="navbar">
+<!-- ✅ NAVBAR -->
+<header class="navbar">
     <div class="navbar-brand-container">
         <img src="../img/logo.png" class="logo">
     </div>
-</nav>
 
-<div class="your-orders-container">
+    <div class="navbar-right">
+        <ul class="navbar-menu">
+            <li><a href="index.php">Home</a></li>
+            <li><a href="products.php">Products</a></li>
+            <li><a href="booking.php">Booking</a></li>
+            <li><a href="cart.php">Cart</a></li>
+            <li><a href="your_orders.php" class="active">Orders</a></li>
+            <li><a href="aboutus.php">About</a></li>
+        </ul>
 
-<h1>Your <?= ucfirst($type_filter) ?></h1>
+        <div class="navbar-dropdown">
+            <span class="navbar-user-btn">
+                <?php echo htmlspecialchars($username); ?> ▼
+            </span>
 
-<!-- TYPE FILTER -->
-<div class="filter-bar">
-    <a href="?type=orders&status=all" class="<?= ($type_filter=='orders')?'active':'' ?>">Orders</a>
-    <a href="?type=bookings&status=all" class="<?= ($type_filter=='bookings')?'active':'' ?>">Bookings</a>
-</div>
+            <div class="navbar-dropdown-content">
+                <a href="your_profile.php">My Profile</a>
+                <a href="your_orders.php">Your Orders</a>
+                <a href="../logout.php">Logout</a>
+            </div>
+        </div>
+    </div>
+</header>
 
-<!-- STATUS FILTER -->
-<div class="filter-bar">
-    <a href="?type=<?= $type_filter ?>&status=all">All</a>
-    <a href="?type=<?= $type_filter ?>&status=pending">Pending</a>
-    <a href="?type=<?= $type_filter ?>&status=accepted">Accepted</a>
-    <a href="?type=<?= $type_filter ?>&status=rejected">Rejected</a>
-    <a href="?type=<?= $type_filter ?>&status=done">Done</a>
-</div>
+<!-- ✅ MAIN CONTAINER -->
+<div class="your-order-container">
 
-<!-- LIST -->
-<div class="your-orders-grid">
+    <!-- TITLE -->
+    <h1 class="your-order-title">
+        Your <?= ucfirst($type_filter) ?>
+    </h1>
 
-<?php if(empty($data)): ?>
-    <p>No records found.</p>
-<?php endif; ?>
-
-<?php foreach($data as $id => $item): ?>
-
-<?php $status = strtolower($item['status'] ?? 'pending'); ?>
-
-<div class="your-orders-card">
-
-    <div class="your-orders-header">
-        <strong><?= htmlspecialchars($item['full_name'] ?? 'User') ?></strong>
-
-        <span class="your-orders-badge your-orders-<?= $status ?>">
-            <?= strtoupper($status) ?>
-        </span>
+    <!-- TYPE FILTER -->
+    <div class="your-order-filter-bar">
+        <a href="?type=orders&status=all" class="<?= ($type_filter=='orders')?'active':'' ?>">Orders</a>
+        <a href="?type=bookings&status=all" class="<?= ($type_filter=='bookings')?'active':'' ?>">Bookings</a>
     </div>
 
-    <p>₱<?= number_format($item['total'] ?? 0, 2) ?></p>
+    <!-- STATUS FILTER -->
+    <div class="your-order-filter-bar">
+        <a href="?type=<?= $type_filter ?>&status=all" class="<?= ($status_filter=='all')?'active':'' ?>">All</a>
+        <a href="?type=<?= $type_filter ?>&status=pending" class="<?= ($status_filter=='pending')?'active':'' ?>">Pending</a>
+        <a href="?type=<?= $type_filter ?>&status=accepted" class="<?= ($status_filter=='accepted')?'active':'' ?>">Accepted</a>
+        <a href="?type=<?= $type_filter ?>&status=rejected" class="<?= ($status_filter=='rejected')?'active':'' ?>">Rejected</a>
+        <a href="?type=<?= $type_filter ?>&status=done" class="<?= ($status_filter=='done')?'active':'' ?>">Done</a>
+    </div>
 
-    <?php
-    $products = $item['products'] ?? $item['items'] ?? [];
-    ?>
+    <!-- GRID -->
+    <div class="your-order-grid">
 
-    <?php if(!empty($products)): ?>
-        <ul>
-            <?php foreach($products as $p): ?>
-                <li><?= htmlspecialchars($p['name'] ?? '') ?> x <?= intval($p['qty'] ?? 1) ?></li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
+        <?php if(empty($data)): ?>
+            <p class="your-order-empty">No records found.</p>
+        <?php endif; ?>
 
-</div>
+        <?php foreach($data as $id => $item): ?>
+        <?php $status = strtolower($item['status'] ?? 'pending'); ?>
 
-<?php endforeach; ?>
+        <div class="your-order-card">
 
-</div>
+            <div class="your-order-header">
+                <strong><?= htmlspecialchars($item['full_name'] ?? 'User') ?></strong>
+
+                <span class="your-order-badge your-order-<?= $status ?>">
+                    <?= strtoupper($status) ?>
+                </span>
+            </div>
+
+            <div class="your-order-total">
+                ₱<?= number_format($item['total'] ?? 0, 2) ?>
+            </div>
+
+            <?php $products = $item['products'] ?? $item['items'] ?? []; ?>
+
+            <?php if(!empty($products)): ?>
+                <ul class="your-order-list">
+                    <?php foreach($products as $p): ?>
+                        <li>
+                            <?= htmlspecialchars($p['name'] ?? '') ?>
+                            <span>x<?= intval($p['qty'] ?? 1) ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+
+        </div>
+
+        <?php endforeach; ?>
+
+    </div>
 
 </div>
 

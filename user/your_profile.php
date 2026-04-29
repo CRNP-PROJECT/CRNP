@@ -33,84 +33,107 @@ $email = $user['email'] ?? '';
 
 <body class="your_profile">
 
-<!-- NAVBAR -->
-<nav class="navbar">
+<!-- ✅ NAVBAR -->
+<header class="navbar">
     <div class="navbar-brand-container">
-        <img src="../img/logo.png" alt="Logo" class="logo">
-        <a href="index.php" class="navbar-brand"></a>
+        <img src="../img/logo.png" class="logo">
     </div>
 
-    <ul class="navbar-menu">
-        <li><a href="index.php"><i class="fa-solid fa-house"></i> Home</a></li>
-        <li><a href="products.php"><i class="fa-solid fa-shop"></i> Products</a></li>
-        <li><a href="booking.php"><i class="fa-solid fa-calendar-check"></i> Booking</a></li>
-        <li><a href="cart.php"><i class="fa-solid fa-cart-shopping"></i> Cart</a></li>
-        <li><a href="your_orders.php"><i class="fa-solid fa-box-open"></i> Orders</a></li>
-        <li><a href="aboutus.php"><i class="fa-solid fa-circle-info"></i> About</a></li>
+    <div class="navbar-right">
+        <ul class="navbar-menu">
+            <li><a href="index.php">Home</a></li>
+            <li><a href="products.php">Products</a></li>
+            <li><a href="booking.php">Booking</a></li>
+            <li><a href="cart.php">Cart</a></li>
+            <li><a href="aboutus.php">About</a></li>
+        </ul>
 
-        <li class="navbar-dropdown">
-            <a href="#">
-                <i class="fa-solid fa-user"></i>
-                <?= htmlspecialchars($username) ?> ▼
-            </a>
+        <form action="products.php" method="GET" class="search-box" style="position: relative;">
+            <button type="submit" style="background:none; border:none; cursor:pointer; color:inherit;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            <input type="text" name="search" placeholder="Search..." class="navbar-search">
+            <div id="suggestion-box"></div>
+        </form>
+
+        <div class="navbar-dropdown">
+            <span class="navbar-user-btn">
+                <i class="fa-regular fa-user"></i>
+                <?= htmlspecialchars($username) ?>
+            </span>
 
             <div class="navbar-dropdown-content">
-                <a href="your_profile.php" class="active">My Profile</a>
-                <a href="your_orders.php">Your Orders</a>
+                <a href="your_profile.php">My Profile</a>
+                <a href="your_orders.php">Orders</a>
                 <a href="../logout.php">Logout</a>
             </div>
-        </li>
-    </ul>
-</nav>
-
-<!-- PROFILE -->
-<div class="profile-wrapper">
-
-    <div class="profile-card">
-
-        <div class="profile-header">
-            <div class="profile-avatar">
-                <i class="fa-solid fa-user"></i>
-            </div>
-
-            <h2><?= htmlspecialchars($username) ?></h2>
-            <p class="profile-sub">Manage your account information</p>
         </div>
+    </div>
+</header>
 
-        <!-- STATUS MESSAGE -->
-        <?php if (isset($_GET['status'])): ?>
-            <div class="profile-message <?= $_GET['status'] == 'success' ? 'success' : 'error' ?>">
-                <?= $_GET['status'] == 'success' ? 'Profile updated successfully!' : 'Update failed. Try again.' ?>
-            </div>
-        <?php endif; ?>
+<!-- ✅ PROFILE -->
+<div class="your_profile-wrapper">
 
-        <!-- FORM -->
-        <form action="process.php" method="POST">
+    <div class="your_profile-card">
+
+        <form action="process.php" method="POST" enctype="multipart/form-data">
 
             <input type="hidden" name="action" value="update_profile">
 
-            <div class="input-group">
-                <i class="fa-solid fa-user"></i>
+            <!-- HEADER -->
+            <div class="your_profile-header">
+
+                <div class="your_profile-avatar">
+
+                    <!-- PROFILE IMAGE -->
+                    <?php if (!empty($user['profile_image'])): ?>
+                        <img id="previewImage"
+                             src="<?= htmlspecialchars($user['profile_image']) ?>"
+                             alt="Profile">
+                    <?php else: ?>
+                        <div class="your_profile-avatar-icon" id="avatarIcon">
+                            <?= strtoupper(substr($username, 0, 1)) ?>
+                        </div>
+                        <img id="previewImage" style="display:none;">
+                    <?php endif; ?>
+
+                    <!-- UPLOAD BUTTON -->
+                    <label class="your_profile-upload">
+                        <i class="fa-solid fa-camera"></i>
+                        <input type="file" name="profile_image" id="imageInput" hidden>
+                    </label>
+
+                </div>
+
+                <h2><?= htmlspecialchars($username) ?></h2>
+                <p class="your_profile-sub"><?= htmlspecialchars($email) ?></p>
+
+            </div>
+
+            <!-- DIVIDER -->
+            <hr class="your_profile-divider">
+
+            <!-- FORM -->
+            <div class="your_profile-group">
+                <label>Name</label>
                 <input type="text" name="name"
-                    value="<?= htmlspecialchars($user['name'] ?? '') ?>"
-                    placeholder="Full Name" required>
+                    value="<?= htmlspecialchars($user['name'] ?? '') ?>">
             </div>
 
-            <div class="input-group">
-                <i class="fa-solid fa-envelope"></i>
+            <div class="your_profile-group">
+                <label>Email Address</label>
                 <input type="email" name="email"
-                    value="<?= htmlspecialchars($email) ?>"
-                    placeholder="Email Address" required>
+                    value="<?= htmlspecialchars($email) ?>">
             </div>
 
-            <div class="input-group">
-                <i class="fa-solid fa-lock"></i>
+            <div class="your_profile-group">
+                <label>Password</label>
                 <input type="password" name="password"
-                    placeholder="New Password (optional)">
+                    placeholder="••••••••">
             </div>
 
-            <button type="submit">
-                <i class="fa-solid fa-pen-to-square"></i> Update Profile
+            <button type="submit" class="your_profile-save">
+                <i class="fa-solid fa-floppy-disk"></i> Save Changes
             </button>
 
         </form>
@@ -118,6 +141,24 @@ $email = $user['email'] ?? '';
     </div>
 
 </div>
+
+<!-- ✅ IMAGE PREVIEW SCRIPT -->
+<script>
+const input = document.getElementById("imageInput");
+const preview = document.getElementById("previewImage");
+const icon = document.getElementById("avatarIcon");
+
+input.addEventListener("change", function(e) {
+    const file = e.target.files[0];
+
+    if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+
+        if (icon) icon.style.display = "none";
+    }
+});
+</script>
 
 </body>
 </html>
