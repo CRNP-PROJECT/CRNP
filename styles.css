@@ -2153,3 +2153,2043 @@ html {
         padding: 20px;
     }
 }
+
+/*Cashier login/signup*/
+
+.cashier-auth-body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    color: #fbe9e7;
+}
+
+/* BACKGROUND */
+.cashier-auth-body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url(img/log.png) center/cover no-repeat;
+    filter: blur(2px) brightness(0.45);
+    transform: scale(1.05);
+    z-index: -2;
+}
+
+.cashier-auth-body::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(25, 18, 12, 0.65);
+    z-index: -1;
+}
+
+/* LAYOUT */
+.cashier-auth-body .split-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* LEFT FORM */
+.cashier-auth-body .form-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeSlide 1s ease;
+}
+
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* CARD */
+.cashier-auth-body .auth-card {
+    width: 380px;
+    text-align: center;
+}
+
+/* TITLE */
+.cashier-auth-body .auth-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    color: whitesmoke;
+    font-weight: 800;
+}
+
+/* SUBTITLE */
+.cashier-auth-body .auth-subtitle {
+    font-size: 25px;
+    font-family: 'Playfair Display', serif;
+    color: #d7ccc8;
+    margin-bottom: 25px;
+}
+
+/* FORM */
+.cashier-auth-body .form-group {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.cashier-auth-body .form-label {
+    font-size: 12px;
+    color: whitesmoke;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.cashier-auth-body .form-input {
+    width: 90%;
+    padding: 14px;
+    border-radius: 15px;
+    border: 1px solid #8d6e63;
+    background: transparent;
+    color: #ffffff !important;   /* typed text */
+    caret-color: #ffcc80; 
+    transition: 0.3s;
+}
+
+.cashier-auth-body .form-input:focus {
+    border-color: #ffcc80;
+    box-shadow: 0 0 10px rgba(255,204,128,0.3);
+    outline: none;
+}
+
+/* BUTTON */
+.cashier-auth-body .btn-auth {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border-radius: 15px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    background: linear-gradient(135deg, #8b5e34, #563719);
+    color: #fff;
+    transition: 0.3s;
+}
+
+.cashier-auth-body .btn-auth:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(200,155,109,0.3);
+}
+
+/* FOOTER */
+.cashier-auth-body .auth-footer {
+    margin-top: 20px;
+    font-size: 15px;
+}
+
+.cashier-auth-body .auth-footer a {
+    color: #ffcc80;
+}
+
+/* RIGHT VISUAL */
+.cashier-auth-body .visual-side {
+    flex: 1;
+    position: relative;
+}
+
+/* FLOATING EFFECT */
+.cashier-auth-body .visual-side::before {
+    content: "";
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: #5d4037;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: float 4s ease-in-out infinite;
+}
+
+.cashier-auth-body .visual-side::after {
+    content: "💰";
+    font-size: 110px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%,100% { transform: translate(-50%, -50%); }
+    50% { transform: translate(-50%, -60%); }
+}
+
+
+/* =========================
+   CASHIER DASHBOARD (FINAL CLEAN UI)
+========================= */
+
+.cashier-dashboard {
+    font-family: 'Segoe UI', sans-serif;
+
+    background: 
+        linear-gradient(rgba(15,8,4,0.85), rgba(15,8,4,0.9)),
+        url('img/log.png') center/cover no-repeat;
+
+    color: #f5f5f5;
+    min-height: 100vh;
+}
+
+/* =========================
+   WRAPPER
+========================= */
+.cashier-dashboard .cashier-dashboard-wrapper {
+    padding: 40px;
+    max-width: 1350px;
+    margin: auto;
+}
+
+/* =========================
+   HEADER (FIXED)
+========================= */
+.cashier-dashboard .cashier-dashboard-header {
+    margin-top: 80px; /* FIX NAV OVERLAP */
+    margin-bottom: 30px;
+
+    padding: 40px 20px;
+
+    text-align: center;
+
+    background: rgba(255,255,255,0.05);
+    border-radius: 18px;
+
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* TITLE */
+.cashier-dashboard .cashier-dashboard-welcome-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 52px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: whitesmoke;/* softer gold */
+}
+
+/* SUBTITLE */
+.cashier-dashboard .cashier-dashboard-welcome-sub {
+    margin-top: 10px;
+    color: rgba(255, 255, 255, 0.985);
+    font-size: 14px;
+}
+
+/* =========================
+   LAYOUT
+========================= */
+.cashier-dashboard .cashier-dashboard-main-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 300px;
+    gap: 25px;
+}
+
+/* =========================
+   COLUMN
+========================= */
+.cashier-dashboard .cashier-dashboard-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* =========================
+   LABEL
+========================= */
+.cashier-dashboard .cashier-dashboard-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgb(255, 255, 255);
+}
+
+/* =========================
+   BUTTONS (CLEAN + SOFT)
+========================= */
+.cashier-dashboard .cashier-dashboard-btn-large {
+    display: block;
+    padding: 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #fff;
+    font-weight: 600;
+
+    transition: 0.25s;
+}
+
+/* GREEN */
+.cashier-dashboard .cashier-dashboard-green {
+    background: linear-gradient(45deg, #2e7d32, #43a047);
+}
+
+/* BLUE */
+.cashier-dashboard .cashier-dashboard-blue {
+    background: linear-gradient(45deg, #1565c0, #42a5f5);
+}
+
+.cashier-dashboard .cashier-dashboard-btn-large:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+}
+
+/* =========================
+   CARDS (REAL GLASS)
+========================= */
+.cashier-dashboard .cashier-dashboard-card-plain,
+.cashier-dashboard .cashier-dashboard-card-table {
+
+    margin-top: 10px; /* ✅ ADDED SPACE BETWEEN ITEMS */
+
+    background: rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 20px;
+
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* =========================
+   STATS
+========================= */
+.cashier-dashboard .cashier-dashboard-stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.cashier-dashboard .cashier-dashboard-stat-row:last-child {
+    border-bottom: none;
+}
+
+.cashier-dashboard .cashier-dashboard-stat-val {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* =========================
+   TABLE
+========================= */
+.cashier-dashboard .cashier-dashboard-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* TABLE HEADER */
+.cashier-dashboard .cashier-dashboard-data-table th {
+    background: rgba(255,255,255,0.08);
+    padding: 12px;
+    font-size: 13px;
+    color: #ddd;
+    text-align: left;
+}
+
+/* TABLE DATA */
+.cashier-dashboard .cashier-dashboard-data-table td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: #ddd;
+}
+
+/* HOVER */
+.cashier-dashboard .cashier-dashboard-data-table tr:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+/* =========================
+   TAB (FIXED LOOK)
+========================= */
+.cashier-dashboard .cashier-dashboard-tab-container {
+    margin-bottom: 10px;
+}
+
+.cashier-dashboard .cashier-dashboard-tab {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    border: none;
+
+    font-weight: 600;
+}
+
+.cashier-dashboard .cashier-dashboard-tab.active {
+    background: #8d6e63;
+}
+
+/* =========================
+   RIGHT PANEL FIX
+========================= */
+.cashier-dashboard .cashier-dashboard-column:last-child 
+.cashier-dashboard .cashier-dashboard-card-table {
+    margin-top: 10px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1024px) {
+    .cashier-dashboard .cashier-dashboard-main-layout {
+        grid-template-columns: 1fr;
+    }
+}
+/* =========================
+   BASE / BACKGROUND
+========================= */
+.cashier-order {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background:
+        linear-gradient(rgba(15,8,4,0.85), rgba(15,8,4,0.9)),
+        url('img/log.png') center/cover no-repeat;
+    color: #fff;
+    min-height: 100vh;
+}
+
+/* =========================
+   HEADER (NO CARD ANYMORE)
+========================= */
+.cashier-order-header {
+    text-align: center;
+    margin-top: 130px;
+}
+
+.cashier-order-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 52px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: white;
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.cashier-order-header p {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: #cfcfcf;
+    text-align: center;
+}
+
+/* =========================
+   TABLE CONTAINER (GLASS)
+========================= */
+.cashier-order-container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 40px auto;
+
+    padding: 20px;
+    border-radius: 20px;
+
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(12px);
+
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+/* =========================
+   TABLE
+========================= */
+.cashier-order-container .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+}
+
+/* HEADER (DARK BAR) */
+.cashier-order-container .orders-table th {
+    background: rgba(255,255,255,0.08);
+    color: #e0e0e0;
+
+    padding: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+}
+
+/* BODY */
+.cashier-order-container .orders-table td {
+    padding: 18px;
+    font-size: 14px;
+    color: #ddd;
+}
+
+/* REMOVE HARD LINES */
+.cashier-order-container .orders-table td,
+.cashier-order-container .orders-table th {
+    border: none;
+}
+
+/* ROW HOVER */
+.cashier-order-container .orders-table tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+/* =========================
+   EMPTY STATE (CENTERED)
+========================= */
+.cashier-order-container .empty {
+    text-align: center;
+    padding: 40px;
+    font-size: 18px;
+    color: #cfcfcf;
+}
+
+/* =========================
+   TYPE BADGE
+========================= */
+.cashier-order-container span.walkin,
+.cashier-order-container span.online {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.cashier-order-container span.walkin {
+    background: linear-gradient(45deg, #2e7d32, #66bb6a);
+}
+
+.cashier-order-container span.online {
+    background: linear-gradient(45deg, #1565c0, #64b5f6);
+}
+
+/* =========================
+   STATUS BADGE
+========================= */
+.cashier-order-container .badge.pending {
+    background: linear-gradient(45deg, #ef6c00, #ffb74d);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.cashier-order-container .btn {
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #fff;
+    margin-right: 4px;
+
+    transition: 0.2s ease;
+}
+
+.cashier-order-container .btn.accept {
+    background: #43a047;
+}
+
+.cashier-order-container .btn.reject {
+    background: #e53935;
+}
+
+.cashier-order-container .btn.view {
+    background: #1e88e5;
+    text-decoration: none;
+}
+
+.cashier-order-container .btn:hover {
+    transform: scale(1.1);
+    opacity: 0.9;
+}
+
+/* =========================
+   INLINE FORM
+========================= */
+.cashier-order-container .inline {
+    display: inline-block;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+
+    .cashier-order-header h1 {
+        font-size: 26px;
+    }
+
+    .cashier-order-container {
+        padding: 15px;
+    }
+
+    .cashier-order-container .orders-table th,
+    .cashier-order-container .orders-table td {
+        padding: 12px;
+        font-size: 12px;
+    }
+}
+
+
+/* BOOKING PAYMENT*/
+
+body.cashier-booking-payment.booking-payment {
+
+    font-family: 'Segoe UI', sans-serif;
+
+    background:
+        linear-gradient(rgba(10,5,2,0.85), rgba(10,5,2,0.95)),
+        url('img/log.png') center/cover no-repeat;
+
+    background-attachment: fixed;
+    color: #fff;
+}
+
+
+/* =========================
+   HEADER (MATCH STYLE)
+========================= */
+.cashier-booking-payment .booking-payment-header {
+    text-align: center;
+    margin-top: 120px;
+    margin-bottom: 40px;
+}
+
+.cashier-booking-payment .booking-payment-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 45px; /* BIG like your screenshot */
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: whitesmoke;
+
+    margin-bottom: 10px;
+}
+
+.cashier-booking-payment .booking-payment-header p {
+    font-size: 18px;
+    color: #d6d6d6;
+    letter-spacing: 1px;
+}
+
+
+/* =========================
+   GRID
+========================= */
+.cashier-booking-payment .booking-payment-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 22px;
+
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+
+/* =========================
+   CARD (MATCH GLASS STYLE)
+========================= */
+.cashier-booking-payment .booking-payment-card {
+    background: rgba(255,255,255,0.05);
+
+    border-radius: 18px;
+    padding: 20px;
+
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+
+    transition: 0.3s;
+}
+
+.cashier-booking-payment .booking-payment-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+
+/* =========================
+   TOP
+========================= */
+.cashier-booking-payment .booking-payment-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cashier-booking-payment .booking-payment-top h3 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+
+/* =========================
+   BADGES
+========================= */
+.cashier-booking-payment .booking-payment-badge {
+    font-size: 10px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* green */
+.cashier-booking-payment .booking-payment-badge.accepted {
+    background: #43a047;
+}
+
+/* orange */
+.cashier-booking-payment .booking-payment-badge.pending {
+    background: #fb8c00;
+}
+
+/* blue */
+.cashier-booking-payment .booking-payment-badge.paid {
+    background: #1e88e5;
+}
+
+/* red */
+.cashier-booking-payment .booking-payment-badge.notpaid {
+    background: #e53935;
+}
+
+
+/* =========================
+   INFO
+========================= */
+.cashier-booking-payment .booking-payment-info {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #e0e0e0;
+}
+
+
+/* =========================
+   STATUS LINE
+========================= */
+.cashier-booking-payment .booking-payment-status {
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+
+/* =========================
+   RECEIPT
+========================= */
+.cashier-booking-payment .booking-payment-receipt {
+    margin-top: 12px;
+}
+
+.cashier-booking-payment .booking-payment-receipt img {
+    width: 100px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+
+/* =========================
+   ITEMS
+========================= */
+.cashier-booking-payment .booking-payment-items {
+    margin-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 10px;
+}
+
+.cashier-booking-payment .booking-payment-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #ddd;
+}
+
+.cashier-booking-payment .booking-payment-total {
+    margin-top: 8px;
+    font-weight: bold;
+    color: #e6c08b;
+}
+
+
+/* =========================
+   BUTTON
+========================= */
+.cashier-booking-payment .booking-payment-btn {
+    margin-top: 12px;
+    padding: 7px 14px;
+
+    border-radius: 6px;
+    border: none;
+
+    font-size: 12px;
+    cursor: pointer;
+
+    background: #43a047;
+    color: #fff;
+
+    transition: 0.2s;
+}
+
+.cashier-booking-payment .booking-payment-btn:hover {
+    background: #66bb6a;
+}
+
+
+/* =========================
+   COMPLETED
+========================= */
+.cashier-booking-payment .booking-payment-done {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #66bb6a;
+    font-weight: bold;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+
+    .cashier-booking-payment .booking-payment-header h1 {
+        font-size: 40px;
+    }
+
+    .cashier-booking-payment .booking-payment-container {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
+/*BOOKING HISTORY*/
+
+/* =========================
+   BACKGROUND (MATCH DASHBOARD)
+========================= */
+body.cashier-history-booking {
+    font-family: 'Segoe UI', sans-serif;
+
+    background:
+        linear-gradient(rgba(20,10,5,0.75), rgba(20,10,5,0.85)),
+        url('img/log.png') center/cover no-repeat;
+
+    min-height: 100vh;
+    margin: 0;
+    color: #fff;
+}
+
+/* =========================
+   HEADER
+========================= */
+.cashier-history-booking .cashier-history-booking-header {
+    text-align: center;
+    margin-top: 110px;
+    margin-bottom: 30px;
+}
+
+.cashier-history-booking .cashier-history-booking-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #e6c08b;
+    margin-bottom: 10px;
+}
+
+.cashier-history-booking .cashier-history-booking-header p {
+    font-size: 14px;
+    color: #d7ccc8;
+}
+
+/* =========================
+   FILTER TABS
+========================= */
+.cashier-history-booking .cashier-history-booking-tabs {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.cashier-history-booking .cashier-history-booking-tabs a {
+    display: inline-block;
+    margin: 0 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 13px;
+
+    background: rgba(255,255,255,0.08);
+    color: #ddd;
+
+    transition: 0.3s;
+}
+
+.cashier-history-booking .cashier-history-booking-tabs a:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.cashier-history-booking .cashier-history-booking-tabs a.active {
+    background: linear-gradient(45deg, #e6c08b, #c89b5e);
+    color: #000;
+    font-weight: bold;
+}
+
+/* =========================
+   GRID CONTAINER
+========================= */
+.cashier-history-booking .cashier-history-booking-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* =========================
+   CARD (GLASS STYLE)
+========================= */
+.cashier-history-booking .cashier-history-booking-card {
+    background: rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 18px;
+
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+
+    transition: 0.3s;
+}
+
+.cashier-history-booking .cashier-history-booking-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.45);
+}
+
+/* =========================
+   TOP SECTION
+========================= */
+.cashier-history-booking .cashier-history-booking-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cashier-history-booking .cashier-history-booking-top h3 {
+    font-size: 18px;
+    color: #fff;
+    margin: 0;
+}
+
+/* =========================
+   BADGES
+========================= */
+.cashier-history-booking .cashier-history-booking-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.cashier-history-booking .cashier-history-booking-badge.accepted {
+    background: linear-gradient(45deg, #2e7d32, #66bb6a);
+}
+
+.cashier-history-booking .cashier-history-booking-badge.rejected {
+    background: linear-gradient(45deg, #c62828, #ef5350);
+}
+
+/* =========================
+   INFO
+========================= */
+.cashier-history-booking .cashier-history-booking-info {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #e0e0e0;
+}
+
+.cashier-history-booking .cashier-history-booking-info p {
+    margin: 4px 0;
+}
+
+/* =========================
+   ITEMS
+========================= */
+.cashier-history-booking .cashier-history-booking-items {
+    margin-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 8px;
+}
+
+.cashier-history-booking .cashier-history-booking-item {
+    font-size: 13px;
+    padding: 4px 0;
+    color: #ddd;
+}
+
+/* =========================
+   DATE
+========================= */
+.cashier-history-booking .cashier-history-booking-date {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #bbb;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+.cashier-history-booking .cashier-history-booking-empty {
+    text-align: center;
+    padding: 40px;
+    border-radius: 12px;
+
+    background: rgba(255,255,255,0.08);
+    color: #ddd;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+
+    .cashier-history-booking .cashier-history-booking-header h1 {
+        font-size: 32px;
+    }
+
+    .cashier-history-booking .cashier-history-booking-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/*CASHIER ORDER HISTORY*/
+
+body.cashier-order-history {
+    font-family: 'Segoe UI', sans-serif;
+
+    background:
+        linear-gradient(rgba(20,15,10,0.85), rgba(20,15,10,0.95)),
+        url('img/log.png');
+
+    min-height: 100vh;
+    color: #fff;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+.cashier-order-history .history-header {
+    text-align: center;
+    margin-top: 100px;
+    margin-bottom: 30px;
+}
+
+.cashier-order-history .history-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 46px;
+    letter-spacing: 2px;
+    color: whitesmoke;
+    margin-bottom: 10px;
+}
+
+.cashier-order-history .history-header p {
+    color: #d7ccc8;
+    font-size: 18px;
+}
+
+
+/* =========================
+   CONTAINER GRID
+========================= */
+.cashier-order-history .history-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+
+/* =========================
+   CARD (GLASS DESIGN)
+========================= */
+.cashier-order-history .history-card {
+    background: rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 20px;
+
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    transition: 0.3s;
+}
+
+.cashier-order-history .history-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+}
+
+
+/* =========================
+   TOP SECTION
+========================= */
+.cashier-order-history .history-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cashier-order-history .history-top h3 {
+    font-size: 18px;
+    color: #fff;
+}
+
+
+/* =========================
+   ORDER TYPE TAG
+========================= */
+.cashier-order-history .type {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.cashier-order-history .type.walkin {
+    background: linear-gradient(45deg, #6d4c41, #bcaaa4);
+}
+
+.cashier-order-history .type.online {
+    background: linear-gradient(45deg, #1565c0, #64b5f6);
+}
+
+
+/* =========================
+   TEXT DETAILS
+========================= */
+.cashier-order-history .history-card p {
+    font-size: 14px;
+    color: #e0e0e0;
+    margin: 5px 0;
+}
+
+
+/* =========================
+   STATUS BADGES
+========================= */
+.cashier-order-history .status {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.cashier-order-history .status.accepted {
+    background: linear-gradient(45deg, #2e7d32, #66bb6a);
+}
+
+.cashier-order-history .status.rejected {
+    background: linear-gradient(45deg, #c62828, #ef5350);
+}
+
+.cashier-order-history .status.done {
+    background: linear-gradient(45deg, #1565c0, #64b5f6);
+}
+
+.cashier-order-history .status.pending {
+    background: linear-gradient(45deg, #ef6c00, #ffb74d);
+}
+
+.cashier-order-history .status.paid {
+    background: linear-gradient(45deg, #2e7d32, #66bb6a);
+}
+
+.cashier-order-history .status.notpaid {
+    background: linear-gradient(45deg, #c62828, #ef5350);
+}
+
+
+/* =========================
+   ITEMS LIST
+========================= */
+.cashier-order-history .items {
+    margin-top: 10px;
+    padding-top: 10px;
+
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.cashier-order-history .items ul {
+    margin-top: 5px;
+    padding-left: 18px;
+}
+
+.cashier-order-history .items li {
+    font-size: 13px;
+    color: #ddd;
+    margin-bottom: 3px;
+}
+
+
+/* =========================
+   DATE
+========================= */
+.cashier-order-history .date {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #b0bec5;
+
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+
+/* =========================
+   EMPTY STATE
+========================= */
+.cashier-order-history .history-empty {
+    text-align: center;
+    padding: 40px;
+
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+
+    color: #ccc;
+    font-size: 14px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+
+    .cashier-order-history .history-container {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+/*CASHIER CREATE ORDER*/
+
+/* =========================
+   BACKGROUND (MATCH DASHBOARD)
+========================= */
+body.create-order {
+    font-family: 'Segoe UI', sans-serif;
+
+    background:
+        linear-gradient(rgba(20,10,5,0.85), rgba(5,2,1,0.95)),
+        url('img/log.png') center/cover no-repeat;
+
+    color: #fff;
+}
+
+
+/* =========================
+   WRAPPER
+========================= */
+.create-order-wrapper {
+    max-width: 1200px;
+    margin: auto;
+    padding-top: 100px;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+.create-order-header {
+    text-align: center;
+}
+
+.create-order-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 50px;
+    color:#cfcfcf; 
+    letter-spacing: 2px;
+}
+
+.create-order-header p {
+    color: #cfcfcf;
+    font-size: 14px;
+}
+
+
+/* =========================
+   FILTER BUTTONS
+========================= */
+.create-order-filters {
+    text-align: center;
+    margin: 25px 0;
+}
+
+.create-order-filters a {
+    padding: 8px 18px;
+    margin: 5px;
+    border-radius: 25px;
+    background: rgba(255,255,255,0.08);
+    color: #ddd;
+    text-decoration: none;
+    font-size: 13px;
+    transition: 0.3s;
+}
+
+/* ACTIVE = GOLD */
+.create-order-filters a.active,
+.create-order-filters a:hover {
+    background: #e6c08b;
+    color: #000;
+}
+
+
+/* =========================
+   MAIN LAYOUT
+========================= */
+.create-order-layout {
+    display: grid;
+    grid-template-columns: 2.5fr 1fr;
+    gap: 25px;
+}
+
+
+/* =========================
+   PRODUCTS GRID
+========================= */
+.create-order-products {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+
+/* =========================
+   PRODUCT CARD (GLASS)
+========================= */
+.create-order-card {
+    background: rgba(255,255,255,0.06);
+    border-radius: 18px;
+    padding: 15px;
+    text-align: center;
+
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+
+    transition: 0.3s;
+}
+
+.create-order-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.6);
+}
+
+
+/* =========================
+   PRODUCT IMAGE (RED ACCENT ONLY HERE)
+========================= */
+.create-order-card img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+
+    border: 3px solid #e6c08b; /* softer red */
+    padding: 3px;
+    background: #fff;
+}
+
+
+/* =========================
+   INFO
+========================= */
+.create-order-info h4 {
+    margin-top: 10px;
+    font-size: 15px;
+    color: #fff;
+}
+
+.create-order-info p {
+    color: whitesmoke;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.create-order-info span {
+    font-size: 11px;
+    color: #aaa;
+}
+
+
+/* =========================
+   CART PANEL
+========================= */
+.create-order-cart {
+    background: rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 20px;
+
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.12);
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.create-order-cart h3 {
+    text-align: center;
+    font-size: 30px;
+    color: whitesmoke;
+    margin-bottom: 10px;
+}
+
+
+/* =========================
+   CART ITEMS
+========================= */
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: #eee;
+}
+
+.cart-right {
+    display: flex;
+    gap: 10px;
+}
+
+
+/* =========================
+   REMOVE BUTTON (RED ONLY HERE)
+========================= */
+.remove-btn {
+    background: transparent;
+    border: none;
+    color: #ff5252;
+    cursor: pointer;
+}
+
+
+/* =========================
+   TOTAL (GOLD NOT RED)
+========================= */
+.create-order-total {
+    margin-top: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    color: whitesmoke; /* FIXED: GOLD instead of red */
+}
+
+
+/* =========================
+   INPUTS
+========================= */
+.create-order-cart input {
+    width: 90%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+
+/* =========================
+   BUTTON (GOLD PRIMARY)
+========================= */
+.create-order-cart button {
+    width: 95%;
+    margin-top: 12px;
+    padding: 12px;
+
+    background: linear-gradient(45deg, #e6c08b, #d4a373);
+    border: none;
+    border-radius: 12px;
+
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.create-order-cart button:hover {
+    transform: scale(1.05);
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 900px) {
+
+    .create-order-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .create-order-products {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/*ORDER SUCCESS*/
+
+/* =========================
+   BACKGROUND (DASHBOARD STYLE)
+========================= */
+body.create-order-success {
+    font-family: 'Segoe UI', sans-serif;
+
+    background:
+        linear-gradient(rgba(20,10,5,0.9), rgba(5,2,1,0.95)),
+        url('img/log.png') center/cover no-repeat;
+
+    color: #fff;
+    margin: 0;
+}
+
+
+/* =========================
+   WRAPPER
+========================= */
+.create-order-success-wrapper {
+    max-width: 480px;   /* 🔥 smaller */
+    margin: 60px auto; 
+    padding-top: 90px;
+}
+
+
+/* =========================
+   CARD (RECEIPT BOX)
+========================= */
+.create-order-success-card {
+    background: rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 20px; /* 🔥 reduced */
+
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12);
+
+    box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+}
+
+/* =========================
+   TITLES
+========================= */
+.create-order-success-card h2 {
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    color: #e6c08b;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.create-order-success-card h3 {
+    text-align: center;
+    font-size: 14px;
+    color: #ccc;
+    margin-bottom: 15px;
+}
+
+
+/* =========================
+   INFO TEXT
+========================= */
+.create-order-success-card p {
+    font-size: 14px;
+    margin: 6px 0;
+}
+
+.create-order-success-card b {
+    color: #e6c08b;
+}
+
+
+/* =========================
+   DIVIDER
+========================= */
+.create-order-success-card hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    margin: 10px 0;
+}
+
+
+/* =========================
+   ITEMS
+========================= */
+.create-order-success-items {
+    margin-top: 10px;
+}
+
+.create-order-success-items p {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+   margin: 4px 0;
+}
+
+
+/* =========================
+   TOTAL
+========================= */
+.create-order-success-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #e6c08b;
+    margin-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 10px;
+}
+
+
+/* =========================
+   BUTTON
+========================= */
+.create-order-success-card button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 8px;
+
+    background: linear-gradient(45deg, #e6c08b, #d4a373);
+    border: none;
+    border-radius: 10px;
+
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+}
+
+.create-order-success-card button:hover {
+    transform: scale(1.05);
+}
+
+
+/* =========================
+   BACK LINK
+========================= */
+.create-order-success-card a {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    color: #e6c08b;
+    font-size: 13px;
+}
+
+.create-order-success-card a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================
+   PRINT STYLE
+========================= */
+@media print {
+
+    body.create-order-success {
+        background: #fff;
+        color: #000;
+    }
+
+    .create-order-success-card {
+        background: #fff;
+        color: #000;
+        box-shadow: none;
+        border: none;
+    }
+
+    .create-order-success-card button,
+    .create-order-success-card a {
+        display: none;
+    }
+}
+
+/*VIEW BOOKING*/
+
+/* =========================
+   BACKGROUND (DASHBOARD STYLE)
+========================= */
+body.view-booking {
+    font-family: 'Segoe UI', sans-serif;
+
+    background:
+        linear-gradient(rgba(25,15,10,0.85), rgba(10,5,2,0.95)),
+        url('img/log.png') center/cover no-repeat;
+
+    color: #fff;
+    padding-top: 90px;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+.view-booking-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.view-booking-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 3vw, 3rem);
+    color: #bbb;
+}
+
+.view-booking-header p {
+    color: #bbb;
+    font-size: 14px;
+}
+
+
+/* =========================
+   CONTAINER
+========================= */
+.view-booking-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+
+/* =========================
+   TABLE WRAPPER (GLASS)
+========================= */
+.view-booking-table-wrapper {
+    background: rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 20px;
+
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.15);
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+
+/* =========================
+   TABLE
+========================= */
+.view-booking-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.view-booking-table th {
+    background: rgba(255,255,255,0.1);
+    padding: 12px;
+    text-align: left;
+    color: #bbb;
+}
+
+.view-booking-table td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.view-booking-table tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+
+/* =========================
+   STATUS BADGE
+========================= */
+.view-booking-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.view-booking-badge.pending {
+    background: linear-gradient(45deg, #ef6c00, #ffb74d);
+}
+
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+.view-booking-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.view-booking-btn {
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #fff;
+    transition: 0.3s;
+}
+
+.view-booking-btn.accept {
+    background: linear-gradient(45deg, #2e7d32, #66bb6a);
+}
+
+.view-booking-btn.reject {
+    background: linear-gradient(45deg, #c62828, #ef5350);
+}
+
+.view-booking-btn:hover {
+    transform: scale(1.05);
+}
+
+
+/* =========================
+   EMPTY STATE
+========================= */
+.view-booking-empty {
+    text-align: center;
+    padding: 40px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 15px;
+    color: #ccc;
+}
+
+/*CASHIER PAYMENT STATUS*/
+/* =========================
+   BACKGROUND
+========================= */
+body.payment-status {
+    font-family: 'Segoe UI', sans-serif;
+
+    background:
+        linear-gradient(rgba(10,5,2,0.85), rgba(10,5,2,0.95)),
+        url('img/log.png') center/cover no-repeat;
+
+    background-attachment: fixed;
+    color: #fff;
+}
+
+
+/* =========================
+   HEADER (BIG LIKE IMAGE)
+========================= */
+.payment-status-header {
+    text-align: center;
+    margin-top: 120px;
+    margin-bottom: 40px;
+}
+
+.payment-status-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 45px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #f5f5f5;
+}
+
+.payment-status-header p {
+    color: #ccc;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+
+/* =========================
+   GRID CONTAINER
+========================= */
+.payment-status .container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 22px;
+
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+
+/* =========================
+   CARD (GLASS STYLE)
+========================= */
+.payment-status .card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 18px;
+    padding: 18px;
+
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    transition: 0.3s;
+}
+
+.payment-status .card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+
+/* =========================
+   TOP
+========================= */
+.payment-status-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payment-status-top h3 {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+
+/* =========================
+   INFO
+========================= */
+.payment-status-info {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #e0e0e0;
+}
+
+
+/* =========================
+   STATUS LINE
+========================= */
+.payment-status-line {
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+
+/* =========================
+   BADGES (MATCH BOOKING)
+========================= */
+.payment-status .status {
+    font-size: 10px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* accepted */
+.payment-status .status.accepted {
+    background: #43a047;
+}
+
+/* pending */
+.payment-status .status.pending {
+    background: #fb8c00;
+}
+
+/* paid */
+.payment-status .status.paid {
+    background: #1e88e5;
+}
+
+/* not paid */
+.payment-status .status.notpaid {
+    background: #e53935;
+}
+
+
+/* =========================
+   RECEIPT IMAGE
+========================= */
+.payment-status-receipt {
+    margin-top: 12px;
+}
+
+.payment-status-receipt img {
+    width: 110px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    transition: 0.3s;
+}
+
+.payment-status-receipt img:hover {
+    transform: scale(1.05);
+}
+
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+.payment-status-actions {
+    margin-top: 12px;
+}
+
+.payment-status .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+/* mark paid */
+.payment-status .paid-btn {
+    background: #43a047;
+    color: #fff;
+}
+
+.payment-status .paid-btn:hover {
+    background: #66bb6a;
+}
+
+/* not paid */
+.payment-status .reject-btn {
+    background: #e53935;
+    color: #fff;
+}
+
+.payment-status .reject-btn:hover {
+    background: #ef5350;
+}
+
+
+/* =========================
+   COMPLETED TEXT
+========================= */
+.payment-status-done {
+    font-size: 12px;
+    color: #66bb6a;
+    font-weight: bold;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+
+    .payment-status-header h2 {
+        font-size: 38px;
+    }
+
+    .payment-status .container {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+
+}

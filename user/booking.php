@@ -69,10 +69,10 @@ if(!is_array($rent_items)){
 <div class="booking-card">
 
 <h1 class="page-title-centered">
-    Booking &  Reservation
+    Booking & Reservation
 </h1>
 
-<form action="process.php" method="POST" enctype="multipart/form-data" class="booking-form">
+<form action="process.php" method="POST" enctype="multipart/form-data" class="booking-form" onsubmit="return validateBooking()">
 
 <input type="hidden" name="action" value="booking">
 
@@ -174,11 +174,10 @@ Over the Counter
 GCash
 </label>
 
-<div id="gcashSection">
+<div id="gcashSection" style="display:none;">
 
     <div class="gcash-container">
 
-        <!-- QR AREA -->
         <div class="gcash-image">
             <p class="gcash-scan">Scan Me to Pay</p>
 
@@ -191,7 +190,6 @@ GCash
             </button>
         </div>
 
-        <!-- INPUTS -->
         <div class="gcash-fields">
             <input type="text" name="gcash_number" class="form-input" placeholder="Enter GCash Number">
             <input type="file" name="gcash_receipt" class="form-input" accept="image/*">
@@ -201,7 +199,6 @@ GCash
 
 </div>
 
-<!-- SUBMIT -->
 <button type="submit" class="btn-booking-confirm">
 Confirm Booking
 </button>
@@ -213,19 +210,30 @@ Confirm Booking
 
 <!-- SCRIPT -->
 <script>
+
+// SHOW / HIDE GCASH
 function togglePayment(type){
     document.getElementById("gcashSection").style.display =
         (type === "gcash") ? "block" : "none";
 }
 
-// LIVE TOTAL
-const prices = <?php echo json_encode(array_map(fn($i) => floatval($i['price'] ?? 0), $rent_items)); ?>;
+// SAFE PRICE MAP
+const prices = <?php echo json_encode(
+    is_array($rent_items)
+    ? array_map(fn($i) => floatval($i['price'] ?? 0), $rent_items)
+    : []
+); ?>;
 
+// LIVE TOTAL
 function updateTotal() {
     let total = 0;
 
     document.querySelectorAll(".qty-input").forEach(input => {
-        let id = input.name.match(/\[(.*?)\]/)[1];
+
+        let match = input.name.match(/\[(.*?)\]/);
+        if(!match) return;
+
+        let id = match[1];
         let qty = parseInt(input.value) || 0;
 
         if (prices[id]) {
@@ -236,9 +244,30 @@ function updateTotal() {
     document.getElementById("totalDisplay").innerText = total.toFixed(2);
 }
 
+// VALIDATION (VERY IMPORTANT)
+function validateBooking(){
+
+    let hasItem = false;
+
+    document.querySelectorAll(".qty-input").forEach(input => {
+        if(parseInt(input.value) > 0){
+            hasItem = true;
+        }
+    });
+
+    if(!hasItem){
+        alert("Please select at least one item.");
+        return false;
+    }
+
+    return true;
+}
+
+// EVENTS
 document.querySelectorAll(".qty-input").forEach(input => {
     input.addEventListener("input", updateTotal);
 });
+
 </script>
 
 </body>

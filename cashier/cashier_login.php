@@ -13,7 +13,6 @@
 <div class="split-container">
 
     <div class="form-side">
-
         <div class="auth-card">
 
             <h1 class="auth-title">Cashier Login</h1>

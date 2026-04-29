@@ -50,8 +50,9 @@
 
     </div>
 
-    <div class="visual-side"></div>
-
+    <div class="visual-side">
+        
+    </div>
 </div>
 
 </body>

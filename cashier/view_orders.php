@@ -23,77 +23,43 @@ $orders = json_decode($orders_raw, true) ?? [];
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../styles.css">
 
 <title>Cashier Orders</title>
 </head>
 
-<body class="cashier-view-orders">
-    <nav class="navbar">
+<body class="cashier-order">
+
+<!-- ✅ CLEAN CASHIER NAVBAR (FIXED) -->
+<header class="navbar">
 
     <div class="navbar-brand-container">
         <img src="../img/logo.png" class="logo" alt="Logo">
     </div>
 
-    <ul class="navbar-menu">
+    <div class="navbar-right">
 
-        <li>
-            <a href="cashier_index.php">
-                <i class="fa-solid fa-chart-line"></i> Dashboard
-            </a>
-        </li>
-
-        <li>
-            <a href="booking_history.php"></i> booking history
-            </a>
-        </li>
-
-        <li>
-            <a href="view_orders.php">
-                <i class="fa-solid fa-receipt"></i> Orders
-            </a>
-        </li>
-
-        <li>
-            <a href="booking_payment.php" class="active">
-                <i class="fa-solid fa-calendar-days"></i> Booking status
-            </a>
-        </li>
-
-        <li>
-            <a href="cashier_logout.php">
-                <i class="fa-solid fa-right-from-bracket"></i> Logout
-            </a>
-        </li>
-
-    </ul>
-</nav>
-
-<!-- NAVBAR -->
-<nav class="navbar">
-
-    <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo" alt="Logo">
+        <ul class="navbar-menu">
+            <li><a href="cashier_index.php">Dashboard</a></li>
+            <li><a href="create_order.php">Create Orders</a></li>
+            <li><a href="view_orders.php" class="active">Orders</a></li>
+            <li><a href="view_bookings.php">Bookings</a></li>
+            <li><a href="cashier_orderHistory.php">History</a></li>
+            <li><a href="cashier_logout.php">Logout</a></li>
+        </ul>
     </div>
 
-    <ul class="navbar-menu">
+</header>
 
-        <li><a href="payment_status.php"><i class="fa-solid fa-money-check"></i> Payment Status</a></li>
-        <li class="active"><a href="view_orders.php"><i class="fa-solid fa-receipt"></i> Orders</a></li>
-        <li><a href="cashier_orderHistory.php"><i class="fa-solid fa-clock-rotate-left"></i> History</a></li>
-        <li><a href="cashier_logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
-
-    </ul>
-</nav>
-
-<div class="history-header">
-    <h1><i class="fa-solid fa-box"></i> Pending Orders</h1>
+<!-- HEADER -->
+<div class="cashier-order-header">
+    <h1>Pending Orders</h1>
     <p>Manage all incoming orders</p>
 </div>
 
-<div class="orders-container">
+<!-- TABLE CONTAINER -->
+<div class="cashier-order-container">
 
 <table class="orders-table">
 
@@ -158,28 +124,20 @@ foreach($orders as $id => $order){
             <input type="hidden" name="action" value="update_status">
             <input type="hidden" name="order_id" value="<?= $id ?>">
             <input type="hidden" name="status" value="accepted">
-
-            <button class="btn accept">
-                <i class="fa-solid fa-check"></i>
-            </button>
+            <button class="btn accept">✔</button>
         </form>
 
         <form method="POST" action="cashier_process.php" class="inline">
             <input type="hidden" name="action" value="update_status">
             <input type="hidden" name="order_id" value="<?= $id ?>">
             <input type="hidden" name="status" value="rejected">
-
-            <button class="btn reject">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <button class="btn reject">✖</button>
         </form>
 
     </td>
 
     <td>
-        <a href="cashier_view_order.php?id=<?= $id ?>" class="btn view">
-            <i class="fa-solid fa-eye"></i>
-        </a>
+        <a href="cashier_view_order.php?id=<?= $id ?>" class="btn view">👁</a>
     </td>
 
 </tr>

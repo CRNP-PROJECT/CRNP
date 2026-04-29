@@ -32,8 +32,7 @@ foreach ($data as $id => $product) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- ICONS -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="../styles.css">
@@ -41,131 +40,85 @@ foreach ($data as $id => $product) {
 <title>Cashier POS</title>
 </head>
 
-<body class="cashier-pos">
+<body class="create-order">
 
-<!-- ================= NAVBAR ================= -->
-<nav class="navbar">
-
+<header class="navbar">
     <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo" alt="Logo">
+        <img src="../img/logo.png" class="logo">
     </div>
 
-    <ul class="navbar-menu">
+    <div class="navbar-right">
+        <ul class="navbar-menu">
+            <li><a href="cashier_index.php">Dashboard</a></li>
+            <li><a href="create_order.php" class="active">Create Order</a></li>
+            <li><a href="view_orders.php">Orders</a></li>
+            <li><a href="view_bookings.php">Bookings</a></li>
+            <li><a href="cashier_orderHistory.php">History</a></li>
+            <li><a href="cashier_logout.php">Logout</a></li>
+        </ul>
+    </div>
+</header>
 
-        <li>
-            <a href="cashier_index.php">
-                <i class="fa-solid fa-chart-line"></i> Dashboard
-            </a>
-        </li>
+<!-- CENTERED CONTENT -->
+<div class="create-order-wrapper">
 
-        <li>
-            <a href="create_order.php">
-                <i class="fa-solid fa-bag-shopping"></i> New Order
-            </a>
-        </li>
+    <div class="create-order-header">
+        <h1>Diner POS Portal</h1>
+        <p><?= htmlspecialchars($_SESSION['cashier_email']); ?></p>
+    </div>
 
-        <li>
-            <a href="view_orders.php">
-                <i class="fa-solid fa-file-invoice"></i> Orders
-            </a>
-        </li>
+    <!-- FILTER -->
+    <div class="create-order-filters">
+        <a href="?category=All" class="<?= ($filter=='All')?'active':'' ?>">All</a>
+        <a href="?category=Food" class="<?= ($filter=='Food')?'active':'' ?>">Food</a>
+        <a href="?category=Drinks" class="<?= ($filter=='Drinks')?'active':'' ?>">Drinks</a>
+        <a href="?category=Beverages" class="<?= ($filter=='Beverages')?'active':'' ?>">Beverages</a>
+    </div>
 
-        <li>
-            <a href="view_bookings.php">
-                <i class="fa-solid fa-calendar-days"></i> Bookings
-            </a>
-        </li>
+    <div class="create-order-layout">
 
-        <li>
-            <a href="cashier_logout.php">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
-            </a>
-        </li>
+        <!-- PRODUCTS -->
+        <div class="create-order-products">
+            <?php foreach($products as $id => $product): ?>
+            <div class="create-order-card"
+                onclick="addToCart('<?= $id ?>','<?= $product['name'] ?>',<?= $product['price'] ?>)">
 
-    </ul>
-</nav>
+                <img src="../admin/<?= htmlspecialchars($product['image']) ?>">
 
-<!-- ================= HEADER ================= -->
-<div class="pos-header">
-    <h1><i class="fa-solid fa-cash-register"></i> POS System</h1>
-    <p><?php echo htmlspecialchars($_SESSION['cashier_email']); ?></p>
-</div>
+                <div class="create-order-info">
+                    <h4><?= htmlspecialchars($product['name']) ?></h4>
+                    <p>₱<?= number_format($product['price'], 2) ?></p>
+                    <span><?= $product['category'] ?></span>
+                </div>
 
-<!-- ================= FILTER ================= -->
-<div class="pos-filters">
+            </div>
+            <?php endforeach; ?>
+        </div>
 
-    <a href="?category=All" class="filter-btn <?= ($filter=='All')?'active':'' ?>">
-        <i class="fa-solid fa-layer-group"></i> All
-    </a>
+        <!-- CART -->
+        <div class="create-order-cart">
+            <h3>Current Cart</h3>
 
-    <a href="?category=Food" class="filter-btn <?= ($filter=='Food')?'active':'' ?>">
-        <i class="fa-solid fa-burger"></i> Food
-    </a>
+            <div id="cartBox"></div>
 
-    <a href="?category=Drinks" class="filter-btn <?= ($filter=='Drinks')?'active':'' ?>">
-        <i class="fa-solid fa-glass-water"></i> Drinks
-    </a>
-
-    <a href="?category=Beverages" class="filter-btn <?= ($filter=='Beverages')?'active':'' ?>">
-        <i class="fa-solid fa-mug-hot"></i> Beverages
-    </a>
-
-</div>
-
-<!-- ================= MAIN ================= -->
-<div class="pos-container">
-
-    <!-- PRODUCTS -->
-    <div class="products">
-
-        <?php foreach($products as $id => $product): ?>
-        <div class="product-card"
-            onclick="addToCart('<?= $id ?>','<?= $product['name'] ?>',<?= $product['price'] ?>)">
-
-            <img src="../admin/<?= htmlspecialchars($product['image']) ?>" class="product-img">
-
-            <div class="product-info">
-                <strong><?= htmlspecialchars($product['name']) ?></strong>
-                <p>₱<?= number_format($product['price'], 2) ?></p>
-                <small><?= $product['category'] ?? 'Food' ?></small>
+            <div class="create-order-total">
+                ₱<span id="total">0.00</span>
             </div>
 
-        </div>
-        <?php endforeach; ?>
+            <input type="text" id="customer_name" placeholder="Customer Name">
+            <input type="text" id="table_number" placeholder="Table Number">
 
-    </div>
+            <form method="POST" action="save_order.php">
+                <input type="hidden" name="cart_data" id="cart_data">
+                <input type="hidden" name="customer_name" id="c_name">
+                <input type="hidden" name="table_number" id="c_table">
+                <input type="hidden" name="payment_method" id="c_payment" value="Over the Counter">
 
-    <!-- CART -->
-    <div class="cart">
-
-        <h3><i class="fa-solid fa-cart-shopping"></i> Cart</h3>
-
-        <div id="cartBox"></div>
-
-        <div class="total">
-            Total: ₱<span id="total">0.00</span>
+                <button type="submit" onclick="prepareOrder()">Place Order</button>
+            </form>
         </div>
 
-        <input type="text" id="customer_name" placeholder="Customer Name">
-        <input type="text" id="table_number" placeholder="Table Number">
-
-        <input type="hidden" id="payment_method" value="Over the Counter">
-
-        <form method="POST" action="save_order.php">
-
-            <input type="hidden" name="cart_data" id="cart_data">
-            <input type="hidden" name="customer_name" id="c_name">
-            <input type="hidden" name="table_number" id="c_table">
-            <input type="hidden" name="payment_method" id="c_payment">
-
-            <button type="submit" onclick="prepareOrder()">
-                <i class="fa-solid fa-check"></i> Place Order
-            </button>
-
-        </form>
-
     </div>
-
 </div>
 
 <!-- ================= SCRIPT ================= -->

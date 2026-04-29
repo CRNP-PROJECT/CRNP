@@ -13,95 +13,89 @@ if(!isset($_SESSION['cashier_email'])){
 
 $rdb = new firebaseRDB($databaseURL);
 
-// ✅ FIX: READ FROM BOOKINGS (NOT cashier_bookinghistory)
+/* GET BOOKINGS */
 $data_raw = $rdb->retrieve("/bookings");
 $data = json_decode($data_raw, true) ?? [];
 
+/* FILTER */
 $filter = $_GET['filter'] ?? 'all';
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="../styles.css">
+
 <title>Booking History</title>
 
-<style>
-.tab-bar{
-    margin: 15px 0;
-}
-
-.tab-bar a{
-    padding: 8px 15px;
-    margin-right: 5px;
-    text-decoration: none;
-    border-radius: 5px;
-    background: #eee;
-    color: #333;
-    font-weight: bold;
-}
-
-.tab-bar a.active{
-    background: #333;
-    color: #fff;
-}
-
-.card{
-    background:#fff;
-    padding:15px;
-    margin-bottom:15px;
-    border-radius:10px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.status-accepted{ color:green; font-weight:bold; }
-.status-rejected{ color:red; font-weight:bold; }
-
-.items{
-    margin-top:10px;
-    padding-left:15px;
-}
-</style>
+<link rel="stylesheet" href="../styles.css">
 
 </head>
-<body>
 
-<nav class="navbar">
-    <a href="cashier_index.php" class="navbar-brand">Cashier Dashboard</a>
-    <ul class="navbar-menu">
-        <li><a href="view_bookings.php">View Bookings</a></li>
-    </ul>
-</nav>
+<body class="cashier-history-booking">
 
-<div class="container">
+<!-- ✅ NAVBAR (NO DROPDOWN, MATCHES OTHER PAGES) -->
+<header class="navbar">
 
-<h1>📋 Booking History</h1>
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo" alt="Logo">
+    </div>
 
-<div class="tab-bar">
+    <div class="navbar-right">
+
+        <ul class="navbar-menu">
+            <li><a href="cashier_index.php">Dashboard</a></li>
+            <li><a href="view_orders.php">Orders</a></li>
+            <li><a href="booking_payment.php">Bookings</a></li>
+            <li><a href="cashier_bookingHistory.php" class="active">Booking History</a></li>
+            <li><a href="cashier_orderHistory">Order History</a></li>
+            <li><a href="cashier_logout.php">Logout</a></li>
+        </ul>
+    </div>
+
+</header>
+
+<!-- HEADER -->
+<div class="cashier-history-booking-header">
+    <h1>Booking History</h1>
+    <p>View accepted and rejected bookings</p>
+</div>
+
+<!-- FILTER -->
+<div class="cashier-history-booking-tabs">
     <a href="?filter=all" class="<?= $filter=='all'?'active':'' ?>">All</a>
     <a href="?filter=accepted" class="<?= $filter=='accepted'?'active':'' ?>">Accepted</a>
     <a href="?filter=rejected" class="<?= $filter=='rejected'?'active':'' ?>">Rejected</a>
 </div>
 
-<?php if(empty($data)): ?>
-    <div class="card">No booking history yet.</div>
-<?php else: ?>
+<!-- CONTENT -->
+<div class="cashier-history-booking-container">
 
-<?php foreach($data as $id => $b):
+<?php
+$hasData = false;
+
+foreach($data as $id => $b):
+
+    if(!is_array($b)) continue;
 
     $status = strtolower($b['status'] ?? '');
 
+    /* FILTER */
     if($filter == 'accepted' && $status != 'accepted') continue;
     if($filter == 'rejected' && $status != 'rejected') continue;
-
     if($status != 'accepted' && $status != 'rejected') continue;
 
+    $hasData = true;
+
+    /* PAYMENT */
     $payment_status = strtoupper($b['payment_status'] ?? 'NO PAYMENT');
-    if($payment_status == "NO_PAYMENT_REQUIRED"){
-    $payment_status = "OVER THE COUNTER";
-}
+
+    if($payment_status === "NO_PAYMENT_REQUIRED"){
+        $payment_status = "OVER THE COUNTER";
+    }
+
+    /* ITEMS */
     $items = [
         'Tables' => $b['tables_qty'] ?? 0,
         'Chairs' => $b['chairs_qty'] ?? 0,
@@ -109,44 +103,55 @@ $filter = $_GET['filter'] ?? 'all';
     ];
 ?>
 
-<div class="card">
+<div class="cashier-history-booking-card">
 
-    <p><b>Customer:</b> <?= htmlspecialchars($b['full_name'] ?? 'N/A') ?></p>
+    <!-- TOP -->
+    <div class="cashier-history-booking-top">
+        <h3><?= htmlspecialchars($b['full_name'] ?? 'Unknown') ?></h3>
 
-    <p><b>Total:</b> ₱<?= number_format($b['booking_total'] ?? $b['total'] ?? 0, 2) ?></p>
-
-    <p>
-        <b>Status:</b>
-        <?php if($status == 'accepted'): ?>
-            <span class="status-accepted">ACCEPTED</span>
-        <?php else: ?>
-            <span class="status-rejected">REJECTED</span>
-        <?php endif; ?>
-    </p>
-
-    <p><b>Payment Status:</b> <?= $payment_status ?></p>
-
-    <p><b>Items:</b></p>
-    <div class="items">
-
-        <?php foreach($items as $name => $qty): ?>
-            <?php if($qty > 0): ?>
-                <div>
-                    • <?= $name ?> × <?= intval($qty) ?>
-                </div>
-            <?php endif; ?>
-        <?php endforeach; ?>
-
+        <span class="cashier-history-booking-badge <?= $status ?>">
+            <?= strtoupper($status) ?>
+        </span>
     </div>
 
-    <p style="margin-top:10px; font-size:12px; color:gray;">
-        <?= $b['cashier_action_time'] ?? '' ?>
-    </p>
+    <!-- INFO -->
+    <div class="cashier-history-booking-info">
+        <p><b>Total:</b> ₱<?= number_format($b['booking_total'] ?? $b['total'] ?? 0, 2) ?></p>
+        <p><b>Payment:</b> <?= htmlspecialchars($payment_status) ?></p>
+    </div>
+
+    <!-- ITEMS -->
+    <div class="cashier-history-booking-items">
+        <?php
+        $hasItems = false;
+
+        foreach($items as $name => $qty):
+            if($qty > 0):
+                $hasItems = true;
+        ?>
+            <div class="cashier-history-booking-item">
+                <?= $name ?> x<?= intval($qty) ?>
+            </div>
+        <?php endif; endforeach; ?>
+
+        <?php if(!$hasItems): ?>
+            <div class="cashier-history-booking-item">No items</div>
+        <?php endif; ?>
+    </div>
+
+    <!-- DATE -->
+    <div class="cashier-history-booking-date">
+        <?= htmlspecialchars($b['cashier_action_time'] ?? '') ?>
+    </div>
 
 </div>
 
 <?php endforeach; ?>
 
+<?php if(!$hasData): ?>
+    <div class="cashier-history-booking-empty">
+        No booking history found.
+    </div>
 <?php endif; ?>
 
 </div>
