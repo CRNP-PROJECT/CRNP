@@ -39,9 +39,9 @@ $bookings = json_decode($bookings_raw, true) ?? [];
     <div class="navbar-right">
         <ul class="navbar-menu">
             <li><a href="cashier_index.php">Dashboard</a></li>
-            <li><a href="view_orders.php">Orders</a></li>
             <li><a href="view_bookings.php" class="active">Bookings</a></li>
-            <li><a href="cashier_orderHistory.php">History</a></li>
+            <li><a href="booking_history.php">History</a></li>
+            <li><a href="booking_payment.php">Payment Status</a></li>
             <li><a href="cashier_logout.php">Logout</a></li>
         </ul>
     </div>

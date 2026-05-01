@@ -46,10 +46,9 @@ $filter = $_GET['filter'] ?? 'all';
 
         <ul class="navbar-menu">
             <li><a href="cashier_index.php">Dashboard</a></li>
-            <li><a href="view_orders.php">Orders</a></li>
-            <li><a href="booking_payment.php">Bookings</a></li>
-            <li><a href="cashier_bookingHistory.php" class="active">Booking History</a></li>
-            <li><a href="cashier_orderHistory">Order History</a></li>
+            <li><a href="view_bookings.php">Bookings</a></li>
+            <li><a href="booking_history.php" class="active">Booking History</a></li>
+            <li><a href="booking_payment.php">Payment Status</a></li>
             <li><a href="cashier_logout.php">Logout</a></li>
         </ul>
     </div>
