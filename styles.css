@@ -4193,3 +4193,528 @@ body.payment-status {
     }
 
 }
+
+/*KITCHEN LOGIN AND SIGNUP*/
+
+.kitchen-auth-body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    color: #fbe9e7;
+}
+
+/* ===== BACKGROUND ===== */
+.kitchen-auth-body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url('img/log.png') center/cover no-repeat; /* change image */
+    filter: blur(2px) brightness(0.45);
+    transform: scale(1.05);
+    z-index: -2;
+}
+
+.kitchen-auth-body::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(25, 18, 12, 0.65);
+    z-index: -1;
+}
+
+/* ===== LAYOUT ===== */
+.kitchen-auth-body .split-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* ===== FORM SIDE ===== */
+.kitchen-auth-body .form-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: kitchenFade 1s ease;
+}
+
+@keyframes kitchenFade {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== CARD ===== */
+.kitchen-auth-body .auth-card {
+    width: 380px;
+    text-align: center;
+
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 30px;
+
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+/* ===== TITLE ===== */
+.kitchen-auth-body .auth-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    color: whitesmoke;
+    font-weight: 800;
+    margin: 80px 0 40px;
+}
+
+/* ===== SUBTITLE ===== */
+.kitchen-auth-body .auth-subtitle {
+    font-size: 25px;
+    font-family: 'Playfair Display', serif;
+    color: #d7ccc8;
+    margin-bottom: 25px;
+}
+
+/* ===== FORM ===== */
+.kitchen-auth-body .form-group {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.kitchen-auth-body .form-label {
+    font-size: 12px;
+    color: whitesmoke;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.kitchen-auth-body .form-input {
+    width: 90%;
+    padding: 14px;
+    border-radius: 15px;
+    border: 1px solid #8d6e63;
+    background: transparent;
+    color: #ffffff !important;
+    caret-color: #ffcc80;
+    transition: 0.3s;
+}
+
+.kitchen-auth-body .form-input:focus {
+    border-color: #ffcc80;
+    box-shadow: 0 0 10px rgba(255,204,128,0.3);
+    outline: none;
+}
+
+/* ===== BUTTON ===== */
+.kitchen-auth-body .btn-primary-auth {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border-radius: 15px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    background: linear-gradient(135deg, #8b5e34, #563719);
+    color: #fff;
+    transition: 0.3s;
+}
+
+.kitchen-auth-body .btn-primary-auth:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(200,155,109,0.3);
+}
+
+/* ===== FOOTER ===== */
+.kitchen-auth-body .auth-footer {
+    margin-top: 20px;
+    font-size: 15px;
+}
+
+.kitchen-auth-body .auth-footer a {
+    color: #ffcc80;
+}
+
+/* ===== VISUAL SIDE ===== */
+.kitchen-auth-body .visual-side {
+    flex: 1;
+    position: relative;
+}
+
+/* ===== FLOATING CIRCLE ===== */
+.kitchen-auth-body .visual-side::before {
+    content: "";
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    display: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* ===== PROFILE IMAGE (REPLACES EMOJI) ===== */
+.kitchen-auth-body .profile-circle {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+    transform: translate(-40%, -50%); /* adjust position */
+
+    width: 420px; 
+    height: 420px;
+
+    animation: kitchenFloat 4s ease-in-out infinite;
+}
+
+.kitchen-auth-body .profile-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* important: keeps full icon visible */
+}
+
+/*KITCHEN DASHBOARD*/
+
+
+/* ================= BASE ================= */
+.kitchen-dashboard {
+    font-family: 'Poppins', sans-serif;
+
+     background:
+        linear-gradient(rgba(20,10,5,0.75), rgba(20,10,5,0.85)),
+        url('img/log.png') center/cover no-repeat;
+
+    color: #fff;
+}
+
+/* ================= CONTAINER ================= */
+.kitchen-dashboard .container {
+    padding: 40px 60px;
+    max-width: 1400px;
+    margin: auto;
+}
+
+/* ================= TITLE ================= */
+.kitchen-dashboard .kitchen-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 50px;
+    text-align: center;
+    margin: 70px 0 30px;
+}
+
+/* ================= GRID ================= */
+.kitchen-dashboard .orders-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+}
+
+/* ================= COLUMN ================= */
+.kitchen-dashboard .orders-column {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ================= SUBTITLE ================= */
+.kitchen-dashboard .orders-subtitle {
+    font-family: 'Playfair Display', serif;
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: rgba(255,255,255,0.8);
+}
+
+/* ================= CARD GRID ================= */
+.kitchen-dashboard .orders-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    align-items: stretch;
+    grid-auto-rows: 1fr;
+}
+
+/* ================= CARD ================= */
+.kitchen-dashboard .card {
+    padding: 14px;
+    border-radius: 16px;
+
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.08),
+        rgba(0,0,0,0.45)
+    );
+
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    transition: 0.25s;
+    min-height: 220px;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.kitchen-dashboard .card:hover {
+    transform: translateY(-4px);
+    z-index: 2;
+}
+
+/* ================= BORDER COLORS ================= */
+.kitchen-dashboard .card.walkin {
+    border-left: 5px solid #ff9800;
+}
+
+.kitchen-dashboard .card.online {
+    border-left: 5px solid #42a5f5;
+}
+
+/* ================= TEXT ================= */
+.kitchen-dashboard .card strong {
+    font-size: 14px;
+}
+
+.kitchen-dashboard .card small {
+    display: block;
+    opacity: 0.7;
+}
+
+.kitchen-dashboard .type {
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+
+/* ================= STATUS TEXT ================= */
+.kitchen-dashboard .status {
+    font-weight: 600;
+    margin: 5px 0;
+}
+
+/* ================= ITEMS ================= */
+.kitchen-dashboard .items {
+    margin-bottom: 10px;
+}
+
+/* ================= BUTTON GROUP ================= */
+.kitchen-dashboard .status-buttons {
+    display: flex;
+    gap: 6px;
+    margin-top: auto; /* 🔥 PUSH TO BOTTOM */
+}
+
+/* ================= BUTTON BASE ================= */
+.kitchen-dashboard .status-buttons button {
+    flex: 1;
+    padding: 6px;
+    border-radius: 8px;
+    border: none;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: 0.2s;
+
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+/* ================= HOVER ================= */
+.kitchen-dashboard .status-buttons button:hover {
+    transform: scale(1.05);
+}
+
+/* ================= STATUS COLORS ================= */
+
+/* PREPARING = ORANGE */
+.kitchen-dashboard .status-buttons button[value="preparing"] {
+    background: rgba(255,152,0,0.2);
+    color: #ffcc80;
+}
+
+.kitchen-dashboard .status-buttons button[value="preparing"].active {
+    background: #ff9800;
+    color: #000;
+}
+
+/* READY = BLUE */
+.kitchen-dashboard .status-buttons button[value="ready"] {
+    background: rgba(66,165,245,0.2);
+    color: #90caf9;
+}
+
+.kitchen-dashboard .status-buttons button[value="ready"].active {
+    background: #42a5f5;
+    color: #000;
+}
+
+/* DONE = GREEN */
+.kitchen-dashboard .status-buttons button[value="done"] {
+    background: rgba(76,175,80,0.2);
+    color: #a5d6a7;
+}
+
+.kitchen-dashboard .status-buttons button[value="done"].active {
+    background: #4caf50;
+    color: #000;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 1200px) {
+    .kitchen-dashboard .orders-cards {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .kitchen-dashboard .orders-grid {
+       grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 500px) {
+    .kitchen-dashboard .orders-cards {
+       grid-template-columns: repeat(4, 1fr);
+    }
+}
+/*KITCHEN HISTORY*/
+
+
+.kitchen-history-page {
+    font-family: 'Poppins', sans-serif;
+
+    /* ✅ FIXED: lighter overlay so colors are visible */
+    background:
+        linear-gradient(rgba(20,10,5,0.75), rgba(20,10,5,0.85)),
+        url('img/log.png') center/cover no-repeat;
+
+    color: #fff;
+}
+
+/* ================= CONTAINER ================= */
+.kitchen-history-container {
+    padding: 40px 60px;
+}
+
+/* ================= TITLE ================= */
+.kitchen-history-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 50px;
+    font-weight: 700;
+    text-align: center;
+
+    margin-top: 60px;
+    margin-bottom: 10px;
+
+    letter-spacing: 2px;
+}
+
+/* ================= SUBTITLE ================= */
+.kitchen-history-subtitle {
+    font-family: 'Playfair Display', serif;
+    color: whitesmoke;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 40px;
+
+    /* subtle glow like screenshot */
+    text-shadow: 0 0 8px rgba(255,255,255,0.15);
+}
+
+/* ================= GRID ================= */
+.kitchen-history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+/* ================= CARD ================= */
+.kitchen-history-card {
+    padding: 20px;
+    border-radius: 20px;
+
+    /* ✅ FIXED: lighter glass (no heavy black) */
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.12),
+        rgba(0,0,0,0.35)
+    );
+
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.15);
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: 0.3s ease;
+}
+
+.kitchen-history-card:hover {
+    transform: translateY(-6px);
+}
+
+/* ================= HEADER ================= */
+.kitchen-history-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ================= NAME ================= */
+.kitchen-history-name {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* ================= TYPE ================= */
+.kitchen-history-type {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+/* ================= BADGE ================= */
+.kitchen-history-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* DONE badge (green like screenshot) */
+.kitchen-history-badge.done {
+    background: #4caf50;
+    color: #fff;
+}
+
+/* ================= INFO ================= */
+.kitchen-history-info {
+    margin-top: 15px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ================= ITEMS ================= */
+.kitchen-history-items {
+    margin-top: 15px;
+}
+
+.kitchen-history-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+/* ================= EMPTY ================= */
+.kitchen-history-empty {
+    text-align: center;
+    opacity: 0.7;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .kitchen-history-container {
+        padding: 20px;
+    }
+
+    .kitchen-history-title {
+        font-size: 32px;
+    }
+}

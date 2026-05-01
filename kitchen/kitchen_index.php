@@ -14,20 +14,17 @@ $rdb = new firebaseRDB($databaseURL);
 $orders_raw = $rdb->retrieve("/orders");
 $orders = json_decode($orders_raw, true) ?? [];
 
-// ================= GROUP =================
+/* ================= BUILD + SORT QUEUE ================= */
 $walkin_orders = [];
 $online_orders = [];
+$all_orders = [];
 
 foreach($orders as $id => $order){
 
     $status = strtolower($order['status'] ?? '');
-    $payment_status = strtolower($order['payment_status'] ?? '');
-    $payment_method = strtolower($order['payment_method'] ?? '');
 
-    // ❌ only reject rejected orders
     if($status === 'rejected') continue;
 
-    // kitchen status
     $kitchen_status = strtolower($order['kitchen_status'] ?? 'accepted');
 
     if($kitchen_status === 'done') continue;
@@ -38,8 +35,22 @@ foreach($orders as $id => $order){
 
     $order['_id'] = $id;
     $order['_kitchen_status'] = $kitchen_status;
+    $order['timestamp'] = $order['timestamp'] ?? time();
 
-    // classify
+    $all_orders[] = $order;
+}
+
+/* ================= SORT OLDEST FIRST ================= */
+usort($all_orders, function($a, $b) {
+    return ($a['timestamp'] ?? 0) <=> ($b['timestamp'] ?? 0);
+});
+
+/* ================= CLASSIFY ================= */
+foreach($all_orders as $order){
+
+    $id = $order['_id'];
+    $payment_method = strtolower($order['payment_method'] ?? '');
+
     if($payment_method === 'over the counter' || $payment_method === 'over_the_counter'){
         $walkin_orders[$id] = $order;
     } else {
@@ -62,124 +73,145 @@ foreach($orders as $id => $order){
 
 <body class="kitchen-dashboard">
 
-<nav class="navbar">
+<header class="navbar">
     <div class="navbar-brand-container">
         <img src="../img/logo.png" class="logo">
     </div>
-
-    <ul class="navbar-menu">
-        <li><a href="kitchen_index.php">Queue</a></li>
-        <li><a href="kitchen_history.php">History</a></li>
-        <li><a href="kitchen_logout.php">Logout</a></li>
-    </ul>
-</nav>
+    <div class="navbar-right">
+        <ul class="navbar-menu">
+            <li><a href="kitchen_index.php" class="active">Dashboard</a></li>
+            <li><a href="kitchen_history.php">History</a></li>
+            <li><a href="kitchen_logout.php">Logout</a></li>
+        </ul>
+    </div>
+</header>
 
 <div class="container">
 
-<h1>🍳 Kitchen Orders</h1>
+<h1 class="kitchen-title">Kitchen Orders</h1>
 
-<!-- 🔥 IMPORTANT: LIVE UPDATE TARGETS -->
 <div class="orders-grid">
 
-    <h2>🧾 Walk-in Orders</h2>
-    <div id="walkin">
+    <!-- WALK-IN -->
+    <div class="orders-column">
+        <h2 class="orders-subtitle">Walk-in Orders</h2>
+
+        <div id="walkin" class="orders-cards">
 
         <?php foreach($walkin_orders as $id => $order): ?>
 
-        <div class="card" style="border-left:5px solid orange; margin-bottom:10px; padding:10px;">
+        <div class="card walkin">
 
             <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
-            <br>
-            <small>🧾 WALK-IN</small>
 
-            <br><br>
+            <small>
+                <?= htmlspecialchars($order['time'] ?? date("h:i A", $order['timestamp'])) ?>
+            </small>
 
-            <b>Status:</b> <?= strtoupper($order['_kitchen_status']) ?>
-            <br><br>
+            <small class="type">WALK-IN</small>
 
-            <?php foreach(($order['products'] ?? []) as $p): ?>
-                • <?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?><br>
-            <?php endforeach; ?>
+            <div class="status"><?= strtoupper($order['_kitchen_status']) ?></div>
+
+            <div class="items">
+                <?php foreach(($order['products'] ?? []) as $p): ?>
+                    <div><?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?></div>
+                <?php endforeach; ?>
+            </div>
+<form method="POST" action="kitchen_process.php" class="status-buttons">
+
+    <input type="hidden" name="action" value="update_status">
+    <input type="hidden" name="order_id" value="<?= $id ?>">
+
+    <button name="status" value="preparing"
+        class="<?= $order['_kitchen_status'] == 'preparing' ? 'active' : '' ?>">
+        Preparing
+    </button>
+
+    <button name="status" value="ready"
+        class="<?= $order['_kitchen_status'] == 'ready' ? 'active' : '' ?>">
+        Ready
+    </button>
+
+    <button name="status" value="done"
+        class="<?= $order['_kitchen_status'] == 'done' ? 'active' : '' ?>">
+        Done
+    </button>
+
+</form>
 
         </div>
 
         <?php endforeach; ?>
 
+        </div>
     </div>
 
-    <hr>
+    <!-- ONLINE -->
+    <div class="orders-column">
+        <h2 class="orders-subtitle">Online Orders</h2>
 
-    <h2>👤 Online Orders</h2>
-    <div id="online">
+        <div id="online" class="orders-cards">
 
         <?php foreach($online_orders as $id => $order): ?>
 
-        <div class="card" style="border-left:5px solid blue; margin-bottom:10px; padding:10px;">
+        <div class="card online">
 
             <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
-            <br>
-            <small>👤 ONLINE</small>
 
-            <br><br>
+            <small>
+                <?= htmlspecialchars($order['time'] ?? date("h:i A", $order['timestamp'])) ?>
+            </small>
 
-            <b>Status:</b> <?= strtoupper($order['_kitchen_status']) ?>
-            <br><br>
+            <small class="type">ONLINE</small>
 
-            <?php foreach(($order['products'] ?? []) as $p): ?>
-                • <?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?><br>
-            <?php endforeach; ?>
+            <div class="status"><?= strtoupper($order['_kitchen_status']) ?></div>
 
+            <div class="items">
+                <?php foreach(($order['products'] ?? []) as $p): ?>
+                    <div><?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?></div>
+                <?php endforeach; ?>
+            </div>
+<form method="POST" action="kitchen_process.php" class="status-buttons">
+
+    <input type="hidden" name="action" value="update_status">
+    <input type="hidden" name="order_id" value="<?= $id ?>">
+
+    <button name="status" value="preparing"
+        class="<?= $order['_kitchen_status'] == 'preparing' ? 'active' : '' ?>">
+        Preparing
+    </button>
+
+    <button name="status" value="ready"
+        class="<?= $order['_kitchen_status'] == 'ready' ? 'active' : '' ?>">
+        Ready
+    </button>
+
+    <button name="status" value="done"
+        class="<?= $order['_kitchen_status'] == 'done' ? 'active' : '' ?>">
+        Done
+    </button>
+
+</form>
         </div>
 
         <?php endforeach; ?>
 
+        </div>
     </div>
 
 </div>
-
 </div>
 
-<!-- ================= SAFE LIVE UPDATE ================= -->
+<!-- LIVE UPDATE -->
 <script>
-let lastWalkin = "";
-let lastOnline = "";
-
-async function loadKitchenOrders() {
-    try {
-        const res = await fetch("kitchen_fetch_orders.php");
-
-        if(!res.ok) return;
-
-        const data = await res.json();
-
-        const walkin = document.getElementById("walkin");
-        const online = document.getElementById("online");
-
-        if(walkin && data.walkin !== undefined){
-            walkin.innerHTML = data.walkin;
-            lastWalkin = data.walkin;
-        }
-
-        if(online && data.online !== undefined){
-            online.innerHTML = data.online;
-            lastOnline = data.online;
-        }
-
-    } catch (err) {
-        console.log("Refresh error:", err);
-
-        // prevent vanishing
-        if(document.getElementById("walkin")){
-            document.getElementById("walkin").innerHTML = lastWalkin;
-        }
-
-        if(document.getElementById("online")){
-            document.getElementById("online").innerHTML = lastOnline;
-        }
-    }
-}
-
-setInterval(loadKitchenOrders, 5000);
+setInterval(() => {
+    fetch("kitchen_fetch_orders.php")
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("walkin").innerHTML = data.walkin;
+        document.getElementById("online").innerHTML = data.online;
+    });
+}, 5000);
 </script>
 
 </body>

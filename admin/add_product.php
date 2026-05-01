@@ -65,73 +65,85 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="css/style.css">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+
 <title>Add Product</title>
 </head>
-<body>
+
+<body class="admin-add-product-body">
 
 <nav class="navbar">
-    <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo">
+    </div>
+
     <ul class="navbar-menu">
-        <li><a href="add_product.php">Add Product</a></li>
+        <li><a href="admin_index.php">Dashboard</a></li>
+        <li><a href="add_product.php" class="active">Add Product</a></li>
         <li><a href="product_list.php">Product List</a></li>
         <li><a href="admin_log.php">Logout</a></li>
     </ul>
 </nav>
 
-<div class="container">
-    <div class="container-sm">
-        <div class="card">
-            <h1 class="card-title mb-3">Add New Product</h1>
+<div class="admin-add-product-container">
 
-            <?php if($message): ?>
-                <div class="alert alert-error"><?php echo htmlspecialchars($message); ?></div>
-            <?php endif; ?>
+    <div class="admin-add-product-card">
 
-            <form action="" method="POST" enctype="multipart/form-data">
+        <h1 class="admin-add-product-title">Add New Product</h1>
 
-                <div class="form-group">
-                    <label class="form-label">Product Name</label>
-                    <input type="text" name="name" class="form-input" required>
-                </div>
+        <?php if($message): ?>
+            <div class="admin-add-product-alert">
+                <?php echo htmlspecialchars($message); ?>
+            </div>
+        <?php endif; ?>
 
-                <div class="form-group">
-                    <label class="form-label">Price</label>
-                    <input type="number" step="0.01" name="price" class="form-input" required>
-                </div>
+        <form method="POST" enctype="multipart/form-data">
 
-                <!-- 🔥 CATEGORY DROPDOWN -->
-                <div class="form-group">
-                    <label class="form-label">Category</label>
-                    <select name="category" class="form-input" required>
-                        <option value="">Select Category</option>
-                        <option value="Food">Food</option>
-                        <option value="Drinks">Drinks</option>
-                        <option value="Beverages">Beverages </option>
-                    </select>
-                </div>
+            <div class="admin-add-product-group">
+                <label>Product Name</label>
+                <input type="text" name="name" placeholder="Enter product name" required>
+            </div>
 
-                <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea name="description" class="form-textarea" required></textarea>
-                </div>
+            <div class="admin-add-product-group">
+                <label>Price</label>
+                <input type="number" step="0.01" name="price" placeholder="Enter price" required>
+            </div>
 
-                <div class="form-group">
-                    <label class="form-label">Product Image</label>
-                    <input type="file" name="image" class="form-input" accept="image/*" required>
-                </div>
+            <div class="admin-add-product-group">
+                <label>Category</label>
+                <select name="category" required>
+                    <option value="">Select Category</option>
+                    <option value="Food">Food</option>
+                    <option value="Drinks">Drinks</option>
+                    <option value="Beverages">Beverages</option>
+                </select>
+            </div>
 
-                <button type="submit" class="btn btn-primary btn-block">Add Product</button>
+            <div class="admin-add-product-group">
+                <label>Description</label>
+                <textarea name="description" placeholder="Enter product description" required></textarea>
+            </div>
 
-            </form>
-        </div>
+            <div class="admin-add-product-group">
+                <label>Product Image</label>
+                <input type="file" name="image" accept="image/*" required>
+            </div>
+
+            <button type="submit" class="admin-add-product-btn">
+                Add Product
+            </button>
+
+        </form>
+
     </div>
+
 </div>
 
 </body>

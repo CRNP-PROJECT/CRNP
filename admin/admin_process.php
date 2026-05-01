@@ -206,6 +206,125 @@ foreach($bookings as $b){
         }
     }
 }
+/* ================= PoP CALCULATION (FIXED & COMPLETE) ================= */
+
+/* ✅ SAFE FUNCTION */
+function adminCalcChange($current, $previous) {
+    if ($previous == 0) {
+        return $current > 0 ? 100 : 0; // avoid always 0%
+    }
+    return round((($current - $previous) / $previous) * 100, 1);
+}
+
+/* ================= DATE HELPERS ================= */
+$today = date('Y-m-d');
+$yesterday = date('Y-m-d', strtotime('-1 day'));
+
+$thisMonth = date('Y-m');
+$lastMonth = date('Y-m', strtotime('-1 month'));
+
+$thisWeekStart = date('Y-m-d', strtotime('-7 days'));
+$lastWeekStart = date('Y-m-d', strtotime('-14 days'));
+$lastWeekEnd   = date('Y-m-d', strtotime('-7 days'));
+
+/* ================= TEMP HOLDERS ================= */
+$todayRevenue = 0;
+$yesterdayRevenue = 0;
+
+$thisMonthRevenue = 0;
+$lastMonthRevenue = 0;
+
+$thisMonthSales = 0;
+$lastMonthSales = 0;
+
+$thisWeekBookings = 0;
+$lastWeekBookings = 0;
+
+/* ================= ORDERS LOOP ================= */
+foreach($orders as $order){
+
+    if(!is_array($order)) continue;
+
+    $date = substr($order['created_at'] ?? '', 0, 10);
+    $month = substr($date, 0, 7);
+    $total = floatval($order['total'] ?? 0);
+
+    /* TODAY */
+    if($date === $today){
+        $todayRevenue += $total;
+    }
+
+    /* YESTERDAY */
+    if($date === $yesterday){
+        $yesterdayRevenue += $total;
+    }
+
+    /* THIS MONTH */
+    if($month === $thisMonth){
+        $thisMonthRevenue += $total;
+        $thisMonthSales++;
+    }
+
+    /* LAST MONTH */
+    if($month === $lastMonth){
+        $lastMonthRevenue += $total;
+        $lastMonthSales++;
+    }
+}
+
+/* ================= BOOKINGS LOOP ================= */
+foreach($bookings as $b){
+
+    if(!is_array($b)) continue;
+
+    $date = $b['cashier_action_time'] ?? $b['created_at'] ?? '';
+    $dateKey = substr($date, 0, 10);
+
+    /* THIS WEEK */
+    if($dateKey >= $thisWeekStart && $dateKey <= $today){
+        $thisWeekBookings++;
+    }
+
+    /* LAST WEEK */
+    if($dateKey >= $lastWeekStart && $dateKey <= $lastWeekEnd){
+        $lastWeekBookings++;
+    }
+}
+
+/* ================= STORE BASE VALUES ================= */
+$kpis['todayRevenue'] = $todayRevenue;
+$kpis['yesterdayRevenue'] = $yesterdayRevenue;
+
+$kpis['thisMonthRevenue'] = $thisMonthRevenue;
+$kpis['lastMonthRevenue'] = $lastMonthRevenue;
+
+$kpis['thisMonthSales'] = $thisMonthSales;
+$kpis['lastMonthSales'] = $lastMonthSales;
+
+$kpis['thisWeekBookings'] = $thisWeekBookings;
+$kpis['lastWeekBookings'] = $lastWeekBookings;
+
+/* ================= FINAL PoP CALCULATIONS ================= */
+
+$kpis['todayRevenueChange'] = adminCalcChange(
+    $todayRevenue,
+    $yesterdayRevenue
+);
+
+$kpis['totalRevenueChange'] = adminCalcChange(
+    $thisMonthRevenue,
+    $lastMonthRevenue
+);
+
+$kpis['totalSalesChange'] = adminCalcChange(
+    $thisMonthSales,
+    $lastMonthSales
+);
+
+$kpis['totalBookingsChange'] = adminCalcChange(
+    $thisWeekBookings,
+    $lastWeekBookings
+);
 
 /* ================= RETURN ================= */
 

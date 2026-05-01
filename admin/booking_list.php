@@ -26,65 +26,70 @@ if(!is_array($items)){
 <head>
 <meta charset="UTF-8">
 <title>Rental Items List</title>
+<link rel="stylesheet" href="../style.css">
 
-<link rel="stylesheet" href="../styles.css">
-
-<style>
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    padding: 12px;
-    border: 1px solid #ccc;
-}
-
-th {
-    background: #f4f4f4;
-}
-</style>
 
 </head>
-<body>
+<body class="booking-list-body">
 
 <nav class="navbar">
-    <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo">
+    </div>
+
     <ul class="navbar-menu">
-        <li><a href="booking_add.php">Add booking Item</a></li>
-        
+        <li><a href="admin_index.php">Dashboard</a></li>
+        <li><a href="add_product.php">Add Product</a></li>
+        <li><a href="product_list.php">Product List</a></li>
+        <li><a href="admin_log.php">Logout</a></li>
     </ul>
 </nav>
 
-<h2>Rental Items List</h2>
+<div class="booking-list-container">
 
-<table>
+    <h2 class="booking-list-title">Rental Items List</h2>
 
-<thead>
-<tr>
-    <th>Item ID</th>
-    <th>Name</th>
-    <th>Price</th>
-</tr>
-</thead>
+    <div class="booking-list-table-wrapper">
 
-<tbody>
+        <table class="booking-list-table">
 
-<?php foreach($items as $id => $item): ?>
+            <thead>
+                <tr>
+                    <th>Item ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
 
-    <?php if(!is_array($item)) continue; ?>
+            <tbody>
 
-    <tr>
-        <td><?php echo $id; ?></td>
-        <td><?php echo htmlspecialchars($item['name']); ?></td>
-        <td>₱<?php echo htmlspecialchars($item['price']); ?></td>
-    </tr>
+            <?php if(empty($items)): ?>
+                <tr>
+                    <td colspan="3" class="booking-list-empty">
+                        No items found
+                    </td>
+                </tr>
+            <?php endif; ?>
 
-<?php endforeach; ?>
+            <?php foreach($items as $id => $item): ?>
+                <?php if(!is_array($item)) continue; ?>
 
-</tbody>
+                <tr>
+                    <td><?php echo $id; ?></td>
+                    <td><?php echo htmlspecialchars($item['name']); ?></td>
+                    <td class="booking-list-price">
+                        ₱<?php echo htmlspecialchars($item['price']); ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
 
-</table>
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
 
 </body>
 </html>

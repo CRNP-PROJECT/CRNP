@@ -26,7 +26,7 @@ if(!is_array($bookings)){
 <head>
 <meta charset="UTF-8">
 <title>Booking List</title>
-<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../style.css">
 <style>
 table {
     width: 100%;

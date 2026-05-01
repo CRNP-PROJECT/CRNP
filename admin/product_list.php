@@ -41,7 +41,7 @@ foreach ($data as $id => $product) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../style.css">
 <title>Product List</title>
 
 <style>
@@ -63,14 +63,25 @@ foreach ($data as $id => $product) {
 <body>
 
 <nav class="navbar">
-    <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
-    <ul class="navbar-menu">
-        <li><a href="add_product.php">Add Product</a></li>
-        <li><a href="product_list.php">Product List</a></li>
-        <li><a href="admin_log.php">Logout</a></li>
-    </ul>
-</nav>
 
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo">
+    </div>
+
+    <ul class="navbar-menu">
+        <li class="navbar-dropdown">
+             <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
+
+                <a href="add_product.php">Add Product</a>
+
+                <a href="product_list.php">Product List</a>
+                
+                <li><a href="admin_log.php">Logout</a></li>
+            </div>
+        </li>
+    </ul>
+
+</nav>
 <div class="container">
     <div class="page-header flex-between">
         <div>
