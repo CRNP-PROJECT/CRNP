@@ -37,31 +37,18 @@ foreach ($data as $id => $product) {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="../style.css">
 <title>Product List</title>
 
-<style>
-.filter-btn {
-    margin-right: 5px;
-    padding: 6px 12px;
-    text-decoration: none;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.filter-active {
-    background-color: #007bff;
-    color: white;
-}
-</style>
-
+<link rel="stylesheet" href="../style.css">
 </head>
-<body>
 
+<body class="product-list-body">
+
+<!-- ===== NAVBAR ===== -->
 <nav class="navbar">
 
     <div class="navbar-brand-container">
@@ -69,85 +56,130 @@ foreach ($data as $id => $product) {
     </div>
 
     <ul class="navbar-menu">
-        <li class="navbar-dropdown">
-             <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
-
-                <a href="add_product.php">Add Product</a>
-
-                <a href="product_list.php">Product List</a>
-                
-                <li><a href="admin_log.php">Logout</a></li>
-            </div>
-        </li>
+        <li><a href="admin_index.php">Admin Dashboard</a></li>
+        <li><a href="add_product.php">Add Product</a></li>
+        <li><a href="product_list.php" class="active">Product List</a></li>
+        <li><a href="booking_list.php">Rental Items</a></li>
+        <li><a href="admin_log.php">Logout</a></li>
     </ul>
 
 </nav>
-<div class="container">
-    <div class="page-header flex-between">
-        <div>
-            <h1 class="page-title">Product List</h1>
 
-            <!-- 🔥 FILTER BUTTONS -->
-            <div style="margin-top:10px;">
-                <a href="?category=All" class="filter-btn <?php echo ($filter=='All')?'filter-active':''; ?>">All</a>
-                <a href="?category=Food" class="filter-btn <?php echo ($filter=='Food')?'filter-active':''; ?>">Food</a>
-                <a href="?category=Drinks" class="filter-btn <?php echo ($filter=='Drinks')?'filter-active':''; ?>">Drinks</a>
-                <a href="?category=Beverages" class="filter-btn <?php echo ($filter=='Beverages')?'filter-active':''; ?>">Beverages</a>
-            </div>
+<!-- ===== MAIN ===== -->
+<div class="product-list-container">
 
-        </div>
+    <!-- HEADER -->
+    <div class="product-list-header">
 
-        <a href="add_product.php" class="btn btn-primary">+ Add Product</a>
+    <h1 class="product-list-title">Product List</h1>
+
+    <div class="product-list-filters">
+        <a href="?category=All"
+           class="product-list-filter-btn <?php echo ($filter=='All')?'product-list-filter-active':''; ?>">
+           All
+        </a>
+
+        <a href="?category=Food"
+           class="product-list-filter-btn <?php echo ($filter=='Food')?'product-list-filter-active':''; ?>">
+           Food
+        </a>
+
+        <a href="?category=Drinks"
+           class="product-list-filter-btn <?php echo ($filter=='Drinks')?'product-list-filter-active':''; ?>">
+           Drinks
+        </a>
+
+        <a href="?category=Beverages"
+           class="product-list-filter-btn <?php echo ($filter=='Beverages')?'product-list-filter-active':''; ?>">
+           Beverages
+        </a>
     </div>
 
-    <?php if(empty($products)): ?>
-        <div class="card">
-            <p class="text-center text-muted">No products found.</p>
+</div>
+
+       <div class="product-list-topbar">
+         <a href="add_product.php" class="product-list-btn product-list-btn-primary">
+        + Add Product
+         </a>
         </div>
+
+    </div>
+
+    <!-- EMPTY STATE -->
+    <?php if(empty($products)): ?>
+        <div class="product-list-card">
+            <p class="product-list-text-muted">No products found.</p>
+        </div>
+
+    <!-- TABLE -->
     <?php else: ?>
-        <div class="table-wrapper">
-            <table class="table">
+        <div class="product-list-table-wrapper">
+
+            <table class="product-list-table">
+
                 <thead>
                     <tr>
                         <th>Image</th>
                         <th>Name</th>
-                        <th>Category</th> <!-- 🔥 NEW -->
+                        <th>Category</th>
                         <th>Price</th>
                         <th>Description</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
+
                 <tbody>
+
                     <?php foreach ($products as $id => $product): ?>
+
                     <tr>
 
-                        <!-- 🔥 FIX IMAGE PATH -->
+                        <!-- IMAGE -->
                         <td>
                             <img src="uploads/<?php echo basename($product['image']); ?>" 
-                                 alt="<?php echo htmlspecialchars($product['name']); ?>" 
-                                 style="width:60px; height:60px; object-fit:cover;">
+                                class="product-list-img"
+                                alt="<?php echo htmlspecialchars($product['name']); ?>">
                         </td>
 
+                        <!-- NAME -->
                         <td><?php echo htmlspecialchars($product['name']); ?></td>
 
-                        <!-- 🔥 CATEGORY DISPLAY -->
+                        <!-- CATEGORY -->
                         <td><?php echo htmlspecialchars($product['category'] ?? 'N/A'); ?></td>
 
+                        <!-- PRICE -->
                         <td>₱<?php echo number_format($product['price'], 2); ?></td>
 
+                        <!-- DESCRIPTION -->
                         <td><?php echo htmlspecialchars($product['description']); ?></td>
 
-                        <td>
-                            <a href="edit_product.php?id=<?php echo $id; ?>" class="btn btn-secondary btn-sm">Edit</a>
-                            <a href="product_list.php?delete=<?php echo $id; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Delete this product?')">Delete</a>
+                        <!-- ACTIONS -->
+                        <td class="product-list-actions">
+
+                            <a href="edit_product.php?id=<?php echo $id; ?>"
+                               class="product-list-btn product-list-btn-secondary product-list-btn-sm">
+                               Edit
+                            </a>
+
+                            <a href="product_list.php?delete=<?php echo $id; ?>"
+                               class="product-list-btn product-list-btn-danger product-list-btn-sm"
+                               onclick="return confirm('Delete this product?')">
+                               Delete
+                            </a>
+
                         </td>
 
                     </tr>
+
                     <?php endforeach; ?>
+
                 </tbody>
+
             </table>
+
         </div>
     <?php endif; ?>
+
 </div>
 
 </body>

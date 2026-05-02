@@ -33,16 +33,19 @@ if(!is_array($items)){
 <body class="booking-list-body">
 
 <nav class="navbar">
+
     <div class="navbar-brand-container">
         <img src="../img/logo.png" class="logo">
     </div>
 
     <ul class="navbar-menu">
-        <li><a href="admin_index.php">Dashboard</a></li>
+        <li><a href="admin_index.php">Admin Dashboard</a></li>
         <li><a href="add_product.php">Add Product</a></li>
         <li><a href="product_list.php">Product List</a></li>
+        <li><a href="booking_list.php" class="active">Rental Items</a></li>
         <li><a href="admin_log.php">Logout</a></li>
     </ul>
+
 </nav>
 
 <div class="booking-list-container">

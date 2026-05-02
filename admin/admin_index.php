@@ -63,6 +63,7 @@ $bestSelling = $adminData['bestSelling'] ?? [];
     </div>
 
     <ul class="navbar-menu">
+        <li><a href="admin_index.php" class="active">Admin Dashboard</a></li>
         <li class="navbar-dropdown">
             <a href="#">Products ▼</a>
             <div class="navbar-dropdown-content">
@@ -70,8 +71,9 @@ $bestSelling = $adminData['bestSelling'] ?? [];
                 <a href="product_list.php">Product List</a>
             </div>
         </li>
-
-        <li><a href="booking_add.php">Booking</a></li>
+        <li><a href="booking_add.php">Booking Items</a></li>
+         <li><a href="edit_product.php">Edit Product</a></li>
+        <li><a href="booking_reserve.php">Booking List</a></li>
         <li><a href="admin_log.php">Logout</a></li>
     </ul>
 

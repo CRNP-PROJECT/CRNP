@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     </div>
 
     <ul class="navbar-menu">
-        <li><a href="admin_index.php">Dashboard</a></li>
+        <li><a href="admin_index.php">Admin Dashboard</a></li>
         <li><a href="add_product.php" class="active">Add Product</a></li>
         <li><a href="product_list.php">Product List</a></li>
         <li><a href="admin_log.php">Logout</a></li>
