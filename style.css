@@ -208,6 +208,7 @@
         width: 90%;
     }
 }
+
 /* ===== ADMIN NAVBAR (MATCH USER STYLE) ===== */
 .navbar {
     display: flex;
@@ -229,6 +230,15 @@
     backdrop-filter: blur(10px);
 
     box-sizing: border-box;
+}
+
+/* ACTIVE LINK (keep underline visible) */
+.navbar-menu a.active {
+    color: #d4a373;
+}
+
+.navbar-menu a.active::after {
+    width: 100%;
 }
 
 /* LOGO */
@@ -621,15 +631,17 @@
 
 /* ===== CONTAINER ===== */
 .booking-list-container {
-    padding: 120px 40px 50px;
+     padding: 80px 40px 40px;
 }
 
 /* ===== TITLE ===== */
 .booking-list-title {
-    font-size: 28px;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.3rem, 3vw, 3rem);
     font-weight: 600;
-    margin-bottom: 25px;
-    color: #e6c08b;
+    margin-bottom: 70px;
+    color: whitesmoke;
+    text-align: center;
 }
 
 /* ===== TABLE WRAPPER ===== */
@@ -640,6 +652,7 @@
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    margin-top: 50px;
 }
 
 /* ===== TABLE ===== */
@@ -658,12 +671,12 @@
     text-align: left;
     font-weight: 500;
     font-size: 14px;
-    color: #e6c08b;
+    color: whitesmoke;
 }
 
 /* ===== ROWS ===== */
 .booking-list-table td {
-    padding: 14px;
+    padding: 14px; 
     border-top: 1px solid rgba(255,255,255,0.05);
     font-size: 14px;
 }
@@ -673,13 +686,10 @@
     transition: 0.2s ease;
 }
 
-.booking-list-table tbody tr:hover {
-    background: rgba(255,255,255,0.05);
-}
 
 /* ===== PRICE STYLE ===== */
 .booking-list-price {
-    color: #81c784;
+    color: whitesmoke;
     font-weight: 500;
 }
 
@@ -688,4 +698,476 @@
     padding: 30px;
     text-align: center;
     color: #aaa;
+}
+
+/*BOOKING ADD*/
+
+
+/* PAGE BACKGROUND */
+.booking-add-body {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
+                url('img/log.png');
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+}
+
+/* MAIN CONTAINER */
+.booking-add-container {
+    padding: 100px 50px 50px;
+    display: flex;
+    justify-content: center;
+}
+
+/* CARD */
+.booking-add-card {
+    width: 500px;
+    padding: 35px;
+    background:transparent;
+    backdrop-filter: blur(15px);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+}
+
+/* TITLE */
+.booking-add-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.3rem, 3vw, 3rem);
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+/* FORM GRID */
+.booking-add-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+/* FULL WIDTH */
+.booking-add-full {
+    grid-column: span 2;
+}
+
+/* LABEL */
+.booking-add-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    color: #ddd;
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* INPUTS */
+.booking-add-input {
+    width: 96%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.4);
+    color: #fff;
+    outline: none;
+    transition: 0.25s;
+}
+
+/* FOCUS */
+.booking-add-input:focus {
+    border-color: #c89b6d;
+    
+}
+
+/* IMAGE PREVIEW */
+.booking-add-preview img {
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+/* BUTTON */
+.booking-add-btn {
+    margin-top: 10px;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: #fff;
+    background: #a67c52;
+    transition: 0.25s;
+}
+
+.booking-add-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* DIVIDER */
+.booking-add-divider {
+    margin: 30px 0;
+    border: none;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+}
+
+/* TABLE TITLE */
+.booking-add-subtitle {
+    margin-bottom: 15px;
+}
+
+/* TABLE WRAPPER */
+.booking-add-table-wrapper {
+    overflow-x: auto;
+}
+
+/* TABLE */
+.booking-add-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* HEADER */
+.booking-add-table th {
+    background: rgba(255,255,255,0.08);
+    padding: 12px;
+    text-align: left;
+}
+
+/* CELLS */
+.booking-add-table td {
+    padding: 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ROW HOVER */
+.booking-add-table tr:hover {
+    background: rgba(255,255,255,0.06);
+}
+
+/* IMAGE */
+.booking-add-img {
+    width: 60px;
+    border-radius: 6px;
+}
+/* ACTION COLUMN */
+.booking-add-action {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* ALL LINKS BASE */
+.booking-add-action a {
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+/* EDIT BUTTON */
+.booking-add-action a:first-child {
+    background: #c67c32;
+    color: whitesmoke;
+    border: 1px solid rgba(200,155,109,0.3);
+}
+
+/* DELETE BUTTON */
+.booking-add-action a:last-child {
+    background: red;
+    color: whitesmoke;
+    border: 1px solid rgba(255,80,80,0.3);
+}
+
+/*BOOKING RESERVE*/
+
+/* ================= BOOKING RESERVE ================= */
+
+/* PAGE */
+.booking-reserve-body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
+                url('img/log.png');
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+}
+
+/* CONTAINER */
+.booking-reserve-container {
+    padding: 80px 40px 40px;
+}
+
+/* TITLE */
+.booking-reserve-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 3vw, 2.8rem);
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+/* TABLE WRAPPER */
+.booking-reserve-table-wrapper {
+    overflow-x: auto;
+}
+
+/* TABLE */
+.booking-reserve-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* HEADER */
+.booking-reserve-table th {
+    background: rgba(255,255,255,0.08);
+    padding: 14px;
+    text-align: left;
+    font-size: 14px;
+    color: #fff;
+}
+
+/* CELLS */
+.booking-reserve-table td {
+    padding: 14px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 14px;
+    color: #ddd;
+    vertical-align: top;
+}
+
+/* ROW HOVER */
+.booking-reserve-table tr:hover {
+    background: rgba(255,255,255,0.06);
+}
+
+/* ITEMS */
+.booking-reserve-items {
+    line-height: 1.6;
+    font-size: 13px;
+}
+
+/* BADGE BASE */
+.booking-reserve-badge {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* PAYMENT COLORS */
+.booking-reserve-gcash {
+    background: rgba(0,123,255,0.2);
+    color: #4da3ff;
+    border: 1px solid rgba(0,123,255,0.4);
+}
+
+.booking-reserve-counter {
+    background: rgba(40,167,69,0.2);
+    color: #5cd68d;
+    border: 1px solid rgba(40,167,69,0.4);
+}
+
+/*PRODUCT LIST*/
+
+/* ===== PAGE ===== */
+.product-list-body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background:
+        linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
+        url('img/log.png');
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+}
+
+/* ===== CONTAINER ===== */
+.product-list-container {
+    padding: 80px 30px 40px;
+}
+
+/* ===== HEADER ===== */
+/* WRAPPER (THIS IS THE IMPORTANT PART) */
+.product-list-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;   /* centers everything horizontally */
+    justify-content: center;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* TITLE */
+.product-list-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.3rem, 5vw, 4rem);
+    font-weight: 700;
+    margin-bottom: 10px; /* tighter spacing */
+}
+
+/* FILTERS */
+.product-list-filters {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.product-list-filter-btn {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    text-decoration: none;
+    font-size: 13px;
+    color: #ddd;
+    transition: 0.25s;
+}
+
+.product-list-filter-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.product-list-filter-active {
+    background: #c89b6d;
+    color: #000;
+    border-color: #c89b6d;
+}
+
+/* ===== BUTTONS ===== */
+.product-list-topbar {
+    width: 100%;              /* ⬅️ makes it span full width */
+    display: flex;
+    justify-content: flex-end; /* ⬅️ pushes button to far right */
+    margin-bottom: 0px;
+}
+
+/* OPTIONAL: make button look better */
+.product-list-btn-primary {
+    padding: 10px 16px;
+    background: #c89b6d;
+    color: #000;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.product-list-btn-primary:hover {
+    background: #e0b88a;
+}
+
+.product-list-btn-secondary {
+    background: #c89b6d;
+    color: #fff;
+}
+
+.product-list-btn-secondary:hover {
+    background: #666;
+}
+
+.product-list-btn-danger {
+    background: #c0392b;
+    color: #fff;
+}
+
+.product-list-btn-danger:hover {
+    background: #e74c3c;
+}
+
+.product-list-btn-sm {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+/* ===== EMPTY CARD ===== */
+.product-list-card {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.product-list-text-muted {
+    color: #aaa;
+}
+
+/* ===== TABLE WRAPPER ===== */
+.product-list-table-wrapper {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    overflow-x: auto;
+}
+
+/* ===== TABLE ===== */
+.product-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+/* ===== HEADER ===== */
+.product-list-table th {
+    font-family: 'Playfair Display', serif;
+    text-align: left;
+    padding: 14px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #ccc;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+/* ===== CELLS ===== */
+.product-list-table td {
+    padding: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 14px;
+}
+
+/* ===== ROW HOVER ===== */
+.product-list-table tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+/* PRODUCT IMAGE (CIRCLE FRAME) */
+.product-list-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%; /* makes it circle */
+    object-fit: cover;  /* prevents stretching */
+    border: 2px solid rgba(255,255,255,0.2);
+}
+
+/* ===== ACTIONS ===== */
+.product-list-actions a {
+    margin-right: 10px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .product-list-container {
+        padding: 100px 20px 30px;
+    }
+
+    .product-list-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .product-list-table {
+        min-width: 600px;
+    }
 }

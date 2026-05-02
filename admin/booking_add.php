@@ -39,79 +39,97 @@ if ($edit_id) {
 <title>Booking Items Manager</title>
 <link rel="stylesheet" href="../style.css">
 </head>
-<body>
+<body class="booking-add-body">
 
 <nav class="navbar">
-    <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
+
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo">
+    </div>
+
     <ul class="navbar-menu">
-        <li><a href="booking_add.php">Booking Items</a></li>
-        <li><a href="product_list.php">Products</a></li>
-        <li><a href="admin_log.php">Logout</a></li>
+             <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
+
+                <a href="booking_add.php" class="active">Booking Items</a>
+
+                <a href="product_list.php">Products List</a>
+                
+                <li><a href="admin_log.php">Logout</a></li>
+            </div>
+        </li>
     </ul>
+
 </nav>
 
-<div class="container">
-<div class="card">
 
-<h2>Booking Items (Chair / Table / Skirting)</h2>
+<div class="booking-add-container">
+<div class="booking-add-card">
+
+<h2 class="booking-add-title">Booking Items (Chair / Table / Skirting)</h2>
 
 <!-- ================= FORM ================= -->
-<form method="POST" action="admin_process.php" enctype="multipart/form-data">
+<form method="POST" action="admin_process.php" enctype="multipart/form-data" class="booking-add-form">
 
     <?php if($edit_item): ?>
         <input type="hidden" name="id" value="<?php echo $edit_id; ?>">
         <input type="hidden" name="old_image" value="<?php echo $edit_item['image'] ?? ''; ?>">
     <?php endif; ?>
 
-    <div class="form-group">
-        <label>Item Name</label>
-        <input type="text" name="name"
+    <!-- ITEM NAME -->
+    <div class="booking-add-full">
+        <label class="booking-add-label">Item Name</label>
+        <input type="text" name="name"  placeholder="Enter item name"
         value="<?php echo $edit_item['display_name'] ?? $edit_item['name'] ?? ''; ?>"
-        class="form-input" required>
+        class="booking-add-input" required>
     </div>
 
-    <div class="form-group">
-        <label>Price</label>
-        <input type="number" name="price"
+    <!-- PRICE -->
+    <div class="booking-add-full">
+        <label class="booking-add-label">Price</label>
+        <input type="number" name="price"  placeholder="Enter Price"
         value="<?php echo $edit_item['price'] ?? ''; ?>"
-        class="form-input" required>
+        class="booking-add-input" required>
     </div>
 
-    <!-- ✅ IMAGE INPUT -->
-    <div class="form-group">
-        <label>Image</label>
-        <input type="file" name="image" class="form-input">
+    <!-- IMAGE -->
+    <div class="booking-add-full">
+        <label class="booking-add-label">Image</label>
+        <input type="file" name="image" class="booking-add-input">
     </div>
 
-    <!-- ✅ SHOW CURRENT IMAGE WHEN EDITING -->
+    <!-- IMAGE PREVIEW -->
     <?php if(!empty($edit_item['image'])): ?>
-        <div class="form-group">
-            <img src="<?php echo $edit_item['image']; ?>" width="100">
+        <div class="booking-add-full booking-add-preview">
+            <img src="<?php echo $edit_item['image']; ?>" class="booking-add-img">
         </div>
     <?php endif; ?>
 
-    <?php if($edit_item): ?>
-        <button type="submit" name="update_rent_item" class="btn btn-primary">
-            Update Item
-        </button>
-    <?php else: ?>
-        <button type="submit" name="add_rent_item" class="btn btn-primary">
-            Add Item
-        </button>
-    <?php endif; ?>
+    <!-- BUTTON -->
+    <div class="booking-add-full">
+        <?php if($edit_item): ?>
+            <button type="submit" name="update_rent_item" class="booking-add-btn">
+                Update Item
+            </button>
+        <?php else: ?>
+            <button type="submit" name="add_rent_item" class="booking-add-btn">
+                Add Item
+            </button>
+        <?php endif; ?>
+    </div>
 
 </form>
 
-<hr>
+<hr class="booking-add-divider">
 
 <!-- ================= ITEM LIST ================= -->
-<h3>Existing Booking Items</h3>
+<h3 class="booking-add-subtitle">Existing Booking Items</h3>
 
 <?php if(empty($items)): ?>
     <p>No items yet.</p>
 <?php else: ?>
 
-<table border="1" width="100%" cellpadding="10">
+<div class="booking-add-table-wrapper">
+<table class="booking-add-table">
 
 <tr>
     <th>Image</th>
@@ -125,7 +143,7 @@ if ($edit_id) {
 <tr>
     <td>
         <?php if(!empty($item['image'])): ?>
-            <img src="<?php echo $item['image']; ?>" width="60">
+            <img src="<?php echo $item['image']; ?>" class="booking-add-img">
         <?php else: ?>
             No image
         <?php endif; ?>
@@ -135,8 +153,8 @@ if ($edit_id) {
 
     <td>₱<?php echo $item['price']; ?></td>
 
-    <td>
-        <a href="booking_add.php?edit=<?php echo $id; ?>">Edit</a> |
+    <td class="booking-add-action">
+        <a href="booking_add.php?edit=<?php echo $id; ?>">Edit</a>
         <a href="admin_process.php?delete_rent_item=<?php echo $id; ?>"
            onclick="return confirm('Delete this item?')">
             Delete
@@ -147,6 +165,7 @@ if ($edit_id) {
 <?php endforeach; ?>
 
 </table>
+</div>
 
 <?php endif; ?>
 

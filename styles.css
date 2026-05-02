@@ -4718,3 +4718,6 @@ body.payment-status {
         font-size: 32px;
     }
 }
+git add .
+git commit -m "new file admin for records in charts"
+git push -u origin main

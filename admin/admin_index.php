@@ -95,6 +95,7 @@ foreach($bookingRevenuePerDay as $day => $rev){
     </div>
 
     <ul class="navbar-menu">
+        <li><a href="admin_index.php" class="active">Admin Dashboard</a></li>
         <li class="navbar-dropdown">
             <a href="#">Products ▼</a>
             <div class="navbar-dropdown-content">
