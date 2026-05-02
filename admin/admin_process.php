@@ -10,6 +10,7 @@ $orders = json_decode($rdb->retrieve("/orders"), true) ?? [];
 $kitchenData = json_decode($rdb->retrieve("/kitchen_history"), true) ?? [];
 $bookings = json_decode($rdb->retrieve("/cashier_bookinghistory"), true) ?? [];
 $users = json_decode($rdb->retrieve("/user"), true) ?? [];
+$rentItems = json_decode($rdb->retrieve("/rent_items"), true) ?? [];
 
 /* ================= RENT ITEMS ================= */
 
@@ -107,6 +108,8 @@ if (isset($_GET['delete_rent_item'])) {
     exit;
 }
 
+
+
 /* ================= KPI ================= */
 
 $kpis = [
@@ -124,17 +127,10 @@ $ordersStatus = ['pending'=>0,'accepted'=>0,'rejected'=>0,'done'=>0];
 $kitchenStatus = ['preparing'=>0,'ready'=>0,'done'=>0];
 $bookingsStatus = ['pending'=>0,'accepted'=>0,'rejected'=>0];
 
-/* ================= BOOKING PRICES ================= */
-
-$bookingPrices = [
-    'table' => 100,
-    'chair' => 10,
-    'skirting' => 150
-];
-
 $bookingsPerDay = [];
-$today = date('Y-m-d');
 $productSales = [];
+
+$today = date('Y-m-d');
 
 /* ================= ORDERS ================= */
 
@@ -142,8 +138,13 @@ foreach($orders as $order){
 
     if(!is_array($order)) continue;
 
-    $status = strtolower($order['status'] ?? 'pending');
-    $ordersStatus[$status] = ($ordersStatus[$status] ?? 0) + 1;
+    $status = strtolower(trim($order['status'] ?? 'pending'));
+
+    if(isset($ordersStatus[$status])){
+        $ordersStatus[$status]++;
+    } else {
+        $ordersStatus['pending']++;
+    }
 
     $total = floatval($order['total'] ?? 0);
     $kpis['totalRevenue'] += $total;
@@ -163,168 +164,57 @@ foreach($orders as $order){
 
 /* ================= KITCHEN ================= */
 
-foreach($kitchenData as $k){
-    if(!is_array($k)) continue;
-    $kitchenStatus['done']++;
-    $kpis['totalRevenue'] += floatval($k['total'] ?? 0);
+foreach($orders as $order){
+
+    if(!is_array($order)) continue;
+
+    $status = strtolower(trim($order['kitchen_status'] ?? ''));
+
+    if($status === 'preparing'){
+        $kitchenStatus['preparing']++;
+    }
+    elseif($status === 'ready'){
+        $kitchenStatus['ready']++;
+    }
+    elseif(in_array($status, ['done','completed','finished'])){
+        $kitchenStatus['done']++;
+    }
 }
 
-/* ================= BOOKINGS ================= */
+/* ================= BOOKINGS (FIXED - USE /bookings ONLY) ================= */
 
-foreach($bookings as $b){
+$bookingsStatus = ['pending'=>0,'accepted'=>0,'rejected'=>0];
+$bookingsPerDay = [];
+
+/* 🔥 ALL BOOKINGS COME FROM /bookings */
+$allBookings = json_decode($rdb->retrieve("/bookings"), true) ?? [];
+
+foreach($allBookings as $b){
 
     if(!is_array($b)) continue;
 
-    $status = strtolower($b['final_status'] ?? 'pending');
-    $bookingsStatus[$status] = ($bookingsStatus[$status] ?? 0) + 1;
+    $status = strtolower(trim($b['status'] ?? 'pending'));
 
-    $date = $b['cashier_action_time'] ?? $b['created_at'] ?? '';
+    if($status === 'pending'){
+        $bookingsStatus['pending']++;
+    }
+    elseif($status === 'accepted'){
+        $bookingsStatus['accepted']++;
+    }
+    elseif($status === 'rejected'){
+        $bookingsStatus['rejected']++;
+    }
+    else {
+        $bookingsStatus['pending']++; // fallback
+    }
+
+    $date = $b['created_at'] ?? '';
     $dateKey = substr($date, 0, 10);
 
     if($dateKey){
         $bookingsPerDay[$dateKey] = ($bookingsPerDay[$dateKey] ?? 0) + 1;
     }
-
-    $items = $b['items'] ?? $b['booking_items'] ?? $b['rent_items'] ?? [];
-
-    if(is_array($items)){
-
-        foreach($items as $item){
-
-            if(!is_array($item)) continue;
-
-            $name = strtolower($item['name'] ?? '');
-            $qty = intval($item['qty'] ?? 0);
-
-            foreach($bookingPrices as $key => $price){
-
-                if(strpos($name, $key) !== false){
-                    $kpis['bookingRevenue'] += $price * $qty;
-                    $kpis['totalRevenue'] += $price * $qty;
-                }
-            }
-        }
-    }
 }
-/* ================= PoP CALCULATION (FIXED & COMPLETE) ================= */
-
-/* ✅ SAFE FUNCTION */
-function adminCalcChange($current, $previous) {
-    if ($previous == 0) {
-        return $current > 0 ? 100 : 0; // avoid always 0%
-    }
-    return round((($current - $previous) / $previous) * 100, 1);
-}
-
-/* ================= DATE HELPERS ================= */
-$today = date('Y-m-d');
-$yesterday = date('Y-m-d', strtotime('-1 day'));
-
-$thisMonth = date('Y-m');
-$lastMonth = date('Y-m', strtotime('-1 month'));
-
-$thisWeekStart = date('Y-m-d', strtotime('-7 days'));
-$lastWeekStart = date('Y-m-d', strtotime('-14 days'));
-$lastWeekEnd   = date('Y-m-d', strtotime('-7 days'));
-
-/* ================= TEMP HOLDERS ================= */
-$todayRevenue = 0;
-$yesterdayRevenue = 0;
-
-$thisMonthRevenue = 0;
-$lastMonthRevenue = 0;
-
-$thisMonthSales = 0;
-$lastMonthSales = 0;
-
-$thisWeekBookings = 0;
-$lastWeekBookings = 0;
-
-/* ================= ORDERS LOOP ================= */
-foreach($orders as $order){
-
-    if(!is_array($order)) continue;
-
-    $date = substr($order['created_at'] ?? '', 0, 10);
-    $month = substr($date, 0, 7);
-    $total = floatval($order['total'] ?? 0);
-
-    /* TODAY */
-    if($date === $today){
-        $todayRevenue += $total;
-    }
-
-    /* YESTERDAY */
-    if($date === $yesterday){
-        $yesterdayRevenue += $total;
-    }
-
-    /* THIS MONTH */
-    if($month === $thisMonth){
-        $thisMonthRevenue += $total;
-        $thisMonthSales++;
-    }
-
-    /* LAST MONTH */
-    if($month === $lastMonth){
-        $lastMonthRevenue += $total;
-        $lastMonthSales++;
-    }
-}
-
-/* ================= BOOKINGS LOOP ================= */
-foreach($bookings as $b){
-
-    if(!is_array($b)) continue;
-
-    $date = $b['cashier_action_time'] ?? $b['created_at'] ?? '';
-    $dateKey = substr($date, 0, 10);
-
-    /* THIS WEEK */
-    if($dateKey >= $thisWeekStart && $dateKey <= $today){
-        $thisWeekBookings++;
-    }
-
-    /* LAST WEEK */
-    if($dateKey >= $lastWeekStart && $dateKey <= $lastWeekEnd){
-        $lastWeekBookings++;
-    }
-}
-
-/* ================= STORE BASE VALUES ================= */
-$kpis['todayRevenue'] = $todayRevenue;
-$kpis['yesterdayRevenue'] = $yesterdayRevenue;
-
-$kpis['thisMonthRevenue'] = $thisMonthRevenue;
-$kpis['lastMonthRevenue'] = $lastMonthRevenue;
-
-$kpis['thisMonthSales'] = $thisMonthSales;
-$kpis['lastMonthSales'] = $lastMonthSales;
-
-$kpis['thisWeekBookings'] = $thisWeekBookings;
-$kpis['lastWeekBookings'] = $lastWeekBookings;
-
-/* ================= FINAL PoP CALCULATIONS ================= */
-
-$kpis['todayRevenueChange'] = adminCalcChange(
-    $todayRevenue,
-    $yesterdayRevenue
-);
-
-$kpis['totalRevenueChange'] = adminCalcChange(
-    $thisMonthRevenue,
-    $lastMonthRevenue
-);
-
-$kpis['totalSalesChange'] = adminCalcChange(
-    $thisMonthSales,
-    $lastMonthSales
-);
-
-$kpis['totalBookingsChange'] = adminCalcChange(
-    $thisWeekBookings,
-    $lastWeekBookings
-);
 
 /* ================= RETURN ================= */
 

@@ -13,6 +13,7 @@ $admin_email = $_SESSION['admin_email'];
 
 $adminData = include(__DIR__ . "/admin_process.php");
 
+
 /* ================= SAFE DATA (NO ERRORS) ================= */
 $kpis = $adminData['kpis'] ?? [];
 
@@ -338,4 +339,4 @@ new Chart(document.getElementById('bestSellingChart'), {
 </script>
 
 </body>
-</html>
+</html> 

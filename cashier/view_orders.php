@@ -44,8 +44,8 @@ $orders = json_decode($orders_raw, true) ?? [];
             <li><a href="cashier_index.php">Dashboard</a></li>
             <li><a href="create_order.php">Create Orders</a></li>
             <li><a href="view_orders.php" class="active">Orders</a></li>
-            <li><a href="view_bookings.php">Bookings</a></li>
             <li><a href="cashier_orderHistory.php">History</a></li>
+            <li><a href="payment_status.php">Payment Status</a></li>
             <li><a href="cashier_logout.php">Logout</a></li>
         </ul>
     </div>

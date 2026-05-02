@@ -69,10 +69,8 @@ usort($history, function($a, $b){
 
         <li><a href="cashier_index.php">Dashboard</a></li>
         <li><a href="view_orders.php">Orders</a></li>
-        <li><a class="active" href="cashier_orderHistory.php">History</a></li>
-        <li><a href="view_orders.php"></a>Booking Payment</li>
-        <li><a href="payment_status.php"></a>Payment Status</li>
-        <li><a href="view_orders.php"></a></li>
+        <li><a href="cashier_orderHistory.php">History</a></li>
+        <li><a href="payment_status.php">Payment Status</li>
         <li><a href="cashier_logout.php">Logout</a></li>
 
     </ul>
