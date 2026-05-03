@@ -53,12 +53,10 @@ usort($history, function($a, $b){
 <link rel="stylesheet" href="../styles.css">
 
 <title>Cashier History</title>
-
-
 </head>
 
 <body class="cashier-order-history">
-<!-- NAVBAR -->
+
 <nav class="navbar">
 
     <div class="navbar-brand-container">
@@ -70,19 +68,17 @@ usort($history, function($a, $b){
         <li><a href="cashier_index.php">Dashboard</a></li>
         <li><a href="view_orders.php">Orders</a></li>
         <li><a href="cashier_orderHistory.php">History</a></li>
-        <li><a href="payment_status.php">Payment Status</li>
+        <li><a href="payment_status.php">Payment Status</a></li>
         <li><a href="cashier_logout.php">Logout</a></li>
 
     </ul>
 </nav>
 
-<!-- HEADER -->
 <div class="history-header">
     <h1>Cashier History</h1>
     <p>All processed orders (walk-in & online)</p>
 </div>
 
-<!-- CONTENT -->
 <div class="history-container">
 
 <?php if(empty($history)): ?>
@@ -92,6 +88,30 @@ usort($history, function($a, $b){
 <?php endif; ?>
 
 <?php foreach($history as $order): ?>
+
+<?php
+// ✅ PH TIME FORMATTING (CREATED + APPOINTMENT)
+
+$created_raw = $order['created_at'] ?? '';
+$created = 'N/A';
+
+if (!empty($created_raw)) {
+    $dt1 = date_create($created_raw);
+    if ($dt1) {
+        $created = date_format($dt1, "M d, Y - h:i A");
+    }
+}
+
+$appointment_raw = $order['appointment_time'] ?? '';
+$appointment = 'Walk-in';
+
+if (!empty($appointment_raw)) {
+    $dt2 = date_create($appointment_raw);
+    if ($dt2) {
+        $appointment = date_format($dt2, "M d, Y - h:i A");
+    }
+}
+?>
 
 <div class="history-card">
 
@@ -106,14 +126,14 @@ usort($history, function($a, $b){
     <p><b>Customer:</b> <?= htmlspecialchars($order['full_name'] ?? 'Walk-in') ?></p>
     <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
 
-    <!-- ORDER STATUS -->
+    <!-- STATUS -->
     <p><b>Status:</b>
         <span class="status <?= strtolower($order['status'] ?? '') ?>">
             <?= strtoupper($order['status'] ?? 'unknown') ?>
         </span>
     </p>
 
-    <!-- PAYMENT STATUS -->
+    <!-- PAYMENT -->
     <p><b>Payment Status:</b>
         <?php
             $payment = $order['payment_status'] ?? '';
@@ -150,10 +170,13 @@ usort($history, function($a, $b){
         </ul>
     </div>
 
-    <!-- DATE -->
+    <!-- APPOINTMENT -->
+    <p><b>Appointment:</b> <?= htmlspecialchars($appointment) ?></p>
+
+    <!-- CREATED DATE (PH TIME) -->
     <p class="date">
         <i class="fa-regular fa-calendar"></i>
-        <?= htmlspecialchars($order['cashier_action_time'] ?? $order['created_at'] ?? '') ?>
+        <b>Ordered:</b> <?= htmlspecialchars($created) ?>
     </p>
 
 </div>

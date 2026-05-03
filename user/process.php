@@ -148,17 +148,24 @@ switch($action) {
                     'price' => $price,
                     'qty' => $qty,
                     'subtotal' => $subtotal,
-
-                    // 🔥 FIX ADDED HERE
                     'category' => $product['category'] ?? 'unknown'
                 ];
             }
         }
 
+        /* ✅ FIXED ORDER SAVE WITH APPOINTMENT TIME */
+        $appointment_time = $_POST['appointment_time'] ?? '';
+
         $order_data = [
             'user_email' => $_SESSION['email'],
             'full_name' => $_POST['full_name'] ?? '',
             'contact_number' => $_POST['contact_number'] ?? '',
+            'num_people' => $_POST['num_people'] ?? '',
+
+            // ✅ Reservation fields
+            'appointment_time' => $appointment_time,
+            'appointment_timestamp' => strtotime($appointment_time),
+
             'total' => $total,
             'products' => $products_detail,
 
@@ -338,5 +345,4 @@ switch($action) {
         header("Location: index.php");
         exit;
 }
-
 ?>

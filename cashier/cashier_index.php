@@ -25,12 +25,21 @@ $bookings = json_decode($bookings_raw, true) ?? [];
 $today = date('Y-m-d');
 $current_month = date('Y-m');
 
-// --- STATS ---
-$today_sales = 0;
-$monthly_sales = 0;
+
+/* ================= STATS (SEPARATED) ================= */
+
+$today_order_sales = 0;
+$today_booking_sales = 0;
+
+$monthly_order_sales = 0;
+$monthly_booking_sales = 0;
+
 $order_count = 0;
+$booking_count = 0;
+
 $pending_orders = [];
 $today_bookings = [];
+
 
 /* ================= ORDERS ================= */
 foreach($orders as $id => $order){
@@ -38,7 +47,7 @@ foreach($orders as $id => $order){
     if(empty($order['created_at'])) continue;
 
     $created = strtotime($order['created_at']);
-    if(!$created) continue; // ✅ prevent 1970 bug
+    if(!$created) continue;
 
     $order_date = date('Y-m-d', $created);
     $order_month = date('Y-m', $created);
@@ -48,48 +57,60 @@ foreach($orders as $id => $order){
 
     $total = floatval($order['total'] ?? 0);
 
-    // ✅ COUNT ONLY PAID
-    if($payment_status === 'paid'){
+    if($payment_status === 'paid' || $payment_status === 'no_payment_required'){
 
         if($order_date === $today){
-            $today_sales += $total;
+            $today_order_sales += $total;
             $order_count++;
         }
 
         if($order_month === $current_month){
-            $monthly_sales += $total;
+            $monthly_order_sales += $total;
         }
     }
 
-    // pending list
     if($status === 'pending'){
         $order['id'] = $id;
         $pending_orders[] = $order;
     }
 }
 
-/* ================= BOOKINGS ================= */
+
+
+
+/* ================= TOTALS ================= */
+$today_total_sales = $today_order_sales + $today_booking_sales;
+$monthly_total_sales = $monthly_order_sales + $monthly_booking_sales;
+
+/* ================= AVG ORDER ================= */
+$avg_order = ($order_count > 0) ? ($today_order_sales / $order_count) : 0;
+
+
+
+/* ================= BOOKINGS (ROBUST FIX) ================= */
 foreach($bookings as $id => $b){
 
-    if(empty($b['appointment_time'])) continue;
+    // ✅ use created_at first, fallback to updated_at
+    $time_source = $b['created_at'] ?? $b['updated_at'] ?? null;
+    if(!$time_source) continue;
 
-    $appt_time = strtotime($b['appointment_time']);
-    if(!$appt_time) continue; // ✅ safety
+    $booking_time = strtotime($time_source);
+    if(!$booking_time) continue;
 
-    $booking_date = date('Y-m-d', $appt_time);
-    $booking_month = date('Y-m', $appt_time);
+    $booking_date = date('Y-m-d', $booking_time);
+    $booking_month = date('Y-m', $booking_time);
 
     $status = strtolower($b['status'] ?? '');
     $payment_status = strtolower($b['payment_status'] ?? '');
 
     $total = floatval($b['booking_total'] ?? 0);
 
-    // ✅ INCLUDE BOOKINGS IN SALES
+    // ✅ SALES COUNT (unchanged logic)
     if($payment_status === 'paid'){
 
         if($booking_date === $today){
             $today_sales += $total;
-            $order_count++; // ✅ include in avg
+            $order_count++;
         }
 
         if($booking_month === $current_month){
@@ -97,12 +118,12 @@ foreach($bookings as $id => $b){
         }
     }
 
-    // today's bookings list
-    if($booking_date === $today && $status === 'pending'){
+    // ✅ TODAY SNAPSHOT (FIXED)
+    if($booking_date === $today){
+        $b['id'] = $id;
         $today_bookings[] = $b;
     }
 }
-
 /* ================= SORT BOOKINGS ================= */
 usort($today_bookings, function($a, $b){
     return strtotime($a['appointment_time']) - strtotime($b['appointment_time']);
@@ -174,26 +195,27 @@ $avg_order = ($order_count > 0) ? ($today_sales / $order_count) : 0;
                 <span class="cashier-dashboard-btn-text-main">VERIFY PAYMENTS</span>
             </a>
 
-            <div class="cashier-dashboard-card-plain">
-                <h2 class="cashier-dashboard-label">Revenue Snapshot</h2>
-
-                <div class="cashier-dashboard-stat-row">
-                    <span>Today's Sales</span>
-                    <span class="cashier-dashboard-stat-val">₱<?= number_format($today_sales, 2) ?></span>
-                </div>
-
-                <div class="cashier-dashboard-stat-row">
-                    <span>Monthly Sales</span>
-                    <span class="cashier-dashboard-stat-val">₱<?= number_format($monthly_sales, 2) ?></span>
-                </div>
-
-                <div class="cashier-dashboard-stat-row">
-                    <span>Avg Order</span>
-                    <span class="cashier-dashboard-stat-val">₱<?= number_format($avg_order, 2) ?></span>
-                </div>
-
-            </div>
+            <div class="cashier-dashboard-stat-row">
+    <span>Order Sales Today</span>
+    <span class="cashier-dashboard-stat-val">₱<?= number_format($today_order_sales, 2) ?></span>
         </div>
+
+        <div class="cashier-dashboard-stat-row">
+    <span>Booking Sales Today</span>
+    <span class="cashier-dashboard-stat-val">₱<?= number_format($today_booking_sales, 2) ?></span>
+        </div>
+
+        <div class="cashier-dashboard-stat-row">
+    <span>Total Sales Today</span>
+    <span class="cashier-dashboard-stat-val">₱<?= number_format($today_total_sales, 2) ?></span>
+    </div>
+
+    <div class="cashier-dashboard-stat-row">
+    <span>Avg Order</span>
+    <span class="cashier-dashboard-stat-val">₱<?= number_format($avg_order, 2) ?></span>
+        </div>
+            </div>
+        
 
         <!-- CENTER -->
         <div class="cashier-dashboard-column cashier-dashboard-center">

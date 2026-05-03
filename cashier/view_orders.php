@@ -31,7 +31,6 @@ $orders = json_decode($orders_raw, true) ?? [];
 
 <body class="cashier-order">
 
-<!-- ✅ CLEAN CASHIER NAVBAR (FIXED) -->
 <header class="navbar">
 
     <div class="navbar-brand-container">
@@ -52,13 +51,11 @@ $orders = json_decode($orders_raw, true) ?? [];
 
 </header>
 
-<!-- HEADER -->
 <div class="cashier-order-header">
     <h1>Pending Orders</h1>
     <p>Manage all incoming orders</p>
 </div>
 
-<!-- TABLE CONTAINER -->
 <div class="cashier-order-container">
 
 <table class="orders-table">
@@ -69,7 +66,8 @@ $orders = json_decode($orders_raw, true) ?? [];
     <th>Type</th>
     <th>Customer</th>
     <th>Total</th>
-    <th>Date</th>
+    <th>Created</th>
+    <th>Appointment Time</th>
     <th>Status</th>
     <th>Action</th>
     <th>View</th>
@@ -98,6 +96,17 @@ foreach($orders as $id => $order){
     $customer = $order['full_name'] ?? 'Unknown';
     $total = $order['total'] ?? 0;
     $date = $order['created_at'] ?? '';
+
+    // ✅ PHILIPPINE TIME FORMATTED APPOINTMENT
+    $appointment_raw = $order['appointment_time'] ?? '';
+    $appointment = 'Walk-in';
+
+    if (!empty($appointment_raw)) {
+        $dt = date_create($appointment_raw);
+        if ($dt) {
+            $appointment = date_format($dt, "M d, Y - h:i A");
+        }
+    }
 ?>
 
 <tr>
@@ -115,6 +124,9 @@ foreach($orders as $id => $order){
     <td>₱<?= number_format($total, 2) ?></td>
 
     <td><?= htmlspecialchars($date ?: 'N/A') ?></td>
+
+    <!-- ✅ APPOINTMENT TIME (PH FORMAT) -->
+    <td><?= htmlspecialchars($appointment) ?></td>
 
     <td><span class="badge pending">PENDING</span></td>
 
@@ -146,7 +158,7 @@ foreach($orders as $id => $order){
 
 <?php if(!$hasOrders): ?>
 <tr>
-    <td colspan="8" class="empty">No pending orders</td>
+    <td colspan="9" class="empty">No pending orders</td>
 </tr>
 <?php endif; ?>
 
