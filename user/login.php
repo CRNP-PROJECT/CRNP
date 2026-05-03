@@ -1,47 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Login | Crates N' Plates</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Login | Crates N' Plates</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
 </head>
 
-<body class="user-login-bg">
+<body class="user-auth-body">
 
-<div class="user-login-wrapper">
-    <div class="user-login-card">
+<div class="user-split-container">
 
-        <h1 class="user-login-title">Welcome Back</h1>
-        <p class="user-login-subtitle">Sign in to your account</p>
+    <!-- LEFT FORM -->
+    <div class="user-form-side">
+        <div class="user-auth-card">
 
-        <!-- NORMAL LOGIN ONLY -->
-        <form method="POST" action="login_action.php">
+            <h1 class="user-auth-title">Welcome Back</h1>
+            <p class="user-auth-subtitle">Sign in to your account</p>
 
-            <div class="user-login-group">
-                <i class="fa fa-envelope"></i>
-                <input type="email" name="email" placeholder="Email" required>
-            </div>
+            <form method="POST" action="login_action.php">
 
-            <div class="user-login-group">
-                <i class="fa fa-lock"></i>
-                <input type="password" name="password" placeholder="Password" required>
-            </div>
+                <div class="user-form-group">
+                    <label class="user-form-label">Email Address</label>
+                    <input type="email" name="email" class="user-form-input" placeholder="Enter your email" required>
+                </div>
 
-            <button type="submit" class="user-login-btn">
-                Login
-            </button>
+                <div class="user-form-group">
+                    <label class="user-form-label">Password</label>
+                    <input type="password" name="password" class="user-form-input" placeholder="Enter your password" required>
+                </div>
 
-        </form>
+                <button type="submit" class="user-btn-auth">Login</button>
 
-        <p class="user-login-link">
-            Don't have an account? <a href="sign_up.php">Sign Up</a>
-        </p>
+            </form>
 
+            <p class="user-auth-footer">
+                Don't have an account? <a href="sign_up.php">Sign Up</a>
+            </p>
+
+        </div>
     </div>
+
+    <!-- RIGHT VISUAL -->
+    <div class="user-visual-side">
+        <div class="user-profile-circle">
+            <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png">
+        </div>
+    </div>
+
 </div>
 
 </body>

@@ -45,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
     exit;
 }
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -54,77 +53,88 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 <link rel="stylesheet" href="../style.css">
 <title>Edit Product</title>
 </head>
-<body>
 
+<body class="edit-product-body">
+
+<!-- ===== NAVBAR ===== -->
 <nav class="navbar">
-    <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
+
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo">
+    </div>
+
     <ul class="navbar-menu">
+        <li><a href="admin_index.php">Admin Dashboard</a></li>
+        <li><a href="add_product.php">Add Product</a></li>
         <li><a href="product_list.php">Product List</a></li>
         <li><a href="admin_log.php">Logout</a></li>
     </ul>
+
 </nav>
 
-<div class="container">
-    <div class="container-sm">
-        <div class="card">
+<!-- ===== MAIN ===== -->
+<div class="edit-product-container">
 
-            <h1 class="card-title mb-3">Edit Product</h1>
+    <div class="edit-product-card">
 
-            <form method="POST">
+        <h1 class="edit-product-title">Edit Product</h1>
 
-                <!-- NAME -->
-                <div class="form-group">
-                    <label class="form-label">Product Name</label>
-                    <input type="text" name="name"
-                        value="<?php echo htmlspecialchars($product['name']); ?>"
-                        class="form-input" required>
-                </div>
+        <form method="POST">
 
-                <!-- PRICE -->
-                <div class="form-group">
-                    <label class="form-label">Price</label>
-                    <input type="number" step="0.01" name="price"
-                        value="<?php echo htmlspecialchars($product['price']); ?>"
-                        class="form-input" required>
-                </div>
+            <!-- NAME -->
+            <div class="edit-product-group">
+                <label class="edit-product-label">Product Name</label>
+                <input type="text" name="name"
+                    value="<?php echo htmlspecialchars($product['name']); ?>"
+                    class="edit-product-input" required>
+            </div>
 
-                <!-- CATEGORY 🔥 NEW -->
-                <div class="form-group">
-                    <label class="form-label">Category</label>
-                    <select name="category" class="form-input" required>
-                        <option value="Food" 
-                            <?php if(($product['category'] ?? '') == "Food") echo "selected"; ?>>
-                            Food
-                        </option>
+            <!-- PRICE -->
+            <div class="edit-product-group">
+                <label class="edit-product-label">Price</label>
+                <input type="number" step="0.01" name="price"
+                    value="<?php echo htmlspecialchars($product['price']); ?>"
+                    class="edit-product-input" required>
+            </div>
 
-                        <option value="Drinks"
-                            <?php if(($product['category'] ?? '') == "Drinks") echo "selected"; ?>>
-                            Drinks
-                        </option>
+            <!-- CATEGORY -->
+            <div class="edit-product-group">
+                <label class="edit-product-label">Category</label>
+                <select name="category" class="edit-product-select" required>
 
-                        <option value="Beverages"
-                            <?php if(($product['category'] ?? '') == "Beverages") echo "selected"; ?>>
-                            Beverages
-                        </option>
-                    </select>
-                </div>
+                    <option value="Food"
+                        <?php if(($product['category'] ?? '') == "Food") echo "selected"; ?>>
+                        Food
+                    </option>
 
-                <!-- DESCRIPTION -->
-                <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea name="description" class="form-textarea" required>
-                    <?php echo htmlspecialchars($product['description']); ?>
-                    </textarea>
-                </div>
+                    <option value="Drinks"
+                        <?php if(($product['category'] ?? '') == "Drinks") echo "selected"; ?>>
+                        Drinks
+                    </option>
 
-                <button type="submit" class="btn btn-primary btn-block">
-                    Update Product
-                </button>
+                    <option value="Beverages"
+                        <?php if(($product['category'] ?? '') == "Beverages") echo "selected"; ?>>
+                        Beverages
+                    </option>
 
-            </form>
+                </select>
+            </div>
 
-        </div>
+            <!-- DESCRIPTION -->
+            <div class="edit-product-group">
+                <label class="edit-product-label">Description</label>
+                <textarea name="description" class="edit-product-textarea" required><?php echo htmlspecialchars($product['description']); ?></textarea>
+            </div>
+
+            <!-- BUTTON -->
+            <button type="submit" class="edit-product-btn">
+                Update Product
+            </button>
+
+        </form>
+
     </div>
+
 </div>
 
 </body>

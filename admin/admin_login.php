@@ -49,13 +49,13 @@ if(isset($_SESSION['admin_email'])){
             <form action="admin_B.php" method="POST">
 
                 <div class="admin-form-group">
-                    
-                    <input type="email" name="email" class="admin-form-input" placeholder="Email" required>
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="admin-form-input" placeholder="Enter your email" required>
                 </div>
 
                 <div class="admin-form-group">
-                    
-                    <input type="password" name="password" class="admin-form-input" placeholder="Password" required>
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="admin-form-input" placeholder="Enter your password" required>
                 </div>
 
                 <button type="submit" name="login">Login</button>

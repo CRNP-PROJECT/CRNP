@@ -73,7 +73,6 @@ $bestSelling = $adminData['bestSelling'] ?? [];
             </div>
         </li>
         <li><a href="booking_add.php">Booking Items</a></li>
-         <li><a href="edit_product.php">Edit Product</a></li>
         <li><a href="booking_reserve.php">Booking List</a></li>
         <li><a href="admin_log.php">Logout</a></li>
     </ul>

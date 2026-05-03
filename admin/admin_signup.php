@@ -29,23 +29,23 @@
             <form action="adminsignup_action.php" method="POST">
 
                 <div class="admin-form-group">
-                    
-                    <input type="text" name="name" class="admin-form-input" placeholder="Admin Name" required>
+                    <label class="form-label">Admin Name</label>
+                    <input type="text" name="name" class="admin-form-input" placeholder="Enter your admin name" required>
                 </div>
 
                 <div class="admin-form-group">
-                    
-                    <input type="email" name="email" class="admin-form-input" placeholder="Admin Email" required>
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="admin-form-input" placeholder="Enter your admin email" required>
                 </div>
 
                 <div class="admin-form-group">
-                    
-                    <input type="password" name="password" class="admin-form-input" placeholder="Password" required>
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="admin-form-input" placeholder="Enter your password" required>
                 </div>
 
                 <div class="admin-form-group">
-                    
-                    <input type="text" name="admin_key" class="admin-form-input" placeholder="Admin Key" required>
+                    <label class="form-label">Admin Key</label>
+                    <input type="text" name="admin_key" class="admin-form-input" placeholder="Enter your admin key" required>
                 </div>
 
                 <button type="submit">Create Admin</button>

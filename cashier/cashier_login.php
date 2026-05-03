@@ -23,13 +23,13 @@
                 <input type="hidden" name="action" value="login">
 
                 <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-input" required>
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-input" placeholder="Enter your email address" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-input" required>
+                    <input type="password" name="password" class="form-input" placeholder="Enter your password" required>
                 </div>
 
                 <button type="submit" class="btn-auth">Login</button>
@@ -44,7 +44,11 @@
 
     </div>
 
-    <div class="visual-side"></div>
+    <div class="visual-side">
+        <div class="profile-circle">
+           <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png">
+        </div>
+    </div>
 
 </div>
 

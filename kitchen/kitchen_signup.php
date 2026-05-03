@@ -35,17 +35,17 @@ if(isset($_SESSION['kitchen_email'])){
 
                 <div class="form-group">
                     <label class="form-label">Full Name</label>
-                    <input type="text" name="full_name" class="form-input" required>
+                    <input type="text" name="full_name" class="form-input" placeholder="Enter your name" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-input" required>
+                    <input type="email" name="email" class="form-input" placeholder="Enter your email address" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-input" required>
+                    <input type="password" name="password" class="form-input" placeholder="Enter your password" required>
                 </div>
 
                 <button type="submit" class="btn-primary-auth">Sign Up</button>
