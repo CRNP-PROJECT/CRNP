@@ -8,15 +8,23 @@ $rdb = new firebaseRDB($databaseURL);
 
 $orders = json_decode($rdb->retrieve("/orders"), true) ?? [];
 $kitchenData = json_decode($rdb->retrieve("/kitchen_history"), true) ?? [];
-$bookings = json_decode($rdb->retrieve("/cashier_bookinghistory"), true) ?? [];
+$bookings = json_decode($rdb->retrieve("/bookings"), true) ?? [];
 $users = json_decode($rdb->retrieve("/user"), true) ?? [];
 $rentItems = json_decode($rdb->retrieve("/rent_items"), true) ?? [];
 
-/* ================= RENT ITEMS ================= */
+/* ================= DATE FILTER ================= */
+$selectedDate = $_GET['date'] ?? null;
 
-$rentItems = json_decode($rdb->retrieve("/rent_items"), true) ?? [];
+/* ================= PRODUCTS ================= */
 
-/* ================= IMAGE UPLOAD (ADMIN/ITEM) ================= */
+$products = json_decode($rdb->retrieve("/products"), true) ?? [];
+
+$productMap = [];
+foreach ($products as $id => $p) {
+    $productMap[$id] = $p;
+}
+
+/* ================= IMAGE UPLOAD ================= */
 
 function uploadImage($file){
 
@@ -36,7 +44,7 @@ function uploadImage($file){
     return "";
 }
 
-/* ================= ADD RENT ITEM ================= */
+/* ================= ADD / UPDATE / DELETE ================= */
 
 if (isset($_POST['add_rent_item'])) {
 
@@ -62,8 +70,6 @@ if (isset($_POST['add_rent_item'])) {
     exit;
 }
 
-/* ================= UPDATE RENT ITEM ================= */
-
 if (isset($_POST['update_rent_item'])) {
 
     $id = $_POST['id'] ?? '';
@@ -78,23 +84,17 @@ if (isset($_POST['update_rent_item'])) {
 
     if ($id !== "" && $name !== "" && $price > 0) {
 
-        $rdb->update(
-            "rent_items",
-            $id,
-            [
-                "name" => strtolower($name),
-                "display_name" => ucfirst($name),
-                "price" => $price,
-                "image" => $image
-            ]
-        );
+        $rdb->update("rent_items", $id, [
+            "name" => strtolower($name),
+            "display_name" => ucfirst($name),
+            "price" => $price,
+            "image" => $image
+        ]);
     }
 
     header("Location: booking_add.php");
     exit;
 }
-
-/* ================= DELETE RENT ITEM ================= */
 
 if (isset($_GET['delete_rent_item'])) {
 
@@ -108,18 +108,29 @@ if (isset($_GET['delete_rent_item'])) {
     exit;
 }
 
-
-
 /* ================= KPI ================= */
 
 $kpis = [
     'todayRevenue' => 0,
     'totalRevenue' => 0,
     'totalSales' => 0,
+
+    'todaySales' => 0,
+    'selectedRevenue' => 0,
+    'selectedSales' => 0,
+
     'totalUsers' => count($users),
     'totalBookings' => count($bookings),
     'bookingRevenue' => 0
 ];
+
+/* ================= BOOKING EXTRA KPI ================= */
+
+$bookingTotalSales = 0;
+$bookingTotalOrders = 0;
+
+$bookingRevenuePerDay = [];
+$bookingOrdersPerDay = [];
 
 /* ================= STATUS ================= */
 
@@ -130,6 +141,21 @@ $bookingsStatus = ['pending'=>0,'accepted'=>0,'rejected'=>0];
 $bookingsPerDay = [];
 $productSales = [];
 
+$revenuePerDay = [];
+$ordersByHour = [];
+
+$ordersByDayOfWeek = [
+    "Sun"=>0,"Mon"=>0,"Tue"=>0,"Wed"=>0,"Thu"=>0,"Fri"=>0,"Sat"=>0
+];
+
+$categorySales = [
+    "Foods"=>0,
+    "Drinks"=>0,
+    "Beverages"=>0
+];
+
+$bookingItems = [];
+
 $today = date('Y-m-d');
 
 /* ================= ORDERS ================= */
@@ -137,6 +163,12 @@ $today = date('Y-m-d');
 foreach($orders as $order){
 
     if(!is_array($order)) continue;
+
+    $orderDate = substr($order['created_at'] ?? '', 0, 10);
+
+    if ($selectedDate && $orderDate !== $selectedDate) {
+        continue;
+    }
 
     $status = strtolower(trim($order['status'] ?? 'pending'));
 
@@ -147,18 +179,58 @@ foreach($orders as $order){
     }
 
     $total = floatval($order['total'] ?? 0);
+
     $kpis['totalRevenue'] += $total;
     $kpis['totalSales']++;
 
-    if(substr($order['created_at'] ?? '', 0, 10) === $today){
+    if($orderDate === $today){
         $kpis['todayRevenue'] += $total;
+        $kpis['todaySales']++;
+    }
+
+    if($selectedDate && $orderDate === $selectedDate){
+        $kpis['selectedRevenue'] += $total;
+        $kpis['selectedSales']++;
     }
 
     foreach($order['products'] ?? [] as $p){
+
         $name = $p['name'] ?? 'Unknown';
         $qty = intval($p['qty'] ?? 0);
 
         $productSales[$name] = ($productSales[$name] ?? 0) + $qty;
+
+        $productId = $p['product_id'] ?? null;
+
+        if ($productId && isset($productMap[$productId])) {
+            $cat = strtolower(trim($productMap[$productId]['category'] ?? ''));
+        } else {
+            $cat = strtolower(trim($p['category'] ?? ''));
+        }
+
+        if (strpos($cat, 'food') !== false) {
+            $categorySales['Foods'] += $qty;
+        }
+        elseif (strpos($cat, 'drink') !== false) {
+            $categorySales['Drinks'] += $qty;
+        }
+        elseif (strpos($cat, 'beverage') !== false) {
+            $categorySales['Beverages'] += $qty;
+        }
+    }
+
+    if($orderDate){
+        $revenuePerDay[$orderDate] = ($revenuePerDay[$orderDate] ?? 0) + $total;
+    }
+
+    $hour = date("H:00", strtotime($order['created_at'] ?? ''));
+    if($hour){
+        $ordersByHour[$hour] = ($ordersByHour[$hour] ?? 0) + 1;
+    }
+
+    $dow = date("D", strtotime($order['created_at'] ?? ''));
+    if(isset($ordersByDayOfWeek[$dow])){
+        $ordersByDayOfWeek[$dow]++;
     }
 }
 
@@ -181,38 +253,59 @@ foreach($orders as $order){
     }
 }
 
-/* ================= BOOKINGS (FIXED - USE /bookings ONLY) ================= */
+/* ================= BOOKINGS (FIXED: ONLY ACCEPTED SALES) ================= */
 
-$bookingsStatus = ['pending'=>0,'accepted'=>0,'rejected'=>0];
-$bookingsPerDay = [];
-
-/* 🔥 ALL BOOKINGS COME FROM /bookings */
-$allBookings = json_decode($rdb->retrieve("/bookings"), true) ?? [];
-
-foreach($allBookings as $b){
+foreach($bookings as $b){
 
     if(!is_array($b)) continue;
 
     $status = strtolower(trim($b['status'] ?? 'pending'));
 
-    if($status === 'pending'){
+    /* status chart still shows all */
+    if(isset($bookingsStatus[$status])){
+        $bookingsStatus[$status]++;
+    } else {
         $bookingsStatus['pending']++;
     }
-    elseif($status === 'accepted'){
-        $bookingsStatus['accepted']++;
-    }
-    elseif($status === 'rejected'){
-        $bookingsStatus['rejected']++;
-    }
-    else {
-        $bookingsStatus['pending']++; // fallback
+
+    /* ONLY ACCEPTED GO INTO SALES */
+    if($status !== 'accepted') continue;
+
+    $bookingTotalOrders++;
+
+    $bookingTotal = floatval($b['booking_total'] ?? 0);
+    $bookingTotalSales += $bookingTotal;
+
+    $date = substr($b['created_at'] ?? '', 0, 10);
+
+    if($date){
+        $bookingRevenuePerDay[$date] =
+            ($bookingRevenuePerDay[$date] ?? 0) + $bookingTotal;
+
+        $bookingOrdersPerDay[$date] =
+            ($bookingOrdersPerDay[$date] ?? 0) + 1;
+
+        $bookingsPerDay[$date] =
+            ($bookingsPerDay[$date] ?? 0) + 1;
     }
 
-    $date = $b['created_at'] ?? '';
-    $dateKey = substr($date, 0, 10);
+    if (!empty($b['items'])) {
 
-    if($dateKey){
-        $bookingsPerDay[$dateKey] = ($bookingsPerDay[$dateKey] ?? 0) + 1;
+        foreach($b['items'] as $it){
+
+            $name = $it['name'] ?? $it['display_name'] ?? 'Unknown';
+            $qty = intval($it['qty'] ?? 1);
+
+            $bookingItems[$name] =
+                ($bookingItems[$name] ?? 0) + $qty;
+        }
+
+    } else {
+
+        $fallback = $b['item_name'] ?? 'Unknown';
+
+        $bookingItems[$fallback] =
+            ($bookingItems[$fallback] ?? 0) + 1;
     }
 }
 
@@ -225,5 +318,15 @@ return [
     'kitchenStatus' => $kitchenStatus,
     'bestSelling' => $productSales,
     'bookingsPerDay' => $bookingsPerDay,
-    'rentItems' => $rentItems
+    'revenuePerDay' => $revenuePerDay,
+    'ordersByHour' => $ordersByHour,
+    'ordersByDayOfWeek' => $ordersByDayOfWeek,
+    'categorySales' => $categorySales,
+    'bookingItems' => $bookingItems,
+    'rentItems' => $rentItems,
+
+    'bookingTotalSales' => $bookingTotalSales,
+    'bookingTotalOrders' => $bookingTotalOrders,
+    'bookingRevenuePerDay' => $bookingRevenuePerDay,
+    'bookingOrdersPerDay' => $bookingOrdersPerDay
 ];

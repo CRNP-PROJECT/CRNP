@@ -103,14 +103,11 @@ foreach($bookingRevenuePerDay as $day => $rev){
                 <a href="product_list.php">Product List</a>
             </div>
         </li>
-<<<<<<< HEAD
+
         <li><a href="booking_add.php">Booking Items</a></li>
         <li><a href="booking_reserve.php">Booking List</a></li>
-=======
-
         <li><a href="booking_add.php">Booking</a></li>
         <li><a href="daily_report.php">Daily report</a></li>
->>>>>>> 69419dcc2033d4ecd2c97875a864172bcdcc5098
         <li><a href="admin_log.php">Logout</a></li>
     </ul>
 </nav>
@@ -393,8 +390,6 @@ backgroundColor:'#FF9800'
 }]
 }
 });
-
-
 </script>
 
 </body>

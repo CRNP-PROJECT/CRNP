@@ -147,7 +147,10 @@ switch($action) {
                     'name' => $product['name'],
                     'price' => $price,
                     'qty' => $qty,
-                    'subtotal' => $subtotal
+                    'subtotal' => $subtotal,
+
+                    // 🔥 FIX ADDED HERE
+                    'category' => $product['category'] ?? 'unknown'
                 ];
             }
         }
@@ -323,7 +326,7 @@ switch($action) {
             $update_data['password'] = password_hash($password, PASSWORD_DEFAULT);
         }
 
-        $rdb->update("user", $user_id, $update_data); // ✅ CORRECT
+        $rdb->update("user", $user_id, $update_data);
 
         $_SESSION['username'] = $name;
 
@@ -331,7 +334,6 @@ switch($action) {
         exit;
 
 
-    // ================= DEFAULT =================
     default:
         header("Location: index.php");
         exit;

@@ -34,9 +34,7 @@ foreach ($data as $id => $product) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <link rel="stylesheet" href="../styles.css">
-
 <title>Cashier POS</title>
 </head>
 
@@ -59,7 +57,6 @@ foreach ($data as $id => $product) {
     </div>
 </header>
 
-<!-- CENTERED CONTENT -->
 <div class="create-order-wrapper">
 
     <div class="create-order-header">
@@ -81,7 +78,12 @@ foreach ($data as $id => $product) {
         <div class="create-order-products">
             <?php foreach($products as $id => $product): ?>
             <div class="create-order-card"
-                onclick="addToCart('<?= $id ?>','<?= $product['name'] ?>',<?= $product['price'] ?>)">
+                onclick="addToCart(
+                    '<?= $id ?>',
+                    '<?= $product['name'] ?>',
+                    <?= $product['price'] ?>,
+                    '<?= $product['category'] ?>'
+                )">
 
                 <img src="../admin/<?= htmlspecialchars($product['image']) ?>">
 
@@ -121,17 +123,23 @@ foreach ($data as $id => $product) {
     </div>
 </div>
 
-<!-- ================= SCRIPT ================= -->
 <script>
 
 let cart = {};
 
-function addToCart(id, name, price) {
+function addToCart(id, name, price, category) {
+
     if(cart[id]) {
         cart[id].qty += 1;
     } else {
-        cart[id] = { name, price, qty: 1 };
+        cart[id] = {
+            name: name,
+            price: price,
+            qty: 1,
+            category: category   // ✅ IMPORTANT FIX
+        };
     }
+
     renderCart();
 }
 
@@ -180,8 +188,7 @@ function prepareOrder() {
     document.getElementById("c_table").value =
         document.getElementById("table_number").value;
 
-    document.getElementById("c_payment").value =
-        document.getElementById("payment_method").value;
+    document.getElementById("c_payment").value = "Over the Counter";
 
     if(Object.keys(cart).length === 0){
         alert("Cart is empty!");
