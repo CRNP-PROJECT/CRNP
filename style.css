@@ -49,54 +49,58 @@
 
 /* ===== CARD ===== */
 .admin-auth-body .admin-auth-card {
-    width: 380px;
+    width: 340px;
     text-align: center;
-
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(12px);
     border-radius: 20px;
-    padding: 30px;
-
+    padding: 16px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 }
 
 /* ===== TITLE ===== */
 .admin-auth-body .admin-auth-title {
     font-family: 'Playfair Display', serif;
-    font-size: 42px;
+    font-size: 32px;
+    margin: 5px 0 5px;
     color: whitesmoke;
     font-weight: 800;
-    margin: 30px 0 10px;
 }
 
 /* ===== SUBTITLE ===== */
 .admin-auth-body .admin-auth-subtitle {
-    font-size: 18px;
+    font-size: 16px;
+    margin-bottom: 15px;
     font-family: 'Playfair Display', serif;
     color: #d7ccc8;
-    margin-bottom: 25px;
 }
 
-/* ===== FORM GROUP ===== */
+/* LABEL */
+.admin-auth-body .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #e0e0e0;
+    font-family: 'Playfair Display', serif;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
 .admin-auth-body .admin-form-group {
     text-align: left;
-    margin-bottom: 15px;
-    position: relative;
+    margin-bottom: 14px;
 }
 
-/* ===== INPUT ===== */
 .admin-auth-body .admin-form-input {
-    width: 85%;
-    padding: 15px;
-    border-radius: 15px;
+    width: 90%; 
+    padding: 12px;
+    border-radius: 10px;
     border: 1px solid #8d6e63;
-    background: transparent;
-    color: #ffffff !important;
-    caret-color: #ffcc80;
-    transition: 0.3s;
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    font-size: 12px;
 }
 
-/* ===== ICON INSIDE INPUT ===== */
 .admin-auth-body .admin-form-group i {
     position: absolute;
     top: 50%;
@@ -109,27 +113,26 @@
 /* ===== INPUT FOCUS ===== */
 .admin-auth-body .admin-form-input:focus {
     border-color: #ffcc80;
-    box-shadow: 0 0 10px rgba(255,204,128,0.3);
+    
     outline: none;
 }
 
 /* ===== BUTTON ===== */
 .admin-auth-body .admin-auth-card button {
     width: 100%;
-    padding: 14px;
-    margin-top: 15px;
+    padding: 12px;
+    margin-top: 10px;
     border-radius: 15px;
     border: none;
     cursor: pointer;
     font-weight: 600;
-    background: linear-gradient(135deg, #8b5e34, #563719);
+    background: #8b5e34;
     color: #fff;
     transition: 0.3s;
 }
 
 .admin-auth-body .admin-auth-card button:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(200,155,109,0.3);
 }
 
 /* ===== FOOTER LINK ===== */
@@ -179,7 +182,7 @@
     transform: translate(-40%, -50%);
     width: 380px;
     height: 380px;
-    animation: adminFloat 4s ease-in-out infinite;
+    
 }
 
 .admin-auth-body .admin-profile-circle img {
@@ -208,6 +211,7 @@
         width: 90%;
     }
 }
+
 
 /* ===== ADMIN NAVBAR (MATCH USER STYLE) ===== */
 .navbar {
@@ -1170,4 +1174,120 @@
     .product-list-table {
         min-width: 600px;
     }
+}
+
+/*EDIT PRODUCT*/
+
+/* ===== BODY ===== */
+.edit-product-body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
+                url('img/log.png');
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+}
+
+/* ===== CONTAINER ===== */
+.edit-product-container {
+    padding: 120px 20px 40px;
+    display: flex;
+    justify-content: center;
+}
+
+/* ===== CARD ===== */
+.edit-product-card {
+    width: 420px;
+    padding: 28px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+}
+
+/* ===== TITLE ===== */
+.edit-product-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.3rem, 5vw, 3rem);
+    text-align: center;
+    margin-top: 10px;   /* ✅ reduce top space */
+    margin-bottom: 15px; /* adjust bottom spacing */
+}
+
+/* ===== FORM GROUP ===== */
+.edit-product-group {
+    margin-bottom: 14px;
+}
+
+/* LABEL */
+.edit-product-label {
+    display: block;
+    font-size: 13px;
+    color: #ddd;
+    margin-bottom: 5px;
+}
+
+/* INPUT + SELECT + TEXTAREA */
+.edit-product-input,
+.edit-product-select,
+.edit-product-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.4);
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: 0.25s;
+
+    box-sizing: border-box;
+}
+
+/* TEXTAREA */
+.edit-product-textarea {
+    height: 100px;
+    resize: none;
+}
+
+/* FOCUS EFFECT */
+.edit-product-input:focus,
+.edit-product-select:focus,
+.edit-product-textarea:focus {
+    border-color: #c89b6d;
+}
+
+/* SELECT DROPDOWN STYLE */
+.edit-product-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg fill='%23ffffff' viewBox='0 0 20 20'%3E%3Cpath d='M5 7l5 5 5-5H5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+}
+
+/* OPTION COLOR (white dropdown, black text) */
+.edit-product-select option {
+    background: #fff;
+    color: #000;
+}
+
+/* ===== BUTTON ===== */
+.edit-product-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    background: #a67c52;
+    transition: 0.25s;
+}
+
+.edit-product-btn:hover {
+    transform: translateY(-2px);
 }
