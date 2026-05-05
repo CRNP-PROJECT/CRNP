@@ -9,39 +9,31 @@ if(!isset($_SESSION['cashier_email'])){
     exit;
 }
 
-// ✅ IMPORTANT: set timezone (fixes wrong "today")
 date_default_timezone_set('Asia/Manila');
 
 $rdb = new firebaseRDB($databaseURL);
 
-// --- FETCH DATA ---
+/* ================= FETCH ================= */
+
 $orders_raw = $rdb->retrieve("/orders");
 $orders = json_decode($orders_raw, true) ?? [];
 
 $bookings_raw = $rdb->retrieve("/bookings");
 $bookings = json_decode($bookings_raw, true) ?? [];
 
-// --- DATE SETUP ---
+/* ================= DATE ================= */
+
 $today = date('Y-m-d');
 $current_month = date('Y-m');
 
-
-/* ================= STATS (SEPARATED) ================= */
+/* ================= ORDERS ================= */
 
 $today_order_sales = 0;
-$today_booking_sales = 0;
-
 $monthly_order_sales = 0;
-$monthly_booking_sales = 0;
-
 $order_count = 0;
-$booking_count = 0;
 
 $pending_orders = [];
-$today_bookings = [];
 
-
-/* ================= ORDERS ================= */
 foreach($orders as $id => $order){
 
     if(empty($order['created_at'])) continue;
@@ -75,63 +67,81 @@ foreach($orders as $id => $order){
     }
 }
 
+/* ================= BOOKINGS (FIXED PROPERLY) ================= */
 
+$today_booking_sales = 0;
+$monthly_booking_sales = 0;
+$booking_count = 0;
 
+$today_bookings = [];
 
-/* ================= TOTALS ================= */
-$today_total_sales = $today_order_sales + $today_booking_sales;
-$monthly_total_sales = $monthly_order_sales + $monthly_booking_sales;
-
-/* ================= AVG ORDER ================= */
-$avg_order = ($order_count > 0) ? ($today_order_sales / $order_count) : 0;
-
-
-
-/* ================= BOOKINGS (ROBUST FIX) ================= */
 foreach($bookings as $id => $b){
 
-    // ✅ use created_at first, fallback to updated_at
-    $time_source = $b['created_at'] ?? $b['updated_at'] ?? null;
+    // ✅ correct time source for your data
+    $time_source = $b['appointment_time']
+        ?? $b['created_at']
+        ?? $b['updated_at']
+        ?? null;
+
     if(!$time_source) continue;
 
-    $booking_time = strtotime($time_source);
-    if(!$booking_time) continue;
+    $time = strtotime($time_source);
+    if(!$time) continue;
 
-    $booking_date = date('Y-m-d', $booking_time);
-    $booking_month = date('Y-m', $booking_time);
+    $booking_date = date('Y-m-d', $time);
+    $booking_month = date('Y-m', $time);
 
-    $status = strtolower($b['status'] ?? '');
-    $payment_status = strtolower($b['payment_status'] ?? '');
+    // ✅ FIX: include ALL your real payment types
+   $payment_status = strtolower($b['payment_status'] ?? '');
+$status = strtolower($b['status'] ?? '');
 
-    $total = floatval($b['booking_total'] ?? 0);
+/*
+✔ treat these as valid revenue:
+- paid
+- no_payment_required (YOUR CASE)
+- counter
+- completed
+*/
+$is_paid =
+    $payment_status === 'paid' ||
+    $payment_status === 'no_payment_required' ||
+    $payment_status === 'counter' ||
+    $payment_status === 'completed' ||
+    $status === 'confirmed'; // optional fallback
 
-    // ✅ SALES COUNT (unchanged logic)
-    if($payment_status === 'paid'){
+    if($is_paid){
 
         if($booking_date === $today){
-            $today_sales += $total;
-            $order_count++;
+            $today_booking_sales += $total;
+            $booking_count++;
         }
 
         if($booking_month === $current_month){
-            $monthly_sales += $total;
+            $monthly_booking_sales += $total;
         }
     }
 
-    // ✅ TODAY SNAPSHOT (FIXED)
     if($booking_date === $today){
         $b['id'] = $id;
         $today_bookings[] = $b;
     }
 }
+
+/* ================= TOTALS ================= */
+
+$today_total_sales = $today_order_sales + $today_booking_sales;
+
+$avg_order = ($order_count > 0)
+    ? ($today_order_sales / $order_count)
+    : 0;
+
 /* ================= SORT BOOKINGS ================= */
+
 usort($today_bookings, function($a, $b){
-    return strtotime($a['appointment_time']) - strtotime($b['appointment_time']);
+    return strtotime($a['appointment_time'] ?? $a['appointment_time'] ?? '') 
+         <=> strtotime($b['appointment_time'] ?? $b['appointment_time'] ?? '');
 });
-
-$avg_order = ($order_count > 0) ? ($today_sales / $order_count) : 0;
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -192,7 +202,10 @@ $avg_order = ($order_count > 0) ? ($today_sales / $order_count) : 0;
             </a>
 
             <a href="payment_status.php" class="cashier-dashboard-btn-large cashier-dashboard-blue">
-                <span class="cashier-dashboard-btn-text-main">VERIFY PAYMENTS</span>
+                <span class="cashier-dashboard-btn-text-main">VERIFY ORDER PAYMENTS</span>
+            </a>
+            <a href="booking_payment.php" class="cashier-dashboard-btn-large cashier-dashboard-green">
+                <span class="cashier-dashboard-btn-text-main">VERIFY BOOKING PAYMENTS</span>
             </a>
 
             <div class="cashier-dashboard-stat-row">
@@ -283,7 +296,8 @@ $avg_order = ($order_count > 0) ? ($today_sales / $order_count) : 0;
                             <tr>
                                 <td><?= date('h:i A', strtotime($tb['appointment_time'])) ?></td>
                                 <td><?= htmlspecialchars($tb['full_name'] ?? '') ?></td>
-                                <td><span class="status pending">PENDING</span></td>
+                                <td><a href="view_bookings.php" class="status pending">View</a></td>
+                                
                             </tr>
                             <?php endforeach; ?>
 

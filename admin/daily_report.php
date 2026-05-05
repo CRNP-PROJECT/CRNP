@@ -2,146 +2,45 @@
 session_start();
 
 include(__DIR__ . "/../config.php");
-include(__DIR__ . "/../firebaseRDB.php");
+require_once(__DIR__ . "/../firebaseRDB.php");
 
-$rdb = new firebaseRDB($databaseURL);
+$report = include(__DIR__ . "/daily_report_process.php");
 
-/* ================= FETCH ================= */
-
-$orders   = json_decode($rdb->retrieve("/orders"), true) ?? [];
-$bookings = json_decode($rdb->retrieve("/bookings"), true) ?? [];
-
-/* ================= FILTER ================= */
-
+if(!is_array($report)){
+    die("Process file did not return data properly.");
+}
+/* ================= MAP VARIABLES ================= */
+$date = $report['date'];
 $view = $_GET['view'] ?? 'daily';
-$date = $_GET['date'] ?? date('Y-m-d');
 
-/* ================= MONTH NAVIGATION (ADDED) ================= */
+$dailyOrders = $report['dailyOrders'];
+$dailyBookings = $report['dailyBookings'];
+
+$dailyRevenue = $report['dailyRevenue'];
+$dailyBookingRevenue = $report['dailyBookingRevenue'];
+
+$calendar = $report['calendar'];
+
+$labels = $report['labels'];
+$orderRevenueData = $report['orderRevenueData'];
+$bookingRevenueData = $report['bookingRevenueData'];
+$orderCountData = $report['orderCountData'];
+$bookingCountData = $report['bookingCountData'];
+
+$selectedOrders = $report['selectedOrders'];
+$selectedBookings = $report['selectedBookings'];
+
+$monthlyOrderRevenue = $report['monthlyOrderRevenue'];
+$monthlyBookingRevenue = $report['monthlyBookingRevenue'];
+
+$year = date('Y', strtotime($date));
+$month = date('m', strtotime($date));
+
+$startDay = date('w', strtotime("$year-$month-01"));
+$daysInMonth = date('t', strtotime("$year-$month-01"));
 
 $prevMonth = date('Y-m-d', strtotime($date . ' -1 month'));
 $nextMonth = date('Y-m-d', strtotime($date . ' +1 month'));
-
-/* ================= WEEK RANGE ================= */
-
-$timestamp = strtotime($date);
-$dayOfWeek = date('N', $timestamp);
-
-$weekStart = date('Y-m-d', strtotime($date . ' -' . ($dayOfWeek - 1) . ' days'));
-$weekEnd   = date('Y-m-d', strtotime($weekStart . ' +6 days'));
-
-/* ================= HELPERS ================= */
-
-function parseDateOnly($str){
-    if(!$str) return '';
-    $t = strtotime($str);
-    return $t ? date('Y-m-d', $t) : substr($str,0,10);
-}
-
-function peso($num){
-    return "₱" . number_format($num,2);
-}
-
-/* ================= DATA ================= */
-
-$calendar = [];
-
-$selectedOrders = [];
-$selectedBookings = [];
-
-$dailyOrders = 0;
-$dailyBookings = 0;
-$dailyRevenue = 0;
-$dailyBookingRevenue = 0;
-
-/* ================= CHART DATA ================= */
-
-$labels = [];
-$revenueData = [];
-$orderCountData = [];
-$bookingCountData = [];
-
-/* ================= ORDERS ================= */
-
-foreach($orders as $o){
-
-    if(!is_array($o)) continue;
-
-    $d = parseDateOnly($o['created_at'] ?? '');
-    if(!$d) continue;
-
-    if(!isset($calendar[$d])){
-        $calendar[$d] = [
-            'orders'=>0,
-            'bookings'=>0,
-            'orderRevenue'=>0,
-            'bookingRevenue'=>0
-        ];
-    }
-
-    $calendar[$d]['orders']++;
-    $calendar[$d]['orderRevenue'] += floatval($o['total'] ?? 0);
-
-    if($d == $date){
-        $dailyOrders++;
-        $dailyRevenue += floatval($o['total'] ?? 0);
-        $selectedOrders[] = $o;
-    }
-}
-
-/* ================= BOOKINGS (ONLY ACCEPTED) ================= */
-
-foreach($bookings as $b){
-
-    if(!is_array($b)) continue;
-
-    $status = strtolower($b['status'] ?? '');
-
-    if($status !== 'accepted') continue;
-
-    $d = parseDateOnly($b['created_at'] ?? '');
-    if(!$d) continue;
-
-    if(!isset($calendar[$d])){
-        $calendar[$d] = [
-            'orders'=>0,
-            'bookings'=>0,
-            'orderRevenue'=>0,
-            'bookingRevenue'=>0
-        ];
-    }
-
-    $calendar[$d]['bookings']++;
-
-    $amount = floatval($b['booking_total'] ?? 0);
-    $calendar[$d]['bookingRevenue'] += $amount;
-
-    if($d == $date){
-        $dailyBookings++;
-        $dailyBookingRevenue += $amount;
-        $selectedBookings[] = $b;
-    }
-}
-
-
-/* ================= BUILD CHART ================= */
-
-ksort($calendar);
-
-foreach($calendar as $d => $v){
-    $labels[] = $d;
-    $revenueData[] = $v['orderRevenue'] + $v['bookingRevenue'];
-    $orderCountData[] = $v['orders'];
-    $bookingCountData[] = $v['bookings'];
-}
-
-/* ================= CALENDAR ================= */
-
-$year  = date('Y', strtotime($date));
-$month = date('m', strtotime($date));
-
-$firstDay = date('Y-m-01', strtotime($date));
-$daysInMonth = date('t', strtotime($firstDay));
-$startDay = date('w', strtotime($firstDay));
 ?>
 
 <!DOCTYPE html>
@@ -170,6 +69,14 @@ body{background:#f4f6f9;font-family:Arial;}
 </head>
 
 <body>
+    <nav class="navbar">
+    
+
+    <ul class="navbar-menu">
+        <li><a href="admin_index.php" class="active">Admin Dashboard</a></li>
+       
+    </ul>
+</nav>
 
 <div class="container py-4">
 
@@ -230,6 +137,8 @@ body{background:#f4f6f9;font-family:Arial;}
 
 </div>
 
+
+
 <!-- CALENDAR -->
 <div class="card card-box p-3 mb-4">
 
@@ -270,6 +179,24 @@ elseif($b>0) $class="bookings-only";
 </div>
 </div>
 
+<div class="row g-3 mb-4">
+
+<div class="col-md-6">
+<div class="card card-box kpi">
+<h6>📦 Monthly Order Revenue</h6>
+<h4><?= peso($monthlyOrderRevenue) ?></h4>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="card card-box kpi">
+<h6>📅 Monthly Booking Revenue</h6>
+<h4><?= peso($monthlyBookingRevenue) ?></h4>
+</div>
+</div>
+
+</div>
+
 <!-- CHARTS -->
 <div class="row g-3 mb-4">
 
@@ -293,15 +220,33 @@ elseif($b>0) $class="bookings-only";
 
 <script>
 const labels = <?= json_encode($labels) ?>;
-const revenue = <?= json_encode($revenueData) ?>;
+const orderRevenue = <?= json_encode($orderRevenueData) ?>;
+const bookingRevenue = <?= json_encode($bookingRevenueData) ?>;
 const orders = <?= json_encode($orderCountData) ?>;
 const bookings = <?= json_encode($bookingCountData) ?>;
 
 new Chart(document.getElementById("revenueChart"), {
     type: 'line',
-    data: { labels, datasets: [{ label:'Revenue', data: revenue, borderWidth:2 }] }
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: 'Orders Revenue',
+                data: orderRevenue,
+                borderColor: 'blue',
+                borderWidth: 2,
+                tension: 0.3
+            },
+            {
+                label: 'Bookings Revenue',
+                data: bookingRevenue,
+                borderColor: 'red',
+                borderWidth: 2,
+                tension: 0.3
+            }
+        ]
+    }
 });
-
 new Chart(document.getElementById("barChart"), {
     type: 'bar',
     data: {

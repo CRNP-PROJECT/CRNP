@@ -157,31 +157,33 @@ switch($action) {
         $appointment_time = $_POST['appointment_time'] ?? '';
 
         $order_data = [
-            'user_email' => $_SESSION['email'],
-            'full_name' => $_POST['full_name'] ?? '',
-            'contact_number' => $_POST['contact_number'] ?? '',
-            'num_people' => $_POST['num_people'] ?? '',
+    'user_email' => $_SESSION['email'],
+    'full_name' => $_POST['full_name'] ?? '',
+    'contact_number' => $_POST['contact_number'] ?? '',
+    'num_people' => $_POST['num_people'] ?? '',
 
-            // ✅ Reservation fields
-            'appointment_time' => $appointment_time,
-            'appointment_timestamp' => strtotime($appointment_time),
+    'appointment_time' => $appointment_time,
+    'appointment_timestamp' => strtotime($appointment_time),
 
-            'total' => $total,
-            'products' => $products_detail,
+    'total' => $total,
+    'products' => $products_detail,
 
-            'payment_method' => $payment_method,
-            'gcash_number' => $gcash_number,
-            'gcash_receipt' => $gcash_receipt,
+    'payment_method' => $payment_method,
+    'gcash_number' => $gcash_number,
+    'gcash_receipt' => $gcash_receipt,
 
-            'payment_status' => ($payment_method === "gcash")
-                ? "pending_verification"
-                : "no_payment_required",
+    'payment_status' => ($payment_method === "gcash")
+        ? "pending_verification"
+        : "no_payment_required",
 
-            'payment_verified' => false,
-            'status' => 'pending',
-            'created_at' => date("M d, Y h:i A")
-        ];
+    'payment_verified' => false,
+    'status' => 'pending',
 
+    // ✅ FIXED HERE
+    'created_at' => date("Y-m-d H:i:s"),
+    'date' => date("Y-m-d"),
+    'timestamp' => time()
+];
         $rdb->insert("/orders", $order_data);
 
         unset($_SESSION['cart']);

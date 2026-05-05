@@ -9,6 +9,9 @@ if(!isset($_SESSION['kitchen_email'])){
     exit;
 }
 
+/* ================= FIX TIMEZONE ================= */
+date_default_timezone_set('Asia/Manila');
+
 $rdb = new firebaseRDB($databaseURL);
 
 $orders_raw = $rdb->retrieve("/orders");
@@ -22,7 +25,6 @@ $all_orders = [];
 foreach($orders as $id => $order){
 
     $status = strtolower($order['status'] ?? '');
-
     if($status === 'rejected') continue;
 
     $kitchen_status = strtolower($order['kitchen_status'] ?? 'accepted');
@@ -33,9 +35,31 @@ foreach($orders as $id => $order){
         $kitchen_status = 'accepted';
     }
 
+    /* ================= FIX TIMESTAMP ================= */
+    $timestamp = $order['timestamp'] ?? null;
+
+    if (empty($timestamp)) {
+        $timestamp = time();
+    } else {
+        if (!is_numeric($timestamp)) {
+            $timestamp = strtotime($timestamp);
+        }
+    }
+
+    /* ================= APPOINTMENT + CREATED ================= */
+    $appointment_raw = $order['appointment_time'] ?? null;
+    $created_raw     = $order['created_at'] ?? null;
+
+    // convert appointment time
+    $appointment_ts = $appointment_raw ? strtotime($appointment_raw) : null;
+
+    $display_ts = $appointment_ts ?: $timestamp;
+
     $order['_id'] = $id;
     $order['_kitchen_status'] = $kitchen_status;
-    $order['timestamp'] = $order['timestamp'] ?? time();
+    $order['timestamp'] = $timestamp;
+    $order['display_time'] = $display_ts;
+    $order['appointment_raw'] = $appointment_raw;
 
     $all_orders[] = $order;
 }
@@ -104,9 +128,16 @@ foreach($all_orders as $order){
 
             <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
 
+            <!-- ================= TIME LABEL FIX ================= -->
             <small>
-                <?= htmlspecialchars($order['time'] ?? date("h:i A", $order['timestamp'])) ?>
+                ⏰ Created: <?= date("M d, Y • h:i A", $order['timestamp']) ?>
             </small>
+
+            <?php if(!empty($order['appointment_raw'])): ?>
+            <small>
+                📅 Appointment: <?= date("M d, Y • h:i A", strtotime($order['appointment_raw'])) ?>
+            </small>
+            <?php endif; ?>
 
             <small class="type">WALK-IN</small>
 
@@ -117,27 +148,17 @@ foreach($all_orders as $order){
                     <div><?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?></div>
                 <?php endforeach; ?>
             </div>
-<form method="POST" action="kitchen_process.php" class="status-buttons">
 
-    <input type="hidden" name="action" value="update_status">
-    <input type="hidden" name="order_id" value="<?= $id ?>">
+            <form method="POST" action="kitchen_process.php" class="status-buttons">
 
-    <button name="status" value="preparing"
-        class="<?= $order['_kitchen_status'] == 'preparing' ? 'active' : '' ?>">
-        Preparing
-    </button>
+                <input type="hidden" name="action" value="update_status">
+                <input type="hidden" name="order_id" value="<?= $id ?>">
 
-    <button name="status" value="ready"
-        class="<?= $order['_kitchen_status'] == 'ready' ? 'active' : '' ?>">
-        Ready
-    </button>
+                <button name="status" value="preparing">Preparing</button>
+                <button name="status" value="ready">Ready</button>
+                <button name="status" value="done">Done</button>
 
-    <button name="status" value="done"
-        class="<?= $order['_kitchen_status'] == 'done' ? 'active' : '' ?>">
-        Done
-    </button>
-
-</form>
+            </form>
 
         </div>
 
@@ -158,9 +179,16 @@ foreach($all_orders as $order){
 
             <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
 
+            <!-- ================= TIME LABEL FIX ================= -->
             <small>
-                <?= htmlspecialchars($order['time'] ?? date("h:i A", $order['timestamp'])) ?>
+                ⏰ Created: <?= date("M d, Y • h:i A", $order['timestamp']) ?>
             </small>
+
+            <?php if(!empty($order['appointment_raw'])): ?>
+            <small>
+                📅 Appointment: <?= date("M d, Y • h:i A", strtotime($order['appointment_raw'])) ?>
+            </small>
+            <?php endif; ?>
 
             <small class="type">ONLINE</small>
 
@@ -171,27 +199,18 @@ foreach($all_orders as $order){
                     <div><?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?></div>
                 <?php endforeach; ?>
             </div>
-<form method="POST" action="kitchen_process.php" class="status-buttons">
 
-    <input type="hidden" name="action" value="update_status">
-    <input type="hidden" name="order_id" value="<?= $id ?>">
+            <form method="POST" action="kitchen_process.php" class="status-buttons">
 
-    <button name="status" value="preparing"
-        class="<?= $order['_kitchen_status'] == 'preparing' ? 'active' : '' ?>">
-        Preparing
-    </button>
+                <input type="hidden" name="action" value="update_status">
+                <input type="hidden" name="order_id" value="<?= $id ?>">
 
-    <button name="status" value="ready"
-        class="<?= $order['_kitchen_status'] == 'ready' ? 'active' : '' ?>">
-        Ready
-    </button>
+                <button name="status" value="preparing">Preparing</button>
+                <button name="status" value="ready">Ready</button>
+                <button name="status" value="done">Done</button>
 
-    <button name="status" value="done"
-        class="<?= $order['_kitchen_status'] == 'done' ? 'active' : '' ?>">
-        Done
-    </button>
+            </form>
 
-</form>
         </div>
 
         <?php endforeach; ?>
@@ -201,18 +220,6 @@ foreach($all_orders as $order){
 
 </div>
 </div>
-
-<!-- LIVE UPDATE -->
-<script>
-setInterval(() => {
-    fetch("kitchen_fetch_orders.php")
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById("walkin").innerHTML = data.walkin;
-        document.getElementById("online").innerHTML = data.online;
-    });
-}, 5000);
-</script>
 
 </body>
 </html>

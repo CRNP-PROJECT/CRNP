@@ -35,7 +35,6 @@ $filter = $_GET['filter'] ?? 'all';
 
 <body class="cashier-history-booking">
 
-<!-- ✅ NAVBAR (NO DROPDOWN, MATCHES OTHER PAGES) -->
 <header class="navbar">
 
     <div class="navbar-brand-container">
@@ -55,20 +54,17 @@ $filter = $_GET['filter'] ?? 'all';
 
 </header>
 
-<!-- HEADER -->
 <div class="cashier-history-booking-header">
     <h1>Booking History</h1>
     <p>View accepted and rejected bookings</p>
 </div>
 
-<!-- FILTER -->
 <div class="cashier-history-booking-tabs">
     <a href="?filter=all" class="<?= $filter=='all'?'active':'' ?>">All</a>
     <a href="?filter=accepted" class="<?= $filter=='accepted'?'active':'' ?>">Accepted</a>
     <a href="?filter=rejected" class="<?= $filter=='rejected'?'active':'' ?>">Rejected</a>
 </div>
 
-<!-- CONTENT -->
 <div class="cashier-history-booking-container">
 
 <?php
@@ -80,31 +76,39 @@ foreach($data as $id => $b):
 
     $status = strtolower($b['status'] ?? '');
 
-    /* FILTER */
     if($filter == 'accepted' && $status != 'accepted') continue;
     if($filter == 'rejected' && $status != 'rejected') continue;
     if($status != 'accepted' && $status != 'rejected') continue;
 
     $hasData = true;
 
-    /* PAYMENT */
     $payment_status = strtoupper($b['payment_status'] ?? 'NO PAYMENT');
 
     if($payment_status === "NO_PAYMENT_REQUIRED"){
         $payment_status = "OVER THE COUNTER";
     }
 
-    /* ITEMS */
     $items = [
         'Tables' => $b['tables_qty'] ?? 0,
         'Chairs' => $b['chairs_qty'] ?? 0,
         'Skirting Cloth' => $b['skirting_cloth_qty'] ?? 0
     ];
+
+    /* ================= FORMAT DATES ================= */
+    $createdAt = $b['created_at'] ?? null;
+    $appointment = $b['appointment_time'] ?? null;
+
+    $createdFormatted = $createdAt 
+        ? date("M d, Y - h:i A", strtotime($createdAt)) 
+        : "N/A";
+
+    $appointmentFormatted = $appointment 
+        ? date("M d, Y - h:i A", strtotime($appointment)) 
+        : "N/A";
 ?>
 
 <div class="cashier-history-booking-card">
 
-    <!-- TOP -->
     <div class="cashier-history-booking-top">
         <h3><?= htmlspecialchars($b['full_name'] ?? 'Unknown') ?></h3>
 
@@ -113,13 +117,11 @@ foreach($data as $id => $b):
         </span>
     </div>
 
-    <!-- INFO -->
     <div class="cashier-history-booking-info">
         <p><b>Total:</b> ₱<?= number_format($b['booking_total'] ?? $b['total'] ?? 0, 2) ?></p>
         <p><b>Payment:</b> <?= htmlspecialchars($payment_status) ?></p>
     </div>
 
-    <!-- ITEMS -->
     <div class="cashier-history-booking-items">
         <?php
         $hasItems = false;
@@ -138,9 +140,19 @@ foreach($data as $id => $b):
         <?php endif; ?>
     </div>
 
-    <!-- DATE -->
+    <!-- ✅ FIXED DATE SECTION -->
     <div class="cashier-history-booking-date">
-        <?= htmlspecialchars($b['cashier_action_time'] ?? '') ?>
+
+        <p>
+            <b>Created At:</b>
+            <?= $createdFormatted ?>
+        </p>
+
+        <p>
+            <b>Appointment:</b>
+            <?= $appointmentFormatted ?>
+        </p>
+
     </div>
 
 </div>

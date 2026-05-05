@@ -74,7 +74,7 @@ $bookings = json_decode($bookings_raw, true) ?? [];
     <th>Email</th>
     <th>Name</th>
     <th>Contact</th>
-    <th>Date & Time</th>
+    <th>Schedule</th>
     <th>Items</th>
     <th>Total</th>
     <th>Status</th>
@@ -96,8 +96,11 @@ $bookings = json_decode($bookings_raw, true) ?? [];
 <td><?= htmlspecialchars($b['user_email'] ?? '') ?></td>
 <td><?= htmlspecialchars($b['full_name'] ?? '') ?></td>
 <td><?= htmlspecialchars($b['contact_number'] ?? '') ?></td>
-<td><?= htmlspecialchars($b['appointment_time'] ?? '') ?></td>
-
+<td>
+<?= !empty($b['appointment_time']) 
+    ? date('F d, Y - h:i A', strtotime($b['appointment_time'])) 
+    : '-' ?>
+</td>
 <td>
 <?php 
 if(isset($b['items']) && is_array($b['items'])) {

@@ -12,40 +12,41 @@ $admin_name = $_SESSION['admin_name'];
 $admin_email = $_SESSION['admin_email'];
 
 $adminData = include(__DIR__ . "/admin_process.php");
+$chartData = include(__DIR__ . "/admin_charts.php");
 
 /* ================= SAFE DATA ================= */
-$kpis = $adminData['kpis'] ?? [];
+$kpis = $chartData['kpis'] ?? [];
 
-$ordersStatus = $adminData['ordersStatus'] ?? [
+$ordersStatus = $chartData['ordersStatus'] ?? [
     "pending" => 0,
     "accepted" => 0,
     "rejected" => 0,
     "done" => 0
 ];
 
-$kitchenStatus = $adminData['kitchenStatus'] ?? [
+$kitchenStatus = $chartData['kitchenStatus'] ?? [
     "preparing" => 0,
     "ready" => 0,
     "done" => 0
 ];
 
-$bookingsStatus = $adminData['bookingsStatus'] ?? [
+$bookingsStatus = $chartData['bookingsStatus'] ?? [
     "pending" => 0,
     "accepted" => 0,
     "rejected" => 0
 ];
 
-$bookingsPerDay = $adminData['bookingsPerDay'] ?? [];
-$bestSelling = $adminData['bestSelling'] ?? [];
+$bookingsPerDay = $chartData['bookingsPerDay'] ?? [];
+$bestSelling = $chartData['bestSelling'] ?? [];
 
 /* NEW ANALYTICS */
-$revenuePerDay = $adminData['revenuePerDay'] ?? [];
-$ordersByHour = $adminData['ordersByHour'] ?? [];
-$bookingItems = $adminData['bookingItems'] ?? [];
+$revenuePerDay = $chartData['revenuePerDay'] ?? [];
+$ordersByHour = $chartData['ordersByHour'] ?? [];
+$bookingItems = $chartData['bookingItems'] ?? [];
 
 /* ================= NEW FEATURES ================= */
-$ordersByDayOfWeek = $adminData['ordersByDayOfWeek'] ?? [];
-$categorySales = $adminData['categorySales'] ?? [];
+$ordersByDayOfWeek = $chartData['ordersByDayOfWeek'] ?? [];
+$categorySales = $chartData['categorySales'] ?? [];
 
 /* ================= PER DAY KPI ================= */
 $todayRevenue = $kpis['todayRevenue'] ?? 0;
@@ -55,16 +56,18 @@ $todaySales   = $kpis['todaySales'] ?? 0;
 $aov = ($todaySales > 0) ? ($todayRevenue / $todaySales) : 0;
 
 /* ================= BOOKING KPIs (NEW) ================= */
-$bookingTotalSales = $adminData['bookingTotalSales'] ?? 0;
-$bookingTotalOrders = $adminData['bookingTotalOrders'] ?? 0;
+$bookingTotalSales = $chartData['bookingTotalSales'] ?? 0;
+$bookingTotalOrders = $chartData['bookingTotalOrders'] ?? 0;
+
+$chartData['latestBookings'] = $latestBookings;
 
 $bookingAOV = ($bookingTotalOrders > 0)
     ? ($bookingTotalSales / $bookingTotalOrders)
     : 0;
 
 /* ================= BOOKING PER DAY AOV (NEW) ================= */
-$bookingRevenuePerDay = $adminData['bookingRevenuePerDay'] ?? [];
-$bookingOrdersPerDay  = $adminData['bookingOrdersPerDay'] ?? [];
+$bookingRevenuePerDay = $chartData['bookingRevenuePerDay'] ?? [];
+$bookingOrdersPerDay  = $chartData['bookingOrdersPerDay'] ?? [];
 
 $bookingAovPerDay = [];
 
@@ -141,20 +144,20 @@ foreach($bookingRevenuePerDay as $day => $rev){
         <div class="admin-dashboard-kpi-label">Today's AOV</div>
     </div>
 
-    <!-- ✅ NEW BOOKING KPI -->
+    <!-- TODAY BOOKING KPI -->
     <div class="admin-dashboard-kpi-card">
-        <div class="admin-dashboard-kpi-value">₱<?= number_format($bookingTotalSales,2) ?></div>
-        <div class="admin-dashboard-kpi-label">Booking Sales</div>
+        <div class="admin-dashboard-kpi-value">₱<?= number_format($todayBookingSales,2) ?></div>
+        <div class="admin-dashboard-kpi-label">Today's Booking Sales</div>
     </div>
 
     <div class="admin-dashboard-kpi-card">
-        <div class="admin-dashboard-kpi-value"><?= $bookingTotalOrders ?></div>
-        <div class="admin-dashboard-kpi-label">Booking Orders</div>
+        <div class="admin-dashboard-kpi-value"><?= $todayBookingOrders ?></div>
+        <div class="admin-dashboard-kpi-label">Today's Booking Orders</div>
     </div>
 
     <div class="admin-dashboard-kpi-card">
-        <div class="admin-dashboard-kpi-value">₱<?= number_format($bookingAOV,2) ?></div>
-        <div class="admin-dashboard-kpi-label">Booking AOV</div>
+        <div class="admin-dashboard-kpi-value">₱<?= number_format($todayBookingAOV,2) ?></div>
+        <div class="admin-dashboard-kpi-label">Today's Booking AOV</div>
     </div>
 
     <div class="admin-dashboard-kpi-card">
@@ -193,15 +196,25 @@ foreach($bookingRevenuePerDay as $day => $rev){
 
 <div class="admin-dashboard-chart-grid">
 
+    
     <div class="admin-dashboard-chart-box">
-        <h3>Bookings Per Day</h3>
-        <canvas id="bookingsChart"></canvas>
-    </div>
+    <h3>Latest Day Bookings</h3>
+    <canvas id="latestBookingsChart"></canvas>
+
+</div>
+
+<div class="admin-dashboard-chart-box">
+    <h3>Today's Most Booked Items</h3>
+    <canvas id="todayMostBookedChart"></canvas>
+</div>
 
     <div class="admin-dashboard-chart-box">
-        <h3>Most Booked Items</h3>
-        <canvas id="bookingItemsChart"></canvas>
-    </div>
+    <h3>Latest Booking Revenue</h3>
+    <canvas id="bookingLatestRevenueChart"></canvas>
+
+    
+</div>
+</div>
 
 
 </div>
@@ -210,37 +223,58 @@ foreach($bookingRevenuePerDay as $day => $rev){
 <div class="section-title">ORDERS ANALYTICS</div>
 
 <div class="admin-dashboard-chart-grid">
-
     <div class="admin-dashboard-chart-box">
-        <h3>Best Selling Products</h3>
-        <canvas id="bestSellingChart"></canvas>
-    </div>
-
-    <div class="admin-dashboard-chart-box">
-        <h3>Category Sales</h3>
-        <canvas id="categoryChart"></canvas>
-    </div>
-
+    <h3>Category Sales (Latest Day Orders)</h3>
+    <canvas id="categoryLatestChart"></canvas>
 </div>
-
-<!-- ADVANCED -->
-<div class="section-title">ADVANCED ANALYTICS</div>
-
-<div class="admin-dashboard-chart-grid">
 
     <div class="admin-dashboard-chart-box">
         <h3>Revenue Today</h3>
         <canvas id="revenueChart"></canvas>
     </div>
 
+    <div class="admin-dashboard-chart-grid">
+
+    <div class="admin-dashboard-chart-box">
+    <h3>Best Selling Per Day</h3>
+    <canvas id="bestSellingDayChart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+<!-- ADVANCED -->
+<div class="section-title">PERFORMANCE ANALYTICS</div>
+
+<div class="admin-dashboard-chart-grid">
+
+   
     <div class="admin-dashboard-chart-box">
         <h3>Orders by Hour</h3>
         <canvas id="hourChart"></canvas>
+    </div>
+    <div class="admin-dashboard-chart-box">
+        <h3>Category Sales</h3>
+        <canvas id="categoryChart"></canvas>
     </div>
 
     <div class="admin-dashboard-chart-box">
         <h3>Orders by Day of Week</h3>
         <canvas id="weekChart"></canvas>
+    </div>
+    <div class="admin-dashboard-chart-box">
+        <h3>Best Selling Products</h3>
+        <canvas id="bestSellingChart"></canvas>
+    </div>
+    <div class="admin-dashboard-chart-box">
+        <h3>Bookings Per Day</h3>
+        <canvas id="bookingsChart"></canvas>
+    </div>
+    
+    <div class="admin-dashboard-chart-box">
+        <h3>Most Booked Items</h3>
+        <canvas id="bookingItemsChart"></canvas>
     </div>
 
 </div>
@@ -265,19 +299,26 @@ backgroundColor:['#d69016','#36980c','#e2120b']
 }
 });
 
-/* KITCHEN */
 new Chart(document.getElementById('kitchenChart'), {
-type:'doughnut',
-data:{
-labels:['Preparing','Ready','Done'],
-datasets:[{
-data:[
-<?= $kitchenStatus['preparing'] ?>,
-<?= $kitchenStatus['ready'] ?>,
-<?= $kitchenStatus['done'] ?>
-],
-backgroundColor:['#d69016','#1d83c7','#36980c']
+type: 'bar',
+data: {
+labels: ['Preparing','Ready','Done'],
+datasets: [{
+    label: 'Kitchen Status',
+    data: [
+        <?= $kitchenStatus['preparing'] ?>,
+        <?= $kitchenStatus['ready'] ?>,
+        <?= $kitchenStatus['done'] ?>
+    ],
+    backgroundColor: ['#d69016','#1d83c7','#36980c']
 }]
+},
+options: {
+    responsive: true,
+    scales: {
+        x: { stacked: true },
+        y: { stacked: true, beginAtZero: true }
+    }
 }
 });
 
@@ -323,9 +364,8 @@ backgroundColor:'#90CAF9'
 }
 });
 
-/* CATEGORY */
 new Chart(document.getElementById('categoryChart'),{
-type:'pie',
+type:'bar',
 data:{
 labels:["Foods","Drinks","Beverages"],
 datasets:[{
@@ -336,10 +376,13 @@ data:[
 ],
 backgroundColor:['#4CAF50','#2196F3','#FF9800']
 }]
+},
+options:{
+plugins:{legend:{display:false}},
+scales:{y:{beginAtZero:true}}
 }
 });
 
-/* REVENUE */
 new Chart(document.getElementById('revenueChart'),{
 type:'bar',
 data:{
@@ -347,8 +390,19 @@ labels:["Today"],
 datasets:[{
 label:'Revenue',
 data:[<?= $todayRevenue ?>],
-backgroundColor:'#36980c'
+
+backgroundColor:'#36980c',
+borderRadius:8,
+borderSkipped:false
 }]
+},
+options:{
+responsive:true,
+scales:{
+y:{
+beginAtZero:true
+}
+}
 }
 });
 
@@ -378,7 +432,7 @@ backgroundColor:'#9C27B0'
 }
 });
 
-/* BOOKING ITEMS */
+/*booking item chart in perf */
 new Chart(document.getElementById('bookingItemsChart'),{
 type:'bar',
 data:{
@@ -388,8 +442,150 @@ label:'Booked Items',
 data:<?= json_encode(array_values($bookingItems)) ?>,
 backgroundColor:'#FF9800'
 }]
+},
+options:{
+indexAxis:'y',   
+scales:{
+x:{beginAtZero:true}
+}
 }
 });
+
+/* BEST SELLING PER DAY */
+new Chart(document.getElementById('bestSellingDayChart'), {
+type: 'bar',
+data: {
+labels: <?= json_encode($bestSellingPerDayLabels ?? []) ?>,
+datasets: [{
+label: 'Best Selling (Latest Day)',
+data: <?= json_encode($bestSellingPerDayData ?? []) ?>,
+backgroundColor: '#FF7043'
+}]
+}
+});
+
+/*todays category latest chart  */
+new Chart(document.getElementById('categoryLatestChart'), {
+type: 'doughnut',
+data: {
+labels: ["Foods","Drinks","Beverages"],
+datasets: [{
+data: [
+<?= $chartData['categorySalesLatestDay']['Foods'] ?? 0 ?>,
+<?= $chartData['categorySalesLatestDay']['Drinks'] ?? 0 ?>,
+<?= $chartData['categorySalesLatestDay']['Beverages'] ?? 0 ?>
+],
+backgroundColor: ['#4CAF50','#2196F3','#FF9800']
+}]
+}
+});
+new Chart(document.getElementById('bookingLatestRevenueChart'), {
+type: 'bar',
+data: {
+labels: ["<?= $chartData['latestBookingDate'] ?? 'Latest' ?>"],
+datasets: [{
+label: 'Revenue',
+data: [<?= $chartData['bookingRevenueLatestDay'] ?? 0 ?>],
+backgroundColor: '#36980c'
+}]
+}
+});
+
+/*latest booking chart */
+const latestBookings = <?= json_encode($chartData['latestBookings'] ?? []) ?>;
+
+const ctx = document.getElementById("latestBookingsChart").getContext("2d");
+
+new Chart(ctx, {
+    type: "bar",
+    data: {
+        labels: latestBookings.labels,
+        datasets: [{
+            label: "Bookings Today",
+            data: latestBookings.data,
+
+            // 🔥 different colors per bar
+            backgroundColor: [
+                '#1d83c7',
+                '#36980c',
+                '#d69016',
+                '#e2120b',
+                '#9C27B0',
+                '#FF9800',
+                '#4CAF50',
+                '#03A9F4',
+                '#795548',
+                '#607D8B'
+            ],
+
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { precision: 0 }
+            }
+        }
+    }
+});
+
+/*todays most booked in booking chart */
+new Chart(document.getElementById('todayMostBookedChart'), {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode(array_keys($todayMostBooked)) ?>,
+        datasets: [{
+            label: 'Bookings Today',
+            data: <?= json_encode(array_values($todayMostBooked)) ?>,
+
+            
+            backgroundColor: [
+                '#1d83c7',
+                '#36980c',
+                '#d69016',
+                '#e2120b',
+                '#9C27B0',
+                '#FF9800',
+                '#4CAF50',
+                '#03A9F4'
+            ]
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: { precision: 0 }
+            }
+        }
+    }
+});
+
+<!-- your existing charts scripts above -->
+
+
+// 🔥 MIDNIGHT AUTO REFRESH
+function checkMidnightReset() {
+    const now = new Date();
+
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+
+    if (hours === 0 && minutes === 0 && seconds === 0) {
+        location.reload();
+    }
+}
+
+setInterval(checkMidnightReset, 1000);
+
+
+
 </script>
 
 </body>
