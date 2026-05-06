@@ -9,138 +9,16 @@ if(!isset($_SESSION['cashier_email'])){
     exit;
 }
 
-date_default_timezone_set('Asia/Manila');
+$data = include(__DIR__ . "/cashier_index_process.php");
 
-$rdb = new firebaseRDB($databaseURL);
+/* extract */
+$today_order_sales = $data['today_order_sales'];
+$today_booking_sales = $data['today_booking_sales'];
+$today_total_sales = $data['today_total_sales'];
+$avg_order = $data['avg_order'];
 
-/* ================= FETCH ================= */
-
-$orders_raw = $rdb->retrieve("/orders");
-$orders = json_decode($orders_raw, true) ?? [];
-
-$bookings_raw = $rdb->retrieve("/bookings");
-$bookings = json_decode($bookings_raw, true) ?? [];
-
-/* ================= DATE ================= */
-
-$today = date('Y-m-d');
-$current_month = date('Y-m');
-
-/* ================= ORDERS ================= */
-
-$today_order_sales = 0;
-$monthly_order_sales = 0;
-$order_count = 0;
-
-$pending_orders = [];
-
-foreach($orders as $id => $order){
-
-    if(empty($order['created_at'])) continue;
-
-    $created = strtotime($order['created_at']);
-    if(!$created) continue;
-
-    $order_date = date('Y-m-d', $created);
-    $order_month = date('Y-m', $created);
-
-    $status = strtolower($order['status'] ?? '');
-    $payment_status = strtolower($order['payment_status'] ?? '');
-
-    $total = floatval($order['total'] ?? 0);
-
-    if($payment_status === 'paid' || $payment_status === 'no_payment_required'){
-
-        if($order_date === $today){
-            $today_order_sales += $total;
-            $order_count++;
-        }
-
-        if($order_month === $current_month){
-            $monthly_order_sales += $total;
-        }
-    }
-
-    if($status === 'pending'){
-        $order['id'] = $id;
-        $pending_orders[] = $order;
-    }
-}
-
-/* ================= BOOKINGS (FIXED PROPERLY) ================= */
-
-$today_booking_sales = 0;
-$monthly_booking_sales = 0;
-$booking_count = 0;
-
-$today_bookings = [];
-
-foreach($bookings as $id => $b){
-
-    // ✅ correct time source for your data
-    $time_source = $b['appointment_time']
-        ?? $b['created_at']
-        ?? $b['updated_at']
-        ?? null;
-
-    if(!$time_source) continue;
-
-    $time = strtotime($time_source);
-    if(!$time) continue;
-
-    $booking_date = date('Y-m-d', $time);
-    $booking_month = date('Y-m', $time);
-
-    // ✅ FIX: include ALL your real payment types
-   $payment_status = strtolower($b['payment_status'] ?? '');
-$status = strtolower($b['status'] ?? '');
-
-/*
-✔ treat these as valid revenue:
-- paid
-- no_payment_required (YOUR CASE)
-- counter
-- completed
-*/
-$is_paid =
-    $payment_status === 'paid' ||
-    $payment_status === 'no_payment_required' ||
-    $payment_status === 'counter' ||
-    $payment_status === 'completed' ||
-    $status === 'confirmed'; // optional fallback
-
-    if($is_paid){
-
-        if($booking_date === $today){
-            $today_booking_sales += $total;
-            $booking_count++;
-        }
-
-        if($booking_month === $current_month){
-            $monthly_booking_sales += $total;
-        }
-    }
-
-    if($booking_date === $today){
-        $b['id'] = $id;
-        $today_bookings[] = $b;
-    }
-}
-
-/* ================= TOTALS ================= */
-
-$today_total_sales = $today_order_sales + $today_booking_sales;
-
-$avg_order = ($order_count > 0)
-    ? ($today_order_sales / $order_count)
-    : 0;
-
-/* ================= SORT BOOKINGS ================= */
-
-usort($today_bookings, function($a, $b){
-    return strtotime($a['appointment_time'] ?? $a['appointment_time'] ?? '') 
-         <=> strtotime($b['appointment_time'] ?? $b['appointment_time'] ?? '');
-});
+$pending_orders = $data['pending_orders'];
+$today_bookings = $data['today_bookings'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -230,52 +108,111 @@ usort($today_bookings, function($a, $b){
             </div>
         
 
-        <!-- CENTER -->
-        <div class="cashier-dashboard-column cashier-dashboard-center">
+        <!-- ================= CENTER ================= -->
+<div class="cashier-dashboard-column cashier-dashboard-center">
 
-            <div class="cashier-dashboard-tab-container">
-                <button class="cashier-dashboard-tab active">
-                    PENDING ORDERS (<?= count($pending_orders) ?>)
-                </button>
-            </div>
+    <!-- ================= PENDING BOOKINGS (TOP) ================= -->
+    <div class="cashier-dashboard-tab-container">
+        <button class="cashier-dashboard-tab active">
+            TODAY'S BOOKINGS  (<?= count($latest_pending_bookings) ?>)
+        </button>
+    </div>
 
-            <div class="cashier-dashboard-card-table">
-                <table class="cashier-dashboard-data-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Customer</th>
-                            <th>Total</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+    <div class="cashier-dashboard-card-table">
+        <table class="cashier-dashboard-data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Guest</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
 
-                        <?php if(empty($pending_orders)): ?>
-                            <tr><td colspan="4" style="text-align:center; padding:30px;">No pending orders</td></tr>
-                        <?php else: ?>
+            <tbody>
 
-                            <?php foreach(array_slice($pending_orders, 0, 5) as $po): ?>
-                            <tr>
-                                <td>#<?= substr($po['id'], -4) ?></td>
-                                <td><?= htmlspecialchars($po['full_name'] ?? 'Walk-in') ?></td>
-                                <td>₱<?= number_format($po['total'] ?? 0, 2) ?></td>
-                                <td><a href="view_orders.php" class="status pending">View</a></td>
-                            </tr>
-                            <?php endforeach; ?>
+           <?php if(empty($latest_pending_bookings)): ?>
+    <tr>
+        <td colspan="3" style="text-align:center; padding:30px;">
+            No pending bookings
+        </td>
+    </tr>
+<?php else: ?>
 
-                        <?php endif; ?>
+    <?php foreach(array_slice($latest_pending_bookings, 0, 5) as $tb): ?>
 
-                    </tbody>
-                </table>
-            </div>
+    <tr>
+        <td><?= date('h:i A', strtotime($tb['appointment_time'])) ?></td>
+        <td><?= htmlspecialchars($tb['full_name']) ?></td>
+        <td>
+            <a href="view_bookings.php?booking_id=<?= $tb['id'] ?>" class="status pending">
+                View
+            </a>
+        </td>
+    </tr>
 
-        </div>
+    <?php endforeach; ?>
+
+<?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <br>
+
+    <!-- ================= PENDING ORDERS (BOTTOM) ================= -->
+    <div class="cashier-dashboard-tab-container">
+        <button class="cashier-dashboard-tab active">
+            PENDING ORDERS (<?= count($pending_orders) ?>)
+        </button>
+    </div>
+
+    <div class="cashier-dashboard-card-table">
+        <table class="cashier-dashboard-data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+            <?php if(empty($pending_orders)): ?>
+                <tr>
+                    <td colspan="4" style="text-align:center; padding:30px;">
+                        No pending orders
+                    </td>
+                </tr>
+            <?php else: ?>
+
+                <?php foreach(array_slice($pending_orders, 0, 5) as $po): ?>
+                <tr>
+                    <td>#<?= substr($po['id'], -4) ?></td>
+                    <td><?= htmlspecialchars($po['full_name'] ?? 'Walk-in') ?></td>
+                    <td>₱<?= number_format($po['total'] ?? 0, 2) ?></td>
+                    <td>
+                        <a href="view_orders.php" class="status pending">
+                            View
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+
+            <?php endif; ?>
+
+            </tbody>
+        </table>
+    </div>
+
+</div>
+        
 
         <!-- RIGHT -->
         <div class="cashier-dashboard-column">
 
-            <h2 class="cashier-dashboard-label">TODAY'S BOOKINGS</h2>
+            <h2 class="cashier-dashboard-label">TODAY'S BOOKINGS SCHEDULED</h2>
 
             <div class="cashier-dashboard-card-table">
                 <table class="cashier-dashboard-data-table">
@@ -296,7 +233,7 @@ usort($today_bookings, function($a, $b){
                             <tr>
                                 <td><?= date('h:i A', strtotime($tb['appointment_time'])) ?></td>
                                 <td><?= htmlspecialchars($tb['full_name'] ?? '') ?></td>
-                                <td><a href="view_bookings.php" class="status pending">View</a></td>
+                                <td><a href="scheduled_booking.php" class="status pending">View</a></td>
                                 
                             </tr>
                             <?php endforeach; ?>
