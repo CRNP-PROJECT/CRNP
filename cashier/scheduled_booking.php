@@ -79,109 +79,128 @@ foreach($bookings as $id => $b){
 <head>
 <meta charset="utf-8">
 <title>Booking Calendar</title>
+<link href="https://cdn.jsdelivr.com/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<style>
-body{background:#f4f6f9;}
-
-.header{
-    background:#0d6efd;
-    color:#fff;
-    padding:15px;
-    border-radius:12px;
-    margin-bottom:15px;
-}
-
-.calendar-box{
-    background:white;
-    padding:15px;
-    border-radius:12px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.08);
-    margin-bottom:20px;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-    gap:15px;
-}
-
-.card-box{
-    background:white;
-    padding:15px;
-    border-radius:16px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.08);
-}
-
-.items{
-    font-size:13px;
-    background:#f8f9fa;
-    padding:8px;
-    border-radius:10px;
-}
-</style>
 </head>
 
-<body>
+<body class="schedule-booking-page">
+
+<header class="navbar">
+
+    <div class="navbar-brand-container">
+        <img src="../img/logo.png" class="logo" alt="Logo">
+    </div>
+
     <div class="navbar-right">
+
         <ul class="navbar-menu">
             <li><a href="cashier_index.php">Dashboard</a></li>
-            <li><a href="view_bookings.php" class="active">Bookings</a></li>
-            <li><a href="booking_history.php">History</a></li>
-            <li><a href="booking_payment.php">Payment Status</a></li>
+            <li><a href="create_order.php">Create Orders</a></li>
+            <li><a href="view_orders.php">Orders</a></li>
+            <li><a href="cashier_orderHistory.php">History</a></li>
+            <li><a href="scheduled_booking.php" class="active">Schedule Booking</a></li>
             <li><a href="cashier_logout.php">Logout</a></li>
         </ul>
     </div>
 
-<div class="container mt-4">
+</header>
 
-<div class="header">
-    <h4> Booking Calendar</h4>
+<div class="container mt-4 schedule-booking-container">
+
+<div class="schedule-booking-header">
+    <h4>Booking Calendar</h4>
     <small>Click a date to view appointments</small>
 </div>
 
 <!-- CALENDAR SELECTOR -->
-<div class="calendar-box">
-    <form method="GET">
-        <label><b>Select Date:</b></label>
-        <input type="date" name="date" value="<?= $selectedDate ?>" class="form-control mt-2" onchange="this.form.submit()">
+<div class="schedule-booking-calendar-box">
+    <form method="GET" class="schedule-booking-form">
+
+        <label class="schedule-booking-label">
+            <b>Select Date:</b>
+        </label>
+
+        <input 
+            type="date" 
+            name="date" 
+            value="<?= $selectedDate ?>" 
+            class="form-control schedule-booking-date-input mt-2"
+            onchange="this.form.submit()"
+        >
+
     </form>
 </div>
 
 <!-- SELECTED DATE -->
-<h5> Appointments on <?= $selectedDate ?></h5>
+<h5 class="schedule-booking-selected-date">
+    Appointments on <?= $selectedDate ?>
+</h5>
 
-<div class="grid">
+<div class="schedule-booking-grid">
 
 <?php if(empty($scheduled)): ?>
-    <div class="alert alert-warning">No bookings for this date</div>
+
+    <div class="alert alert-warning schedule-booking-empty">
+        No bookings for this date
+    </div>
+
 <?php endif; ?>
 
 <?php foreach($scheduled as $s): ?>
 
-<div class="card-box">
+<div class="schedule-booking-card-box">
 
-    <h5><?= htmlspecialchars($s['name']) ?></h5>
+    <div class="schedule-booking-card-top">
+        <h5 class="schedule-booking-client-name">
+            <?= htmlspecialchars($s['name']) ?>
+        </h5>
+    </div>
 
-    <p><b>Appointment Time:</b> <?= $s['time'] ?></p>
+    <div class="schedule-booking-info-group">
 
-    <p><b> Address:</b> <?= $s['address'] ?></p>
-    <p><b> Contact:</b> <?= $s['contact'] ?></p>
+        <p class="schedule-booking-info-text">
+            <b>Appointment Time:</b> <?= $s['time'] ?>
+        </p>
 
-    <hr>
+        <p class="schedule-booking-info-text">
+            <b>Address:</b> <?= $s['address'] ?>
+        </p>
 
-    <p><b>Items:</b></p>
-    <div class="items"><?= $s['items'] ?: "No items" ?></div>
+        <p class="schedule-booking-info-text">
+            <b>Contact:</b> <?= $s['contact'] ?>
+        </p>
 
-    <hr>
+    </div>
 
-    <p><b> Total:</b> ₱<?= number_format($s['total'],2) ?></p>
-    <p><b> Method:</b> <?= $s['payment_method'] ?></p>
+    <hr class="schedule-booking-divider">
 
-    <p class="<?= $s['payment_color'] ?>">
-        <b>Status:</b> <?= $s['payment_status'] ?>
+    <p class="schedule-booking-item-title">
+        <b>Items:</b>
     </p>
+
+    <div class="schedule-booking-items">
+        <?= $s['items'] ?: "No items" ?>
+    </div>
+
+    <hr class="schedule-booking-divider">
+
+    <div class="schedule-booking-payment-section">
+
+        <p class="schedule-booking-payment-text">
+            <b>Total:</b> ₱<?= number_format($s['total'],2) ?>
+        </p>
+
+        <p class="schedule-booking-payment-text">
+            <b>Method:</b> <?= $s['payment_method'] ?>
+        </p>
+
+        <p class="schedule-booking-payment-text <?= $s['payment_color'] ?>">
+            <b>Status:</b> <?= $s['payment_status'] ?>
+        </p>
+
+    </div>
 
 </div>
 

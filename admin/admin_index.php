@@ -106,10 +106,15 @@ foreach($bookingRevenuePerDay as $day => $rev){
                 <a href="product_list.php">Product List</a>
             </div>
         </li>
+        <li class="navbar-dropdown">
+            <a href="#">Bookings ▼</a>
+            <div class="navbar-dropdown-content">
+                <a href="booking_add.php">Booking Items</a>
+                <a href="booking_reserve.php">Booking List</a>
+                <a href="booking_add.php">Booking</a>
+            </div>
+        </li>
 
-        <li><a href="booking_add.php">Booking Items</a></li>
-        <li><a href="booking_reserve.php">Booking List</a></li>
-        <li><a href="booking_add.php">Booking</a></li>
         <li><a href="daily_report.php">Daily report</a></li>
         <li><a href="admin_log.php">Logout</a></li>
     </ul>
@@ -294,7 +299,7 @@ data:[
 <?= $ordersStatus['accepted'] ?>,
 <?= $ordersStatus['rejected'] ?>
 ],
-backgroundColor:['#d69016','#36980c','#e2120b']
+backgroundColor:['#F59E0B','#22C55E','#EF4444']
 }]
 }
 });
@@ -310,7 +315,7 @@ datasets: [{
         <?= $kitchenStatus['ready'] ?>,
         <?= $kitchenStatus['done'] ?>
     ],
-    backgroundColor: ['#d69016','#1d83c7','#36980c']
+    backgroundColor: ['#F59E0B','#3B82F6','#22C55E']
 }]
 },
 options: {
@@ -333,7 +338,7 @@ data:[
 <?= $bookingsStatus['accepted'] ?>,
 <?= $bookingsStatus['rejected'] ?>
 ],
-backgroundColor:['#d69016','#36980c','#e2120b']
+backgroundColor:['#F59E0B','#22C55E','#EF4444']
 }]
 }
 });
@@ -346,7 +351,7 @@ labels:<?= json_encode(array_keys($bookingsPerDay)) ?>,
 datasets:[{
 label:'Bookings',
 data:<?= json_encode(array_values($bookingsPerDay)) ?>,
-backgroundColor:'#FFB74D'
+backgroundColor:'#F97316'
 }]
 }
 });
@@ -359,7 +364,7 @@ labels:<?= json_encode(array_keys($bestSelling)) ?>,
 datasets:[{
 label:'Items Sold',
 data:<?= json_encode(array_values($bestSelling)) ?>,
-backgroundColor:'#90CAF9'
+backgroundColor:'#60A5FA'
 }]
 }
 });
@@ -374,7 +379,7 @@ data:[
 <?= $categorySales['Drinks'] ?? 0 ?>,
 <?= $categorySales['Beverages'] ?? 0 ?>
 ],
-backgroundColor:['#4CAF50','#2196F3','#FF9800']
+backgroundColor:['#22C55E','#3B82F6','#F59E0B']
 }]
 },
 options:{
@@ -391,7 +396,7 @@ datasets:[{
 label:'Revenue',
 data:[<?= $todayRevenue ?>],
 
-backgroundColor:'#36980c',
+backgroundColor:'#22C55E',
 borderRadius:8,
 borderSkipped:false
 }]
@@ -414,7 +419,7 @@ labels:<?= json_encode(array_keys($ordersByHour)) ?>,
 datasets:[{
 label:'Orders',
 data:<?= json_encode(array_values($ordersByHour)) ?>,
-backgroundColor:'#1d83c7'
+backgroundColor:'#6366F1'
 }]
 }
 });
@@ -427,7 +432,7 @@ labels:<?= json_encode(array_keys($ordersByDayOfWeek)) ?>,
 datasets:[{
 label:'Orders',
 data:<?= json_encode(array_values($ordersByDayOfWeek)) ?>,
-backgroundColor:'#9C27B0'
+backgroundColor:'#8B5CF6'
 }]
 }
 });
@@ -440,7 +445,7 @@ labels:<?= json_encode(array_keys($bookingItems)) ?>,
 datasets:[{
 label:'Booked Items',
 data:<?= json_encode(array_values($bookingItems)) ?>,
-backgroundColor:'#FF9800'
+backgroundColor:'#F97316'
 }]
 },
 options:{
@@ -459,7 +464,7 @@ labels: <?= json_encode($bestSellingPerDayLabels ?? []) ?>,
 datasets: [{
 label: 'Best Selling (Latest Day)',
 data: <?= json_encode($bestSellingPerDayData ?? []) ?>,
-backgroundColor: '#FF7043'
+backgroundColor: '#14B8A6'
 }]
 }
 });
@@ -475,10 +480,11 @@ data: [
 <?= $chartData['categorySalesLatestDay']['Drinks'] ?? 0 ?>,
 <?= $chartData['categorySalesLatestDay']['Beverages'] ?? 0 ?>
 ],
-backgroundColor: ['#4CAF50','#2196F3','#FF9800']
+backgroundColor: ['#22C55E','#3B82F6','#F59E0B']
 }]
 }
 });
+
 new Chart(document.getElementById('bookingLatestRevenueChart'), {
 type: 'bar',
 data: {
@@ -486,7 +492,7 @@ labels: ["<?= $chartData['latestBookingDate'] ?? 'Latest' ?>"],
 datasets: [{
 label: 'Revenue',
 data: [<?= $chartData['bookingRevenueLatestDay'] ?? 0 ?>],
-backgroundColor: '#36980c'
+backgroundColor: '#10B981'
 }]
 }
 });
@@ -506,16 +512,16 @@ new Chart(ctx, {
 
             // 🔥 different colors per bar
             backgroundColor: [
-                '#1d83c7',
-                '#36980c',
-                '#d69016',
-                '#e2120b',
-                '#9C27B0',
-                '#FF9800',
-                '#4CAF50',
-                '#03A9F4',
-                '#795548',
-                '#607D8B'
+                '#3B82F6',
+                '#22C55E',
+                '#F59E0B',
+                '#EF4444',
+                '#8B5CF6',
+                '#F97316',
+                '#14B8A6',
+                '#06B6D4',
+                '#A16207',
+                '#64748B'
             ],
 
             borderRadius: 6
@@ -543,14 +549,14 @@ new Chart(document.getElementById('todayMostBookedChart'), {
 
             
             backgroundColor: [
-                '#1d83c7',
-                '#36980c',
-                '#d69016',
-                '#e2120b',
-                '#9C27B0',
-                '#FF9800',
-                '#4CAF50',
-                '#03A9F4'
+                '#3B82F6',
+                '#22C55E',
+                '#F59E0B',
+                '#EF4444',
+                '#8B5CF6',
+                '#F97316',
+                '#14B8A6',
+                '#06B6D4'
             ]
         }]
     },
@@ -566,9 +572,6 @@ new Chart(document.getElementById('todayMostBookedChart'), {
     }
 });
 
-<!-- your existing charts scripts above -->
-
-
 // 🔥 MIDNIGHT AUTO REFRESH
 function checkMidnightReset() {
     const now = new Date();
@@ -583,8 +586,6 @@ function checkMidnightReset() {
 }
 
 setInterval(checkMidnightReset, 1000);
-
-
 
 </script>
 

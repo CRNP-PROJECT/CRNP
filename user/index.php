@@ -70,9 +70,9 @@ if(is_array($data)) {
         <div class="dashboard-left">
             <h1 class="dashboard-title">WHERE FLAVOR<br>LINGERS</h1>
             <p class="dashboard-text">
-                From our kitchen to your table, <?php echo htmlspecialchars($username); ?>. 
-                Experience the distinct culinary charm of Crates N' Plates—where 
-                every meal is an invitation to stay a little longer.
+                Welcome back, <?php echo htmlspecialchars($username); ?>! 
+                Experience the distinct culinary charm of Crates N' Plates—
+                where every meal is an invitation to stay a little longer.
             </p>
             <div class="dashboard-buttons">
                 <a href="aboutus.php" class="dashboard-btn">About Us</a>

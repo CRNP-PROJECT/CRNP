@@ -70,7 +70,6 @@ $orders = json_decode($orders_raw, true) ?? [];
     <th>Appointment Time</th>
     <th>Status</th>
     <th>Action</th>
-    <th>View</th>
 </tr>
 </thead>
 
@@ -146,10 +145,6 @@ foreach($orders as $id => $order){
             <button class="btn reject">✖</button>
         </form>
 
-    </td>
-
-    <td>
-        <a href="cashier_view_order.php?id=<?= $id ?>" class="btn view">👁</a>
     </td>
 
 </tr>
