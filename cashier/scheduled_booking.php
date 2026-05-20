@@ -82,45 +82,7 @@ foreach($bookings as $id => $b){
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<style>
-body{background:#f4f6f9;}
-
-.header{
-    background:#0d6efd;
-    color:#fff;
-    padding:15px;
-    border-radius:12px;
-    margin-bottom:15px;
-}
-
-.calendar-box{
-    background:white;
-    padding:15px;
-    border-radius:12px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.08);
-    margin-bottom:20px;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-    gap:15px;
-}
-
-.card-box{
-    background:white;
-    padding:15px;
-    border-radius:16px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.08);
-}
-
-.items{
-    font-size:13px;
-    background:#f8f9fa;
-    padding:8px;
-    border-radius:10px;
-}
-</style>
+ 
 </head>
 
 <body>

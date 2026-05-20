@@ -4802,5 +4802,5 @@ body.payment-status {
     }
 }
 git add .
-git commit -m "google button is already connected to realtimedb"
+git commit -m "fix kitchen and cashier create acc in adminn"
 git push -u origin main

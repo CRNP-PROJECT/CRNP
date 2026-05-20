@@ -59,6 +59,7 @@ $today_bookings = $data['today_bookings'];
     <div class="cashier-dashboard-header">
         <h1 class="cashier-dashboard-welcome-title">
             Welcome, Cashier
+            <h4><p><?php echo htmlspecialchars($_SESSION['cashier_email'] ?? 'Cashier'); ?></p></h4>
         </h1>
 
         <!-- ✅ ADDED TIME -->

@@ -10,36 +10,6 @@ $action = $_POST['action'] ?? '';
 
 switch($action){
 
-// ================= SIGNUP =================
-case 'signup':
-
-    $full_name = $_POST['full_name'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
-
-    if(!$email || !$password){
-        die("Email and password are required.");
-    }
-
-    $cashiers = json_decode($rdb->retrieve("/cashiers"), true) ?? [];
-
-    foreach($cashiers as $c){
-        if(strtolower($c['email'] ?? '') === strtolower($email)){
-            die("Email already exists.");
-        }
-    }
-
-    $rdb->insert("/cashiers", [
-        'full_name' => $full_name,
-        'email' => $email,
-        'password' => password_hash($password, PASSWORD_DEFAULT),
-        'created_at' => date('Y-m-d H:i:s')
-    ]);
-
-    $_SESSION['cashier_email'] = $email;
-    header("Location: cashier_index.php");
-    exit;
-
 
 // ================= LOGIN =================
 case 'login':
@@ -50,15 +20,17 @@ case 'login':
     $cashiers = json_decode($rdb->retrieve("/cashiers"), true) ?? [];
 
     foreach($cashiers as $c){
-        if(strtolower($c['email'] ?? '') === strtolower($email)
-           && password_verify($password, $c['password'] ?? '')){
 
-            $_SESSION['cashier_email'] = $email;
-            header("Location: cashier_index.php");
-            exit;
-        }
+    if(strtolower($c['email'] ?? '') === strtolower($email)
+       && password_verify($password, $c['password'] ?? '')){
+
+        $_SESSION['cashier_email'] = $email;
+        $_SESSION['cashier_name'] = $c['full_name']; // ✅ ADD THIS
+
+        header("Location: cashier_index.php");
+        exit;
     }
-
+}
     die("Invalid email or password");
 
 

@@ -36,9 +36,7 @@
 
             </form>
 
-            <p class="auth-footer">
-                No account? <a href="cashier_signup.php">Sign Up</a>
-            </p>
+            
 
         </div>
 
