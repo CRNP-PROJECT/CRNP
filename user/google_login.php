@@ -83,17 +83,19 @@ try {
     } else {
 
         $firebase_id = array_keys($data)[0];
-        $rdb->update("/google_create_account", $firebase_id, $googleUser);
+        $rdb->update("/google_user", $id, $googleUser);
     }
 
     // SESSION LOGIN
-    $_SESSION['id'] = $id;
-    $_SESSION['name'] = $name;
-    $_SESSION['email'] = $email;
-    $_SESSION['provider'] = "google";
+    $_SESSION['user_id'] = $id;
+$_SESSION['username'] = $name;
+$_SESSION['email'] = $email;
+$_SESSION['provider'] = "google";
 
-    // SUCCESS RESPONSE (important for JS)
-    echo "success";
+session_regenerate_id(true);
+
+    header("Location: index.php");
+exit;
 
 } catch(Exception $e){
 

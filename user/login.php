@@ -70,7 +70,7 @@ function handleCredentialResponse(response) {
 
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = "google-auth.php"; // adjust path
+    form.action = "google_login.php"; // adjust path
 
     const input = document.createElement("input");
     input.type = "hidden";
