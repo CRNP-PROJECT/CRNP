@@ -5200,5 +5200,5 @@ body.payment-status {
     }
 }
 git add .
-git commit -m "new file admin for records in charts"
+git commit -m "fix kitchen and cashier create acc in adminn"
 git push -u origin main

@@ -10,39 +10,30 @@ $action = $_POST['action'] ?? '';
 
 switch($action){
 
-// ================= SIGNUP =================
-case 'signup':
-    $full_name = $_POST['full_name'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $password = $_POST['password'] ?? '';
-
-    if(!$email || !$password){
-        die("Email and password required");
-    }
-
-    $password_hash = password_hash($password, PASSWORD_DEFAULT);
-
-    $rdb->insert("/kitchen", [
-        'full_name' => $full_name,
-        'email' => $email,
-        'password' => $password_hash,
-        'created_at' => date('Y-m-d H:i:s')
-    ]);
-
-    header("Location: kitchen_login.php");
-    exit;
 
 
-// ================= LOGIN =================
 case 'login':
-    $email = $_POST['email'] ?? '';
+
+    $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
+
+    if($email == '' || $password == ''){
+        die("All fields are required.");
+    }
 
     $all_kitchen = json_decode($rdb->retrieve("/kitchen"), true) ?? [];
 
     foreach($all_kitchen as $k){
-        if(($k['email'] ?? '') === $email && password_verify($password, $k['password'] ?? '')){
+
+        if(
+            strtolower($k['email'] ?? '') === strtolower($email) &&
+            password_verify($password, $k['password'] ?? '')
+        ){
+
             $_SESSION['kitchen_email'] = $email;
+            $_SESSION['kitchen_name'] = $k['full_name'] ?? '';
+            $_SESSION['role'] = "kitchen";
+
             header("Location: kitchen_index.php");
             exit;
         }

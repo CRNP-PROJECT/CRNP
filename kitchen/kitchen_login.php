@@ -46,10 +46,7 @@ if(isset($_SESSION['kitchen_email'])){
                 <button type="submit" class="btn-primary-auth">Login</button>
             </form>
 
-            <p class="auth-footer">
-                Don't have an account?
-                <a href="kitchen_signup.php">Sign up</a>
-            </p>
+            
 
         </div>
     </div>

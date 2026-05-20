@@ -101,5 +101,83 @@ if (isset($_GET['delete_rent_item'])) {
     header("Location: booking_add.php");
     exit;
 }
+/* ================= CREATE CASHIER ACCOUNT ================= */
 
+if(isset($_POST['create_cashier'])){
+
+    if(!isset($_SESSION['admin_email'])){
+        die("Unauthorized");
+    }
+
+    $full_name = trim($_POST['full_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if($full_name == '' || $email == '' || $password == ''){
+        die("All fields are required.");
+    }
+
+    /* CHECK DUPLICATE EMAIL */
+
+    $cashiers = json_decode($rdb->retrieve("/cashiers"), true) ?? [];
+
+    foreach($cashiers as $c){
+
+        if(
+            strtolower($c['email'] ?? '') === strtolower($email)
+        ){
+            die("Email already exists.");
+        }
+    }
+
+    /* INSERT CASHIER */
+
+    $rdb->insert("/cashiers", [
+
+        "full_name" => $full_name,
+        "email" => $email,
+        "password" => password_hash($password, PASSWORD_DEFAULT),
+        "created_at" => date('Y-m-d H:i:s')
+
+    ]);
+
+    header("Location: create_cashier.php?success=1");
+    exit;
+}
+/* ================= CREATE KITCHEN ACCOUNT ================= */
+
+if(isset($_POST['action']) && $_POST['action'] == "admin_create_kitchen"){
+
+    if(!isset($_SESSION['admin_email'])){
+        die("Unauthorized");
+    }
+
+    $full_name = trim($_POST['full_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if($full_name == '' || $email == '' || $password == ''){
+        die("All fields are required.");
+    }
+
+    /* CHECK DUPLICATE EMAIL */
+    $kitchens = json_decode($rdb->retrieve("/kitchen"), true) ?? [];
+
+    foreach($kitchens as $k){
+        if(strtolower($k['email'] ?? '') === strtolower($email)){
+            die("Email already exists.");
+        }
+    }
+
+    /* INSERT */
+    $rdb->insert("/kitchen", [
+        "full_name" => $full_name,
+        "email" => $email,
+        "password" => password_hash($password, PASSWORD_DEFAULT),
+        "created_at" => date('Y-m-d H:i:s')
+    ]);
+
+    header("Location: create_kitchen.php?success=1");
+    exit;
+}
 ?>
