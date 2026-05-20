@@ -3257,9 +3257,6 @@ body.cashier-history-booking {
 }
 
 /*SCHEDULE BOOKING*/
-/* =========================
-   SCHEDULE BOOKING PAGE
-========================= */
 
 body.schedule-booking-page{
     font-family:'Segoe UI',sans-serif;
@@ -3372,7 +3369,7 @@ body.schedule-booking-page{
     font-size:16px;
     font-weight:600;
 
-    color:#e6c08b;
+    color:whitesmoke;
 
     letter-spacing:1px;
 }
@@ -3606,10 +3603,6 @@ body.cashier-order-history {
 
 }
 
-
-/* =========================
-   HEADER
-========================= */
 .cashier-order-history .history-header {
     text-align: center;
     margin-top: 100px;
@@ -3809,9 +3802,6 @@ body.cashier-order-history {
 
 /*CASHIER CREATE ORDER*/
 
-/* =========================
-   BACKGROUND (MATCH DASHBOARD)
-========================= */
 body.create-order {
   font-family: 'Segoe UI', sans-serif;
     background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 

@@ -82,9 +82,8 @@ foreach($bookings as $id => $b){
 <link href="https://cdn.jsdelivr.com/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../styles.css">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
- 
+
 </head>
 
 <body class="schedule-booking-page">
@@ -101,10 +100,12 @@ foreach($bookings as $id => $b){
             <li><a href="cashier_index.php">Dashboard</a></li>
             <li><a href="create_order.php">Create Orders</a></li>
             <li><a href="view_orders.php">Orders</a></li>
-            <li><a href="cashier_orderHistory.php">History</a></li>
+            <li><a href="view_bookings.php">Bookings</a></li>
             <li><a href="scheduled_booking.php" class="active">Schedule Booking</a></li>
+            <li><a href="cashier_orderHistory.php">History</a></li>
             <li><a href="cashier_logout.php">Logout</a></li>
         </ul>
+
     </div>
 
 </header>
