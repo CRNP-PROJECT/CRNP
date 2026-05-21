@@ -45,6 +45,7 @@ $today_bookings = $data['today_bookings'];
             <li><a href="create_order.php">Create Orders</a></li>
             <li><a href="view_orders.php">Orders</a></li>
             <li><a href="view_bookings.php">Bookings</a></li>
+            <li><a href="scheduled_booking.php">Schedule Booking</a></li>
             <li><a href="cashier_orderHistory.php">History</a></li>
             <li><a href="cashier_logout.php">Logout</a></li>
         </ul>
@@ -81,10 +82,10 @@ $today_bookings = $data['today_bookings'];
             </a>
 
             <a href="payment_status.php" class="cashier-dashboard-btn-large cashier-dashboard-blue">
-                <span class="cashier-dashboard-btn-text-main">VERIFY ORDER PAYMENTS</span>
+                <span class="cashier-dashboard-btn-text-main">Verify Order Payment</span>
             </a>
             <a href="booking_payment.php" class="cashier-dashboard-btn-large cashier-dashboard-green">
-                <span class="cashier-dashboard-btn-text-main">VERIFY BOOKING PAYMENTS</span>
+                <span class="cashier-dashboard-btn-text-main">Veryfy Order Payment</span>
             </a>
 
             <div class="cashier-dashboard-stat-row">

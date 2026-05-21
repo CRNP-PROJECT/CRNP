@@ -420,8 +420,8 @@ html {
     /* FIX: Image will no longer stretch or animate */
     background: linear-gradient(to right, rgba(0, 0, 0, 0.8) 30%, rgba(0, 0, 0, 0.4)), 
                 url('img/1.jpg'); 
-    background-size: cover;      /* Maintains aspect ratio by cropping */
-    background-position: center; /* Keeps the focal point in the middle */
+    background-size: cover;      
+    background-position: center; 
     background-repeat: no-repeat;
     /* Animation removed */
 }
@@ -462,32 +462,33 @@ html {
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 }
 
-/* PRODUCT SCOPED */
+/* PRODUCTS */
+
 .product-scoped {
     padding: 80px 10%;
     min-height: 100vh;
     background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
-                url('img/log.png');
+                url('img/log.png'); 
     background-size: cover;
     background-position: center;
-    /* Changed from fixed to scroll to prevent mobile 'jumpiness' */
     background-attachment: scroll; 
     color: #ffffff;
 }
 
 .product-scoped .page-header {
     text-align: center;
-    margin-bottom: 50px;
+    margin-bottom: 40px;
 }
 
 .product-scoped .page-title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-size: clamp(2rem, 4vw, 4rem);
     color: #c5a072;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 /* Category Filters */
+
 .product-scoped .filter-container {
     display: flex;
     justify-content: center;
@@ -612,11 +613,13 @@ html {
 }
 
 .cart-title {
-    font-size: 32px;
-    margin: 60px 0 40px 0;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 3vw, 2rem);
+    margin: 80px 0 40px 0;
     font-family: serif;
     text-align: center;
-    color: #ffffff;
+    color:#c5a072;
+    margin-bottom: 50px;
 }
 
 /* TABLE LAYOUT - Perfectly aligned columns */
@@ -630,10 +633,10 @@ html {
 }
 
 .cart-table-header {
-    border-bottom: 2px solid #c5a072;
+    border-bottom: 2px solid whitesmoke;
     padding-bottom: 15px;
     font-weight: 600;
-    color: #c5a072;
+    color: whitesmoke;
 }
 
 /* Right-align headers for price, quantity, and subtotal */
@@ -643,7 +646,6 @@ html {
     text-align: right;
 }
 
-/* ✅ ALIGN FIX FOR QTY & ACTION */
 .cart-row > *:nth-child(3),
 .cart-table-header > *:nth-child(3) {
     justify-self: center; /* Quantity column */
@@ -728,7 +730,7 @@ html {
     white-space: nowrap;
 }
 
-/* SUMMARY & ACTIONS - Left untouched per your request */
+/* SUMMARY & ACTIONS */
 .cart-summary {
     margin-top: 30px;
     display: grid;
@@ -744,7 +746,7 @@ html {
 
 .cart-checkout-btn {
     background: #c5a072;
-    padding: 12px 25px;
+    padding: 10px 15px;
     color: #000;
     text-decoration: none;
     margin-right: 15px;
@@ -754,7 +756,7 @@ html {
 
 .cart-continue-link {
     display: inline-block;
-    padding: 10px 20px;
+    padding: 10px 15px;
     background: #333;
     color: #fff;
     text-decoration: none;
@@ -768,12 +770,21 @@ html {
 }
 
 /*BOOKING PAGE*/
-
-
+/* =========================
+   PAGE BODY
+========================= */
 .booking-page-body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
-    background: url('img/log.png') no-repeat center center/cover;
+
+    background:
+    linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
+    url('img/log.png');
+
+    background-size: cover;
+    background-position: center;
+
+    min-height: 100vh;
 }
 
 .booking-page-body::before {
@@ -785,55 +796,47 @@ html {
 }
 
 /* =========================
-   CONTAINER
+   MAIN CONTAINER
 ========================= */
 .booking-main-container {
     display: flex;
-    justify-content: center;
-    padding: 40px 20px;
-    margin-top: 80px;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 35px 20px 60px;
+
+    margin-top: 70px;
 }
 
 /* =========================
-   CARD (GLASS STYLE)
-========================= */
-.booking-main-container {
-    display: flex;
-    justify-content: center;
-    padding: 40px 20px;
-    margin-top: 80px;
-}
-
-/* =========================
-   CARD (GLASS STYLE)
-========================= */
-.booking-card {
-    width: 50%;
-    padding: 15px 18px;
-    max-width: 480px;
-
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.15);
-    backdrop-filter: blur(12px);
-    border-radius: 18px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-}
-
-/* =========================
-   TITLE (CENTERED)
+   PAGE TITLE
 ========================= */
 .page-title-centered {
-    font-family: 'Playfair Display', serif; /* same as product */
-    font-size: clamp(2.3rem, 3vw, 3rem);   /* responsive like product */
-    font-weight: 600;
-
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
     text-align: center;
-    color: #ffffff; /* changed to white */
-
-    margin-bottom: 25px;
+    color: #c5a072;
+    margin-bottom: 22px;
     letter-spacing: 1px;
+    text-shadow: 0 5px 18px rgba(255,255,255,0.12);
+}
 
-    text-shadow: 0 5px 20px rgba(255,255,255,0.15); /* subtle glow */
+.booking-card {
+    width: 100%;
+    max-width: 820px;
+
+    padding: 20px 22px;
+
+    background: rgba(255,255,255,0.05);
+
+    border: 1px solid rgba(255,255,255,0.12);
+
+    backdrop-filter: blur(12px);
+
+    border-radius: 18px;
+
+    box-shadow: 0 10px 35px rgba(0,0,0,0.45);
 }
 
 /* =========================
@@ -842,90 +845,125 @@ html {
 .booking-form {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+
+    gap: 12px;
 }
 
 /* =========================
-   INPUTS
+   FORM GROUP
 ========================= */
 .form-group {
     display: flex;
     flex-direction: column;
 }
 
+/* LABEL */
 .form-label {
-    color: #ddd;
+    color: #e2e8f0;
+
     font-size: 13px;
-    margin-bottom: 5px;
+
+    margin-bottom: 6px;
+
+    font-weight: 500;
 }
 
+/* INPUT */
 .form-input {
-    padding: 8px;
+    padding: 10px 12px;
+
     font-size: 13px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.1);
-    color: #fff;
+
+    border-radius: 10px;
+
+    border: 1px solid rgba(255,255,255,0.15);
+
+    background: rgba(255,255,255,0.08);
+
+    color: #ffffff;
+
+    transition: 0.25s;
 }
 
 .form-input:focus {
     border-color: #e0b97f;
-    background: rgba(255,255,255,0.15);
+
+    background: rgba(255,255,255,0.12);
+
     outline: none;
 }
 
 /* =========================
-   SECTIONS
+   SECTION GROUP
 ========================= */
 .booking-group {
     grid-column: span 2;
-    margin-top: 12px;
+
+    margin-top: 10px;
 }
 
+/* SECTION TITLE */
 .booking-group h3 {
-    font-size: 18px;
-    color: whitesmoke;
-    margin-bottom: 5px;
+    font-size: 17px;
+
+    color: #ffffff;
+
+    margin-bottom: 10px;
+
+    font-weight: 600;
 }
 
 /* =========================
    RENT ITEMS
 ========================= */
 .booking-row {
-   
     border: 1px solid rgba(255,255,255,0.1);
-    padding: 8px;
+    background: rgba(255,255,255,0.04);
+    padding: 8px 10px;
     border-radius: 12px;
-    margin-bottom: 6px;
+
+    margin-bottom: 8px;
+
     display: flex;
+
     align-items: center;
+
     gap: 12px;
 }
 
 .booking-row h4 {
-    color: #fff;
+    color: #ffffff;
+
+    font-size: 14px;
+
     font-weight: 500;
 }
 
 /* =========================
-   TOTAL BOX (LIKE IMAGE)
+   TOTAL BOX
 ========================= */
 .booking-group[style] {
-    background: transparent !important;
-    border: 1px solid rgba(255,255,255,0.15);
-    color: whitesmoke;
-    padding: 5px !important;
+    background: rgba(255,255,255,0.05) !important;
+
+    border: 1px solid rgba(255,255,255,0.12);
+
+    color: #ffffff;
+
+    padding: 12px !important;
+
+    border-radius: 12px;
 }
 
 #totalDisplay {
-    color: #fff;
-    font-size: 18px;
-    font-weight: bold;
-    margin-top: 4px;
+    color: #ffffff;
+
+    font-size: 22px;
+
+    font-weight: 700;
 }
 
 /* =========================
-   PAYMENT METHOD (CENTERED)
+   PAYMENT METHOD
 ========================= */
 .booking-group:last-of-type {
     text-align: center;
@@ -933,126 +971,187 @@ html {
 
 .booking-group:last-of-type label {
     display: inline-flex;
+
     align-items: center;
+
     gap: 6px;
+
     background: rgba(255,255,255,0.08);
-    padding: 8px 14px;
+
+    padding: 9px 14px;
+
     border-radius: 10px;
+
     margin: 5px;
+
     cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.2);
-    color: #fff;
-    transition: 0.2s;
+
+    border: 1px solid rgba(255,255,255,0.15);
+
+    color: #ffffff;
+
+    transition: 0.25s;
 }
 
 .booking-group:last-of-type label:hover {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.14);
 }
 
 /* =========================
-   GCASH SECTION FIX
+   GCASH SECTION
 ========================= */
 #gcashSection {
     display: none;
+
     margin-top: 15px;
 }
-/* container */
+
 .gcash-container {
     margin-top: 12px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    padding: 12px;
+
+    background: rgba(255,255,255,0.06);
+
+    border: 1px solid rgba(255,255,255,0.12);
+
+    border-radius: 14px;
+
+    padding: 14px;
 
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
-    gap: 18px;
+
+    gap: 15px;
 }
 
-/* QR section */
+/* QR */
 .gcash-image {
     text-align: center;
 }
 
 .gcash-scan {
     color: #e0b97f;
+
     font-size: 14px;
-    margin-bottom: 6px;
+
+    margin-bottom: 8px;
 }
 
-/* QR image */
 .gcash-image img {
     width: 150px;
+
     height: 140px;
+
     object-fit: contain;
-    background: #fff;
+
+    background: #ffffff;
+
     padding: 10px;
+
     border-radius: 12px;
 }
 
-/* number */
 .gcash-number {
     margin-top: 8px;
-    color: #fff;
+
+    color: #ffffff;
+
     font-size: 14px;
+
     letter-spacing: 1px;
 }
 
-/* download btn */
+/* DOWNLOAD */
 .gcash-download {
     margin-top: 10px;
-    padding: 8px 14px;
+
+    padding: 9px 14px;
+
     border: none;
-    border-radius: 8px;
+
+    border-radius: 10px;
+
     background: linear-gradient(45deg, #c89b5e, #e0b97f);
-    color: #000;
+
+    color: #000000;
+
     font-weight: 600;
+
     cursor: pointer;
+
+    transition: 0.25s;
 }
 
-/* inputs */
+.gcash-download:hover {
+    transform: scale(1.03);
+}
+
+/* GCASH FIELDS */
 .gcash-fields {
     display: flex;
+
     gap: 10px;
+
     width: 100%;
+
     justify-content: center;
 }
 
 .gcash-fields .form-input {
     flex: 1;
+
     max-width: 220px;
+
     text-align: center;
 }
 
-/* file input fix */
+/* FILE */
 .gcash-fields input[type="file"] {
-    padding: 6px;
+    padding: 7px;
+
     background: rgba(255,255,255,0.1);
-    color: #fff;
+
+    color: #ffffff;
 }
+
 /* =========================
-   BUTTON (CENTERED)
+   BUTTON
 ========================= */
 .btn-booking-confirm {
     grid-column: span 2;
+
     display: block;
-    margin: 25px auto 0;
-    padding: 14px 20px;
-    width: 70%;
+
+    margin: 22px auto 0;
+
+    padding: 13px 20px;
+
+    width: 65%;
+
     border-radius: 12px;
+
     border: none;
+
     background: linear-gradient(45deg, #c89b5e, #e0b97f);
-    color: #000;
+
+    color: #000000;
+
     font-weight: 600;
+
     font-size: 15px;
+
     cursor: pointer;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+
+    box-shadow: 0 5px 20px rgba(0,0,0,0.35);
+
     transition: 0.3s;
 }
 
 .btn-booking-confirm:hover {
     transform: scale(1.03);
+
     background: linear-gradient(45deg, #b8874f, #d4aa6a);
 }
 
@@ -1060,136 +1159,35 @@ html {
    RESPONSIVE
 ========================= */
 @media (max-width: 768px) {
+
+    .booking-main-container {
+        padding: 25px 15px 50px;
+    }
+
+    .booking-card {
+        padding: 18px;
+    }
+
     .booking-form {
         grid-template-columns: 1fr;
+    }
+
+    .booking-group {
+        grid-column: span 1;
     }
 
     .btn-booking-confirm {
         width: 100%;
     }
-}
 
-/*BOOKING-SUCCESS*/
-
-/* =========================
-   BACKGROUND
-========================= */
-.booking-success-page-body {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    background: url('img/log.png') no-repeat center center/cover;
-}
-
-.booking-success-page-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: rgba(10, 6, 3, 0.75);
-    z-index: -1;
-}
-
-/* =========================
-   MAIN CONTAINER
-========================= */
-.booking-success-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 90vh;
-    padding: 20px;
-}
-
-/* =========================
-   CARD (GLASS STYLE)
-========================= */
-.booking-success-card {
-    width: 100%;
-    max-width: 420px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.15);
-    backdrop-filter: blur(12px);
-    border-radius: 18px;
-    padding: 35px 25px;
-    text-align: center;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-    animation: booking-success-fade 0.6s ease;
-}
-
-/* =========================
-   LOGO
-========================= */
-.booking-success-logo img {
-    width: 75px;
-    margin-bottom: 20px;
-}
-
-/* =========================
-   TITLE
-========================= */
-.booking-success-title {
-    color: #e0b97f;
-    font-size: 26px;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
-
-/* =========================
-   TEXT
-========================= */
-.booking-success-text {
-    color: #f1f1f1;
-    font-size: 14px;
-    margin-bottom: 5px;
-}
-
-.booking-success-text:last-of-type {
-    margin-bottom: 25px;
-    color: #ccc;
-}
-
-/* =========================
-   BUTTON
-========================= */
-.booking-success-btn {
-    display: inline-block;
-    padding: 12px 25px;
-    border-radius: 10px;
-    background: linear-gradient(45deg, #c89b5e, #e0b97f);
-    color: #000;
-    font-weight: 600;
-    text-decoration: none;
-    transition: 0.3s;
-}
-
-.booking-success-btn:hover {
-    transform: scale(1.05);
-    background: linear-gradient(45deg, #b8874f, #d4aa6a);
-}
-
-/* =========================
-   ANIMATION
-========================= */
-@keyframes booking-success-fade {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 480px) {
-    .booking-success-card {
-        padding: 25px 18px;
+    .gcash-fields {
+        flex-direction: column;
+        align-items: center;
     }
 
-    .booking-success-title {
-        font-size: 22px;
+    .gcash-fields .form-input {
+        max-width: 100%;
+        width: 100%;
     }
 }
 
@@ -1227,11 +1225,11 @@ html {
 ========================= */
 .your-order-title {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-size: clamp(2.5rem, 4vw, 4rem);
     color: #c5a072;
     font-weight: 700;
-    margin-bottom: 15px;
-    margin-top: 15px;
+    margin-bottom: 10px;
+    margin-top: 5px;
     letter-spacing: 1px;
 }
 
@@ -2386,49 +2384,37 @@ html {
 }
 
 
-/* =========================
-   CASHIER DASHBOARD (FINAL CLEAN UI)
-========================= */
+/* CASHIER DAASHBOARD*/
 
 .cashier-dashboard {
     font-family: 'Segoe UI', sans-serif;
-
-    background: 
-        linear-gradient(rgba(15,8,4,0.85), rgba(15,8,4,0.9)),
-        url('img/log.png') center/cover no-repeat;
-
+    background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
+                url('img/log.png'); 
+    background-size: cover;
+    background-position: center;
     color: #f5f5f5;
     min-height: 100vh;
 }
 
-/* =========================
-   WRAPPER
-========================= */
+
 .cashier-dashboard .cashier-dashboard-wrapper {
     padding: 40px;
     max-width: 1350px;
     margin: auto;
 }
-
-/* =========================
-   HEADER (FIXED)
-========================= */
 .cashier-dashboard .cashier-dashboard-header {
     margin-top: 80px; /* FIX NAV OVERLAP */
     margin-bottom: 30px;
-
     padding: 40px 20px;
-
     text-align: center;
-
     background: rgba(255,255,255,0.05);
     border-radius: 18px;
-
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255,255,255,0.08);
 }
 
 /* TITLE */
+
 .cashier-dashboard .cashier-dashboard-welcome-title {
     font-family: 'Playfair Display', serif;
     font-size: 52px;
@@ -2439,10 +2425,11 @@ html {
 }
 
 /* SUBTITLE */
+
 .cashier-dashboard .cashier-dashboard-welcome-sub {
     margin-top: 10px;
     color: rgba(255, 255, 255, 0.985);
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* =========================
@@ -2463,37 +2450,42 @@ html {
     gap: 20px;
 }
 
-/* =========================
-   LABEL
-========================= */
+/* label */
+
 .cashier-dashboard .cashier-dashboard-label {
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 600;
     color: rgb(255, 255, 255);
+    text-align: center;
 }
 
-/* =========================
-   BUTTONS (CLEAN + SOFT)
-========================= */
 .cashier-dashboard .cashier-dashboard-btn-large {
     display: block;
     padding: 16px;
     border-radius: 12px;
     text-decoration: none;
     color: #fff;
-    font-weight: 600;
-
+    font-weight: 500;
     transition: 0.25s;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+
 }
 
-/* GREEN */
+/* walkin/online button*/
+
 .cashier-dashboard .cashier-dashboard-green {
-    background: linear-gradient(45deg, #2e7d32, #43a047);
+    background:#8d6e63;
+    font-size: 15px;
+    text-align: center;
 }
 
-/* BLUE */
+/* verify button */
+
 .cashier-dashboard .cashier-dashboard-blue {
-    background: linear-gradient(45deg, #1565c0, #42a5f5);
+    background: #8d6e63;
+    font-size: 15px;
+    text-align: center;
 }
 
 .cashier-dashboard .cashier-dashboard-btn-large:hover {
@@ -2501,27 +2493,18 @@ html {
     filter: brightness(1.1);
 }
 
-/* =========================
-   CARDS (REAL GLASS)
-========================= */
 .cashier-dashboard .cashier-dashboard-card-plain,
 .cashier-dashboard .cashier-dashboard-card-table {
 
-    margin-top: 10px; /* ✅ ADDED SPACE BETWEEN ITEMS */
-
+    margin-top: 10px;
     background: rgba(255,255,255,0.06);
     border-radius: 16px;
     padding: 20px;
-
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.08);
-
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    border: 1px solid rgba(141,110,99,0.4);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-/* =========================
-   STATS
-========================= */
 .cashier-dashboard .cashier-dashboard-stat-row {
     display: flex;
     justify-content: space-between;
@@ -2538,15 +2521,15 @@ html {
     color: #ffffff;
 }
 
-/* =========================
-   TABLE
-========================= */
+/* table */
+
 .cashier-dashboard .cashier-dashboard-data-table {
     width: 100%;
     border-collapse: collapse;
 }
 
 /* TABLE HEADER */
+
 .cashier-dashboard .cashier-dashboard-data-table th {
     background: rgba(255,255,255,0.08);
     padding: 12px;
@@ -2556,20 +2539,17 @@ html {
 }
 
 /* TABLE DATA */
+
 .cashier-dashboard .cashier-dashboard-data-table td {
     padding: 12px;
     border-bottom: 1px solid rgba(255,255,255,0.05);
     color: #ddd;
 }
 
-/* HOVER */
 .cashier-dashboard .cashier-dashboard-data-table tr:hover {
     background: rgba(255,255,255,0.04);
 }
 
-/* =========================
-   TAB (FIXED LOOK)
-========================= */
 .cashier-dashboard .cashier-dashboard-tab-container {
     margin-bottom: 10px;
 }
@@ -2578,11 +2558,9 @@ html {
     width: 100%;
     padding: 12px;
     border-radius: 12px;
-
-    background: rgba(255,255,255,0.08);
+    background: rgba(141,110,99,0.2);
+    border: 1px solid rgba(141,110,99,0.3);
     color: #fff;
-    border: none;
-
     font-weight: 600;
 }
 
@@ -2590,133 +2568,183 @@ html {
     background: #8d6e63;
 }
 
-/* =========================
-   RIGHT PANEL FIX
-========================= */
+/* view button */
+
+.cashier-dashboard .status {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(8px);
+}
+
+/* VIEW (PENDING STYLE) */
+.cashier-dashboard .status.pending {
+    border: 1px solid rgba(141, 110, 99, 0.5);
+    color: #d7ccc8;
+}
+
+/* HOVER EFFECT */
+.cashier-dashboard .status.pending:hover {
+    color: #fff;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+/* CLICK EFFECT */
+.cashier-dashboard .status.pending:active {
+    transform: scale(0.95);
+}
+
+/*right panel */
+
 .cashier-dashboard .cashier-dashboard-column:last-child 
 .cashier-dashboard .cashier-dashboard-card-table {
     margin-top: 10px;
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
 @media (max-width: 1024px) {
     .cashier-dashboard .cashier-dashboard-main-layout {
         grid-template-columns: 1fr;
     }
 }
-/* =========================
-   BASE / BACKGROUND
-========================= */
+
+
+/* CASHIER ORDER */
+
 .cashier-order {
-    font-family: 'Poppins', 'Segoe UI', sans-serif;
-    background:
-        linear-gradient(rgba(15,8,4,0.85), rgba(15,8,4,0.9)),
-        url('img/log.png') center/cover no-repeat;
-    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
+                url('img/log.png');
+    background-size: cover;
+    background-position: center;
+    color: #f5f5f5;
     min-height: 100vh;
 }
 
 /* =========================
-   HEADER (NO CARD ANYMORE)
+   HEADER
 ========================= */
+
 .cashier-order-header {
     text-align: center;
-    margin-top: 130px;
+    margin-top: 100px;
 }
 
 .cashier-order-header h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 52px;
+    font-size: 42px; /* reduced */
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: white;
-    text-align: center;
-    margin-top: 30px;
-    margin-bottom: 15px;
+    color: #ffffff;
+    margin-bottom: 6px;
 }
 
 .cashier-order-header p {
-    font-family: 'Playfair Display', serif;
     font-size: 16px;
-    letter-spacing: 1px;
-    color: #cfcfcf;
-    text-align: center;
+    color: rgba(255,255,255,0.75);
 }
 
-/* =========================
-   TABLE CONTAINER (GLASS)
-========================= */
+/* container */
+
 .cashier-order-container {
-    width: 90%;
-    max-width: 1100px;
-    margin: 40px auto;
+    margin: 30px auto;
+    max-width: 1200px;
 
-    padding: 20px;
-    border-radius: 20px;
+    background: rgba(20, 20, 20, 0.85); 
+    border-radius: 16px;
+    padding: 25px;
 
-    background: rgba(255,255,255,0.06);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.06);
 
-    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
 }
 
 /* =========================
    TABLE
 ========================= */
+
 .cashier-order-container .orders-table {
     width: 100%;
     border-collapse: collapse;
-    overflow: hidden;
 }
 
-/* HEADER (DARK BAR) */
+/* HEADER */
 .cashier-order-container .orders-table th {
-    background: rgba(255,255,255,0.08);
-    color: #e0e0e0;
-
+   background: rgba(255,255,255,0.08);
+    color: #ffffff;
     padding: 16px;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     text-align: left;
 }
 
 /* BODY */
 .cashier-order-container .orders-table td {
-    padding: 18px;
-    font-size: 14px;
-    color: #ddd;
+    padding: 16px;
+    font-size: 13px;
+    color: #e0e0e0;
 }
 
-/* REMOVE HARD LINES */
-.cashier-order-container .orders-table td,
-.cashier-order-container .orders-table th {
-    border: none;
+/* ROW SEPARATION */
+.cashier-order-container .orders-table tr {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-/* ROW HOVER */
+/* HOVER */
 .cashier-order-container .orders-table tr:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.06);
 }
 
 /* =========================
-   EMPTY STATE (CENTERED)
+   COLUMN IMPROVEMENTS
 ========================= */
+
+/* truncate long order IDs */
+
+.orders-table td:first-child {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* highlight total */
+.orders-table td:nth-child(4) {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* soften date */
+.orders-table td:nth-child(5) {
+    color: #bbbbbb;
+    font-size: 12px;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+
 .cashier-order-container .empty {
     text-align: center;
     padding: 40px;
-    font-size: 18px;
-    color: #cfcfcf;
+    font-size: 15px;
+    color: #bbbbbb;
 }
 
 /* =========================
-   TYPE BADGE
+   TYPE BADGES
 ========================= */
+
 .cashier-order-container span.walkin,
 .cashier-order-container span.online {
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
@@ -2724,59 +2752,58 @@ html {
 }
 
 .cashier-order-container span.walkin {
-    background: linear-gradient(45deg, #2e7d32, #66bb6a);
+    background: #5d4037;
 }
 
 .cashier-order-container span.online {
-    background: linear-gradient(45deg, #1565c0, #64b5f6);
+    background: #5d4037;
 }
 
-/* =========================
-   STATUS BADGE
-========================= */
+/*statud badge */
+
 .cashier-order-container .badge.pending {
-    background: linear-gradient(45deg, #ef6c00, #ffb74d);
-    padding: 5px 12px;
+    background: #FFA726;
+    padding: 6px 14px;
     border-radius: 20px;
     font-size: 11px;
+    font-weight: 600;
+    color: #fff;
 }
 
-/* =========================
-   BUTTONS
-========================= */
+
+
 .cashier-order-container .btn {
     border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 6px 12px;
     color: #fff;
-    margin-right: 4px;
-
     transition: 0.2s ease;
+    cursor: pointer;
 }
 
+/* ACCEPT */
 .cashier-order-container .btn.accept {
-    background: #43a047;
+    background: #2e7d32; /* green */
 }
 
+/* REJECT */
 .cashier-order-container .btn.reject {
-    background: #e53935;
+    background: #c62828; /* red */
 }
 
-.cashier-order-container .btn.view {
-    background: #1e88e5;
-    text-decoration: none;
-}
-
+/* HOVER */
 .cashier-order-container .btn:hover {
-    transform: scale(1.1);
-    opacity: 0.9;
+    transform: translateY(-2px);
+    filter: brightness(1.15);
 }
 
-/* =========================
-   INLINE FORM
-========================= */
+/* CLICK */
+.cashier-order-container .btn:active {
+    transform: scale(0.95);
+}
+
+/* INLINE FORM */
 .cashier-order-container .inline {
     display: inline-block;
 }
@@ -2784,6 +2811,7 @@ html {
 /* =========================
    RESPONSIVE
 ========================= */
+
 @media (max-width: 768px) {
 
     .cashier-order-header h1 {
@@ -2800,7 +2828,6 @@ html {
         font-size: 12px;
     }
 }
-
 
 /* BOOKING PAYMENT*/
 
@@ -3035,19 +3062,14 @@ body.cashier-booking-payment.booking-payment {
 
 /*BOOKING HISTORY*/
 
-/* =========================
-   BACKGROUND (MATCH DASHBOARD)
-========================= */
 body.cashier-history-booking {
     font-family: 'Segoe UI', sans-serif;
-
-    background:
-        linear-gradient(rgba(20,10,5,0.75), rgba(20,10,5,0.85)),
-        url('img/log.png') center/cover no-repeat;
-
+    background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
+                url('img/log.png');
+    background-size: cover;
+    background-position: center;
+    color: #f5f5f5;
     min-height: 100vh;
-    margin: 0;
-    color: #fff;
 }
 
 /* =========================
@@ -3061,15 +3083,15 @@ body.cashier-history-booking {
 
 .cashier-history-booking .cashier-history-booking-header h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 48px;
+    font-size: 45px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: #e6c08b;
+    color: whitesmoke;
     margin-bottom: 10px;
 }
 
 .cashier-history-booking .cashier-history-booking-header p {
-    font-size: 14px;
+    font-size: 15px;
     color: #d7ccc8;
 }
 
@@ -3234,23 +3256,353 @@ body.cashier-history-booking {
     }
 }
 
-/*CASHIER ORDER HISTORY*/
+/*SCHEDULE BOOKING*/
 
-body.cashier-order-history {
-    font-family: 'Segoe UI', sans-serif;
-
+body.schedule-booking-page{
+    font-family:'Segoe UI',sans-serif;
     background:
-        linear-gradient(rgba(20,15,10,0.85), rgba(20,15,10,0.95)),
+        linear-gradient(rgba(0,0,0,0.85),rgba(0,0,0,0.90)),
         url('img/log.png');
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+    color:#f5f5f5;
+    min-height:100vh;
+}
 
-    min-height: 100vh;
-    color: #fff;
+/* CONTAINER */
+
+.schedule-booking-page .schedule-booking-container{
+    max-width:1100px;
+    margin:100px auto 30px;
+    padding:18px;
+    border-radius:14px;
 }
 
 
+.schedule-booking-page .schedule-booking-header{
+    text-align:center;
+    margin-bottom:10px;
+}
+
+.schedule-booking-page .schedule-booking-header h4{
+    font-family: 'Playfair Display', serif;
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin-bottom: 6px;
+    margin-top: 1px;
+}
+
+.schedule-booking-page .schedule-booking-header small{
+    font-size:15px;
+    color:rgba(255,255,255,0.75);
+    letter-spacing:1px;
+    margin-bottom: 10px;
+}
+
 /* =========================
-   HEADER
+   CALENDAR BOX
 ========================= */
+
+.schedule-booking-page .schedule-booking-calendar-box{
+    background:rgba(255,255,255,0.05);
+
+    border-radius:12px;
+
+    padding:14px;
+
+    backdrop-filter:blur(10px);
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    box-shadow:0 8px 18px rgba(0,0,0,0.20);
+
+    margin-bottom:15px;
+}
+
+.schedule-booking-page .schedule-booking-label{
+    font-size:12px;
+    color:#f1f1f1;
+
+    letter-spacing:0.5px;
+}
+
+.schedule-booking-page .schedule-booking-date-input{
+    background:rgba(255,255,255,0.06)!important;
+
+    border:1px solid rgba(255,255,255,0.12)!important;
+
+    color:#fff!important;
+
+    border-radius:10px!important;
+
+    padding:8px 12px!important;
+
+    font-size:12px;
+
+    box-shadow:none!important;
+
+    transition:0.3s ease;
+}
+
+.schedule-booking-page .schedule-booking-date-input:focus{
+    border-color:#c89b5e!important;
+
+    box-shadow:0 0 0 2px rgba(200,155,94,0.15)!important;
+}
+
+.schedule-booking-page .schedule-booking-date-input::-webkit-calendar-picker-indicator{
+    filter:invert(1);
+    cursor:pointer;
+}
+
+/* =========================
+   SELECTED DATE
+========================= */
+
+.schedule-booking-page .schedule-booking-selected-date{
+    margin-bottom:15px;
+
+    font-size:16px;
+    font-weight:600;
+
+    color:whitesmoke;
+
+    letter-spacing:1px;
+}
+
+/* =========================
+   GRID LAYOUT
+========================= */
+
+.schedule-booking-page .schedule-booking-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+    gap:12px;
+}
+
+/* =========================
+   CARD
+========================= */
+
+.schedule-booking-page .schedule-booking-card-box{
+    background:rgba(255,255,255,0.05);
+    border-radius:14px;
+    padding:12px;
+
+    backdrop-filter:blur(12px);
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    box-shadow:0 10px 20px rgba(0,0,0,0.30);
+
+    transition:0.3s ease;
+
+    position:relative;
+
+    overflow:hidden;
+}
+
+.schedule-booking-page .schedule-booking-card-box:hover{
+    transform:translateY(-4px);
+
+    box-shadow:0 14px 28px rgba(0,0,0,0.40);
+}
+
+.schedule-booking-page .schedule-booking-card-box::before{
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:3px;
+
+    background:linear-gradient(45deg,#e6c08b,#c89b5e);
+}
+
+/* =========================
+   CARD TOP
+========================= */
+
+.schedule-booking-page .schedule-booking-card-top{
+    margin-bottom:8px;
+}
+
+.schedule-booking-page .schedule-booking-client-name{
+    font-size:17px;
+    font-weight:700;
+
+    color:#ffffff;
+
+    margin:0;
+}
+
+/* =========================
+   INFO TEXT
+========================= */
+
+.schedule-booking-page .schedule-booking-info-text,
+.schedule-booking-page .schedule-booking-payment-text{
+    font-size:11px;
+
+    color:#dddddd;
+
+    margin-bottom:5px;
+
+    line-height:1.4;
+}
+
+.schedule-booking-page .schedule-booking-info-text b,
+.schedule-booking-page .schedule-booking-payment-text b{
+    color:#ffffff;
+}
+
+/* =========================
+   DIVIDER
+========================= */
+
+.schedule-booking-page .schedule-booking-divider{
+    border:none;
+
+    border-top:1px solid rgba(255,255,255,0.08);
+
+    margin:10px 0;
+}
+
+/* =========================
+   ITEMS
+========================= */
+
+.schedule-booking-page .schedule-booking-item-title{
+    font-size:11px;
+
+    color:#ffffff;
+
+    margin-bottom:6px;
+}
+
+.schedule-booking-page .schedule-booking-items{
+    background:rgba(255,255,255,0.04);
+
+    border-radius:10px;
+
+    padding:8px;
+
+    font-size:10px;
+
+    color:#dddddd;
+
+    line-height:1.5;
+
+    border:1px solid rgba(255,255,255,0.06);
+
+    min-height:45px;
+}
+
+/* =========================
+   PAYMENT SECTION
+========================= */
+
+.schedule-booking-page .schedule-booking-payment-section{
+    background:rgba(255,255,255,0.04);
+
+    border-radius:10px;
+
+    padding:8px;
+
+    border:1px solid rgba(255,255,255,0.06);
+}
+
+/* =========================
+   STATUS COLORS
+========================= */
+
+.schedule-booking-page .paid{
+    color:#66bb6a;
+    font-weight:700;
+}
+
+.schedule-booking-page .pending{
+    color:#ffa726;
+    font-weight:700;
+}
+
+.schedule-booking-page .cancelled{
+    color:#ef5350;
+    font-weight:700;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.schedule-booking-page .schedule-booking-empty{
+    background:rgba(255,255,255,0.05)!important;
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    border-radius:12px;
+
+    color:#dddddd!important;
+
+    text-align:center;
+
+    padding:20px;
+
+    font-size:13px;
+
+    box-shadow:0 8px 18px rgba(0,0,0,0.20);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:768px){
+
+    .schedule-booking-page .schedule-booking-container{
+        padding:14px;
+    }
+
+    .schedule-booking-page .schedule-booking-header h4{
+        font-size:26px;
+    }
+
+    .schedule-booking-page .schedule-booking-grid{
+        grid-template-columns:1fr;
+
+        gap:10px;
+    }
+
+    .schedule-booking-page .schedule-booking-card-box{
+        padding:10px;
+    }
+
+    .schedule-booking-page .schedule-booking-client-name{
+        font-size:15px;
+    }
+
+}
+
+/*CASHIER ORDER HISTORY*/
+
+body.cashier-order-history {
+   font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
+                url('img/log.png');
+    background-size: cover;
+    background-position: center;
+    color: #f5f5f5;
+    min-height: 100vh;
+
+}
+
 .cashier-order-history .history-header {
     text-align: center;
     margin-top: 100px;
@@ -3259,7 +3611,7 @@ body.cashier-order-history {
 
 .cashier-order-history .history-header h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 46px;
+    font-size: 45px;
     letter-spacing: 2px;
     color: whitesmoke;
     margin-bottom: 10px;
@@ -3267,7 +3619,7 @@ body.cashier-order-history {
 
 .cashier-order-history .history-header p {
     color: #d7ccc8;
-    font-size: 18px;
+    font-size: 15px;
 }
 
 
@@ -3292,12 +3644,9 @@ body.cashier-order-history {
     background: rgba(255,255,255,0.06);
     border-radius: 16px;
     padding: 20px;
-
     backdrop-filter: blur(10px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-
     border: 1px solid rgba(255,255,255,0.08);
-
     transition: 0.3s;
 }
 
@@ -3453,17 +3802,14 @@ body.cashier-order-history {
 
 /*CASHIER CREATE ORDER*/
 
-/* =========================
-   BACKGROUND (MATCH DASHBOARD)
-========================= */
 body.create-order {
-    font-family: 'Segoe UI', sans-serif;
-
-    background:
-        linear-gradient(rgba(20,10,5,0.85), rgba(5,2,1,0.95)),
-        url('img/log.png') center/cover no-repeat;
-
-    color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
+                url('img/log.png'); 
+    background-size: cover;
+    background-position: center;
+    color: #f5f5f5;
+    min-height: 100vh;
 }
 
 
@@ -3471,9 +3817,9 @@ body.create-order {
    WRAPPER
 ========================= */
 .create-order-wrapper {
-    max-width: 1200px;
+    padding: 40px;
+    max-width: 1350px;
     margin: auto;
-    padding-top: 100px;
 }
 
 
@@ -3482,18 +3828,26 @@ body.create-order {
 ========================= */
 .create-order-header {
     text-align: center;
+    margin-top:20px; 
+    margin-bottom: 15px;
+    padding: 10px 20px;
 }
 
 .create-order-header h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 50px;
-    color:#cfcfcf; 
+    font-size: 42px; /* reduced */
+    font-weight: 700;
     letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin-bottom: 6px;
 }
 
 .create-order-header p {
-    color: #cfcfcf;
-    font-size: 14px;
+    font-size: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: rgba(255,255,255,0.75);
 }
 
 
@@ -3502,7 +3856,7 @@ body.create-order {
 ========================= */
 .create-order-filters {
     text-align: center;
-    margin: 25px 0;
+    margin: 20px 0;
 }
 
 .create-order-filters a {
@@ -3519,7 +3873,7 @@ body.create-order {
 /* ACTIVE = GOLD */
 .create-order-filters a.active,
 .create-order-filters a:hover {
-    background: #e6c08b;
+    background: #8d6e63;
     color: #000;
 }
 
@@ -3608,7 +3962,6 @@ body.create-order {
     background: rgba(255,255,255,0.08);
     border-radius: 18px;
     padding: 20px;
-
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255,255,255,0.12);
 
@@ -3619,7 +3972,34 @@ body.create-order {
     text-align: center;
     font-size: 30px;
     color: whitesmoke;
-    margin-bottom: 10px;
+   
+}
+
+/* =========================
+   CART PANEL
+========================= */
+.create-order-cart {
+
+    background: rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 20px;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    height: fit-content;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* CART TITLE */
+.create-order-cart h3 {
+
+    text-align: center;
+    font-size: 30px;
+    color: whitesmoke;
+    margin-bottom: 15px;
 }
 
 
@@ -3627,38 +4007,46 @@ body.create-order {
    CART ITEMS
 ========================= */
 .cart-item {
+
     display: flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 13px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     color: #eee;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .cart-right {
+
     display: flex;
+    align-items: center;
     gap: 10px;
 }
 
 
 /* =========================
-   REMOVE BUTTON (RED ONLY HERE)
+   REMOVE BUTTON
 ========================= */
 .remove-btn {
+
     background: transparent;
     border: none;
     color: #ff5252;
     cursor: pointer;
+    font-size: 13px;
 }
 
 
 /* =========================
-   TOTAL (GOLD NOT RED)
+   TOTAL
 ========================= */
 .create-order-total {
-    margin-top: 10px;
+    margin-top: 15px;
     font-size: 18px;
     font-weight: bold;
-    color: whitesmoke; /* FIXED: GOLD instead of red */
+    color: whitesmoke;
 }
 
 
@@ -3666,38 +4054,42 @@ body.create-order {
    INPUTS
 ========================= */
 .create-order-cart input {
-    width: 90%;
+
+    width: 100%; /* FIXED */
     margin-top: 10px;
-    padding: 10px;
+    padding: 12px;
     border-radius: 10px;
     border: none;
     outline: none;
-
+    box-sizing: border-box; /* IMPORTANT */
     background: rgba(255,255,255,0.1);
     color: #fff;
+    font-size: 13px;
 }
 
 
 /* =========================
-   BUTTON (GOLD PRIMARY)
+   PLACE ORDER BUTTON
 ========================= */
 .create-order-cart button {
-    width: 95%;
-    margin-top: 12px;
+    width: 100%; /* FIXED */
+    margin-top: 14px;
     padding: 12px;
-
-    background: linear-gradient(45deg, #e6c08b, #d4a373);
     border: none;
     border-radius: 12px;
-
-    font-weight: bold;
-    color: #000;
+    background: #8d6e63;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
     transition: 0.3s;
 }
 
 .create-order-cart button:hover {
-    transform: scale(1.05);
+
+    filter: brightness(1.1);
+
+    transform: translateY(-2px);
 }
 
 
@@ -3723,10 +4115,11 @@ body.create-order {
 body.create-order-success {
     font-family: 'Segoe UI', sans-serif;
 
-    background:
-        linear-gradient(rgba(20,10,5,0.9), rgba(5,2,1,0.95)),
-        url('img/log.png') center/cover no-repeat;
+  background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
+                url('img/log.png'); 
 
+    background-size: cover;
+    background-position: center;
     color: #fff;
     margin: 0;
 }
@@ -4557,37 +4950,34 @@ body.payment-status {
     margin-bottom: 5px;
 }
 
-/* ================= STATUS ================= */
+/* status */
 .kitchen-dashboard .status {
     font-weight: 600;
     margin: 6px 0;
 }
 
-/* ================= ITEMS ================= */
+/* items */
 .kitchen-dashboard .items {
     margin-bottom: 10px;
 }
 
-/* ================= BUTTON GROUP ================= */
+/* button*/
 .kitchen-dashboard .status-buttons {
     display: flex;
     gap: 6px;
     margin-top: auto;
 }
 
-/* ================= BUTTON ================= */
+/* button*/
 .kitchen-dashboard .status-buttons button {
     flex: 1;
     padding: 6px;
     border-radius: 8px;
     border: none;
-
     font-size: 11px;
     font-weight: 600;
-
     cursor: pointer;
     transition: 0.2s;
-
     background: rgba(255,255,255,0.1);
     color: #fff;
 }
@@ -4596,7 +4986,7 @@ body.payment-status {
     transform: scale(1.05);
 }
 
-/* ================= STATUS COLORS ================= */
+/* status color */
 
 /* PREPARING */
 .kitchen-dashboard .status-buttons button[value="preparing"] {
@@ -4628,7 +5018,7 @@ body.payment-status {
     color: #000;
 }
 
-/* ================= RESPONSIVE ================= */
+/*responsive */
 
 /* Tablet */
 @media (max-width: 1200px) {
@@ -4658,11 +5048,9 @@ body.payment-status {
 
 /*KITCHEN HISTORY*/
 
-
 .kitchen-history-page {
     font-family: 'Poppins', sans-serif;
 
-    /* ✅ FIXED: lighter overlay so colors are visible */
    background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
                 url('img/log.png');
 

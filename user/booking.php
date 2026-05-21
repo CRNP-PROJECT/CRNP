@@ -66,11 +66,14 @@ if(!is_array($rent_items)){
 
 <!-- MAIN -->
 <div class="booking-main-container">
-<div class="booking-card">
-
-<h1 class="page-title-centered">
+    
+    <h1 class="page-title-centered">
     Booking & Reservation
 </h1>
+
+<div class="booking-card">
+
+
 
 <form action="process.php" method="POST" enctype="multipart/form-data" class="booking-form" onsubmit="return validateBooking()">
 
