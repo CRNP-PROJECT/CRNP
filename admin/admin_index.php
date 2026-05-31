@@ -30,11 +30,24 @@ $kitchenStatus = $chartData['kitchenStatus'] ?? [
     "done" => 0
 ];
 
-$bookingsStatus = $chartData['bookingsStatus'] ?? [
+$bookingsStatus = [
     "pending" => 0,
     "accepted" => 0,
-    "rejected" => 0
+    "rejected" => 0,
+    "done" => 0
 ];
+
+foreach ($bookings as $b) {
+
+    if (!is_array($b)) continue;
+
+    $status = strtolower(trim($b['status'] ?? ''));
+
+    // ONLY count known statuses
+    if (array_key_exists($status, $bookingsStatus)) {
+        $bookingsStatus[$status]++;
+    }
+}
 
 $bookingsPerDay = $chartData['bookingsPerDay'] ?? [];
 $bestSelling = $chartData['bestSelling'] ?? [];
@@ -75,6 +88,15 @@ foreach($bookingRevenuePerDay as $day => $rev){
     $orders = $bookingOrdersPerDay[$day] ?? 0;
     $bookingAovPerDay[$day] = ($orders > 0) ? ($rev / $orders) : 0;
 }
+
+/* ================= SAFE BOOKING KPI FALLBACK ================= */
+$todayBookingSales  = $chartData['todayBookingSales'] ?? 0;
+$todayBookingOrders = $chartData['todayBookingOrders'] ?? 0;
+
+/* FIX YOUR ERROR HERE */
+$todayBookingAOV = ($todayBookingOrders > 0)
+    ? ($todayBookingSales / $todayBookingOrders)
+    : 0;
 ?>
 
 <!DOCTYPE html>
@@ -112,9 +134,9 @@ foreach($bookingRevenuePerDay as $day => $rev){
         <li class="navbar-dropdown">
             <a href="#">Bookings ▼</a>
             <div class="navbar-dropdown-content">
-                <a href="booking_add.php">Booking Items</a>
+                <a href="booking_add.php">Add Booking Items</a>
                 <a href="booking_reserve.php">Booking List</a>
-                <a href="booking_add.php">Booking</a>
+                
             </div>
         </li>
 

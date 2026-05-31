@@ -53,7 +53,7 @@
 
     $ordersStatus = ['pending'=>0,'accepted'=>0,'rejected'=>0,'done'=>0];
     $kitchenStatus = ['preparing'=>0,'ready'=>0,'done'=>0];
-    $bookingsStatus = ['pending'=>0,'accepted'=>0,'rejected'=>0];
+    $bookingsStatus = ['pending'=>0,'accepted'=>0,'done=>0','rejected'=>0];
 
     $bookingsPerDay = [];
     $productSales = [];
@@ -271,13 +271,8 @@ if ($latestDate) {
         }
     }
 }
-    /* ================= BOOKING REVENUE (LATEST DAY ONLY) ================= */
 
-    ksort($bookingRevenuePerDay);
-$latestBookingDate = array_key_last($bookingRevenuePerDay);
-
-$bookingRevenueLatestDay = $bookingRevenuePerDay[$latestBookingDate] ?? 0;
-    /* ================= KITCHEN ================= */
+ /* ================= KITCHEN ================= */
 
     foreach($orders as $order){
 
@@ -295,7 +290,13 @@ $bookingRevenueLatestDay = $bookingRevenuePerDay[$latestBookingDate] ?? 0;
             $kitchenStatus['done']++;
         }
     }
+    /* ================= BOOKING REVENUE (LATEST DAY ONLY) ================= */
 
+    ksort($bookingRevenuePerDay);
+$latestBookingDate = array_key_last($bookingRevenuePerDay);
+
+$bookingRevenueLatestDay = $bookingRevenuePerDay[$latestBookingDate] ?? 0;
+    
     /* ================= BOOKINGS (FIXED: ONLY ACCEPTED SALES) ================= */
 
     /* ensure safety */
@@ -304,25 +305,28 @@ $bookingRevenueLatestDay = $bookingRevenuePerDay[$latestBookingDate] ?? 0;
     $bookingOrdersPerDay = $bookingOrdersPerDay ?? [];
     $bookingsPerDay = $bookingsPerDay ?? [];
 
-    /* ================= FIND LATEST BOOKING DATE ================= */
     $latestBookingDate = null;
 
-    foreach ($bookings as $b) {
+foreach ($bookings as $b) {
 
-        if (!is_array($b)) continue;
+    if (!is_array($b)) continue;
 
-        if (strtolower(trim($b['status'] ?? '')) !== 'accepted') continue;
+    $status = strtolower(trim($b['status'] ?? ''));
 
-        $created = $b['created_at'] ?? null;
-        if (!$created) continue;
-
-        $createdDate = date('Y-m-d', strtotime($created));
-
-        if ($latestBookingDate === null || $createdDate > $latestBookingDate) {
-            $latestBookingDate = $createdDate;
-        }
+    // include real completed + accepted bookings
+    if (!in_array($status, ['accepted', 'done'])) {
+        continue;
     }
 
+    $created = $b['created_at'] ?? null;
+    if (!$created) continue;
+
+    $createdDate = date('Y-m-d', strtotime($created));
+
+    if ($latestBookingDate === null || $createdDate > $latestBookingDate) {
+        $latestBookingDate = $createdDate;
+    }
+}
     /* ================= RESET LOOP FOR PROCESSING ================= */
 
     $bookingRevenueLatestDay = 0;
@@ -341,7 +345,7 @@ $bookingRevenueLatestDay = $bookingRevenuePerDay[$latestBookingDate] ?? 0;
         }
 
         /* ONLY accepted bookings */
-        if ($status !== 'accepted') continue;
+        if (!in_array($status, ['accepted', 'done'])) continue;
 
         $bookingTotal = floatval($b['booking_total'] ?? 0);
 
@@ -423,8 +427,11 @@ foreach ($bookings as $b) {
 
     if (!is_array($b)) continue;
 
-    $status = strtolower(trim($b['status'] ?? ''));
-    if ($status !== "accepted") continue;
+   $status = strtolower(trim($b['status'] ?? ''));
+
+if (!in_array($status, ['accepted', 'done'])) {
+    continue;
+}
 
     // ✅ FIXED: unified field
     $time = $b['created_at'] ?? null;
@@ -444,13 +451,20 @@ $latestBookings["labels"] = array_map(function($h){
 $latestBookings["data"] = array_values($hourly);
 
 
-/* ================= TODAY MOST BOOKED ================= */
+    /* ================= TODAY MOST BOOKED ================= */
 
-$todayMostBooked = [];
+   $todayMostBooked = [];
 
 foreach ($bookings as $b) {
 
     if (!is_array($b)) continue;
+
+    $status = strtolower(trim($b['status'] ?? ''));
+
+    // ✅ ONLY valid bookings
+    if (!in_array($status, ['accepted', 'done', 'completed', 'finished'])) {
+        continue;
+    }
 
     $time = $b['created_at'] ?? null;
     if (!$time) continue;
@@ -462,14 +476,20 @@ foreach ($bookings as $b) {
     if (!$items) continue;
 
     if (is_array($items)) {
+
         foreach ($items as $i) {
-            $name = is_array($i) ? ($i['name'] ?? null) : $i;
+
+            $name = is_array($i) ? ($i['name'] ?? 'Item') : $i;
+            $qty  = is_array($i) ? (int)($i['qty'] ?? 1) : 1;
+
             if (!$name) continue;
 
             $todayMostBooked[$name] =
-                ($todayMostBooked[$name] ?? 0) + 1;
+                ($todayMostBooked[$name] ?? 0) + $qty;
         }
+
     } else {
+
         $todayMostBooked[$items] =
             ($todayMostBooked[$items] ?? 0) + 1;
     }

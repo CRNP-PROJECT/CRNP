@@ -11,6 +11,37 @@ if(!isset($_SESSION['cashier_email'])){
 
 $rdb = new firebaseRDB($databaseURL);
 
+/* ================= DELIVER BOOKING ================= */
+
+if(isset($_POST['deliver_booking'])){
+
+    $bookingId = $_POST['booking_id'];
+    $deliveryNote = trim($_POST['delivery_note'] ?? '');
+
+    if($deliveryNote == ''){
+        die("Delivery note is required.");
+    }
+
+    $update = [
+        "status" => "done",
+        "delivered_at" => date("Y-m-d H:i:s"),
+        "delivered_by" => $_SESSION['cashier_email'],
+        "delivery_note" => $deliveryNote
+    ];
+
+    $rdb->update(
+        "/bookings",
+        $bookingId,
+        $update
+    );
+
+    header(
+        "Location: scheduled_booking.php?date=" .
+        ($_GET['date'] ?? date('Y-m-d'))
+    );
+    exit;
+}
+
 $selectedDate = $_GET['date'] ?? date("Y-m-d");
 
 $bookings = json_decode($rdb->retrieve("/bookings"), true) ?? [];
@@ -18,7 +49,10 @@ $bookings = json_decode($rdb->retrieve("/bookings"), true) ?? [];
 $scheduled = [];
 
 foreach($bookings as $id => $b){
+
     if(!is_array($b)) continue;
+
+    // ONLY ACCEPTED BOOKINGS
     if(($b['status'] ?? '') !== 'accepted') continue;
 
     $datetime = $b['appointment_time'] ?? '';
@@ -26,19 +60,25 @@ foreach($bookings as $id => $b){
 
     $date = date("Y-m-d", strtotime($datetime));
     $time = date("h:i A", strtotime($datetime));
+    $returnRaw = $b['return_time'] ?? '';
+    $returnDate = $returnRaw ? date("Y-m-d", strtotime($returnRaw)) : '';
+    $returnTime = $returnRaw ? date("h:i A", strtotime($returnRaw)) : '';
 
-    /* FILTER BY CLICKED DATE */
     if($date !== $selectedDate) continue;
 
     /* ITEMS */
     $itemsText = "";
+
     if(!empty($b['items']) && is_array($b['items'])){
+
         foreach($b['items'] as $item){
+
             $name = $item['name'] ?? 'Item';
             $qty  = $item['qty'] ?? 1;
             $price = $item['price'] ?? 0;
 
-            $itemsText .= "• {$name} (x{$qty}) - ₱{$price}<br>";
+            $itemsText .=
+                "• {$name} (x{$qty}) - ₱{$price}<br>";
         }
     }
 
@@ -48,17 +88,23 @@ foreach($bookings as $id => $b){
     if($paymentMethod === "counter"){
         $paymentStatus = "PAID (Counter)";
         $paymentColor = "text-success";
-    }
-    else if(($b['payment_status'] ?? '') === "no_payment_required"){
+
+    } else if(
+        ($b['payment_status'] ?? '') ===
+        "no_payment_required"
+    ){
         $paymentStatus = "No Payment Required";
         $paymentColor = "text-warning";
-    }
-    else{
-        $paymentStatus = $b['payment_status'] ?? 'Pending';
+
+    } else {
+        $paymentStatus =
+            $b['payment_status'] ?? 'Pending';
         $paymentColor = "text-danger";
     }
 
     $scheduled[] = [
+
+        "id" => $id,
         "name" => $b['full_name'] ?? 'Unknown',
         "address" => $b['address'] ?? '',
         "contact" => $b['contact_number'] ?? '',
@@ -69,7 +115,15 @@ foreach($bookings as $id => $b){
         "payment_color" => $paymentColor,
         "items" => $itemsText,
         "date" => $date,
-        "time" => $time
+        "time" => $time,
+
+        /* DELIVERY TRACKING */
+        "delivered_at" => $b['delivered_at'] ?? '',
+        "delivered_by" => $b['delivered_by'] ?? '',
+        "delivery_note" => $b['delivery_note'] ?? '',
+
+        "return_date" => $returnDate,
+        "return_time" => $returnTime,
     ];
 }
 ?>
@@ -79,11 +133,10 @@ foreach($bookings as $id => $b){
 <head>
 <meta charset="utf-8">
 <title>Booking Calendar</title>
+
 <link href="https://cdn.jsdelivr.com/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../styles.css">
-
-
 </head>
 
 <body class="schedule-booking-page">
@@ -91,11 +144,10 @@ foreach($bookings as $id => $b){
 <header class="navbar">
 
     <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo" alt="Logo">
+        <img src="../img/logo.png" class="logo">
     </div>
 
     <div class="navbar-right">
-
         <ul class="navbar-menu">
             <li><a href="cashier_index.php">Dashboard</a></li>
             <li><a href="create_order.php">Create Orders</a></li>
@@ -105,7 +157,6 @@ foreach($bookings as $id => $b){
             <li><a href="cashier_orderHistory.php">History</a></li>
             <li><a href="cashier_logout.php">Logout</a></li>
         </ul>
-
     </div>
 
 </header>
@@ -117,26 +168,22 @@ foreach($bookings as $id => $b){
     <small>Click a date to view appointments</small>
 </div>
 
-<!-- CALENDAR SELECTOR -->
 <div class="schedule-booking-calendar-box">
-    <form method="GET" class="schedule-booking-form">
 
-        <label class="schedule-booking-label">
-            <b>Select Date:</b>
-        </label>
+    <form method="GET">
+        <label><b>Select Date:</b></label>
 
-        <input 
-            type="date" 
-            name="date" 
-            value="<?= $selectedDate ?>" 
-            class="form-control schedule-booking-date-input mt-2"
+        <input
+            type="date"
+            name="date"
+            value="<?= $selectedDate ?>"
+            class="form-control mt-2"
             onchange="this.form.submit()"
         >
-
     </form>
+
 </div>
 
-<!-- SELECTED DATE -->
 <h5 class="schedule-booking-selected-date">
     Appointments on <?= $selectedDate ?>
 </h5>
@@ -144,11 +191,9 @@ foreach($bookings as $id => $b){
 <div class="schedule-booking-grid">
 
 <?php if(empty($scheduled)): ?>
-
-    <div class="alert alert-warning schedule-booking-empty">
+    <div class="alert alert-warning">
         No bookings for this date
     </div>
-
 <?php endif; ?>
 
 <?php foreach($scheduled as $s): ?>
@@ -156,54 +201,114 @@ foreach($bookings as $id => $b){
 <div class="schedule-booking-card-box">
 
     <div class="schedule-booking-card-top">
-        <h5 class="schedule-booking-client-name">
-            <?= htmlspecialchars($s['name']) ?>
-        </h5>
+        <h5><?= htmlspecialchars($s['name']) ?></h5>
     </div>
 
-    <div class="schedule-booking-info-group">
+    <p><b>Appointment:</b> <?= $s['time'] ?></p>
+    <?php if(!empty($s['return_date'])): ?>
+    <p>
+        <b>Return:</b>
+        <?= date("M d, Y", strtotime($s['return_date'])) ?>
+        - <?= $s['return_time'] ?>
+    </p>
+<?php endif; ?>
 
-        <p class="schedule-booking-info-text">
-            <b>Appointment Time:</b> <?= $s['time'] ?>
-        </p>
+    <p><b>Address:</b> <?= $s['address'] ?></p>
+    <p><b>Contact:</b> <?= $s['contact'] ?></p>
 
-        <p class="schedule-booking-info-text">
-            <b>Address:</b> <?= $s['address'] ?>
-        </p>
+    <hr>
 
-        <p class="schedule-booking-info-text">
-            <b>Contact:</b> <?= $s['contact'] ?>
-        </p>
+    <b>Items:</b>
+    <div><?= $s['items'] ?: "No items" ?></div>
 
-    </div>
+    <hr>
 
-    <hr class="schedule-booking-divider">
-
-    <p class="schedule-booking-item-title">
-        <b>Items:</b>
+    <p>
+        <b>Total:</b>
+        ₱<?= number_format($s['total'],2) ?>
     </p>
 
-    <div class="schedule-booking-items">
-        <?= $s['items'] ?: "No items" ?>
-    </div>
+    <p>
+        <b>Method:</b>
+        <?= $s['payment_method'] ?>
+    </p>
 
-    <hr class="schedule-booking-divider">
+    <p class="<?= $s['payment_color'] ?>">
+        <b>Status:</b>
+        <?= $s['payment_status'] ?>
+    </p>
 
-    <div class="schedule-booking-payment-section">
+    <!-- DELIVERY INFO -->
+    <?php if(!empty($s['delivered_at'])): ?>
 
-        <p class="schedule-booking-payment-text">
-            <b>Total:</b> ₱<?= number_format($s['total'],2) ?>
-        </p>
+        <hr>
 
-        <p class="schedule-booking-payment-text">
-            <b>Method:</b> <?= $s['payment_method'] ?>
-        </p>
+        <div class="alert alert-success p-2">
 
-        <p class="schedule-booking-payment-text <?= $s['payment_color'] ?>">
-            <b>Status:</b> <?= $s['payment_status'] ?>
-        </p>
+            <b>Delivered At:</b><br>
+            <?= date(
+                "M d, Y h:i A",
+                strtotime($s['delivered_at'])
+            ) ?><br>
 
-    </div>
+            <small>
+
+                By:
+                <?= htmlspecialchars($s['delivered_by']) ?>
+
+                <br>
+
+                <?php if(!empty($s['delivery_note'])): ?>
+                    Notes:
+                    <?= htmlspecialchars($s['delivery_note']) ?>
+                <?php endif; ?>
+
+            </small>
+
+        </div>
+
+    <?php endif; ?>
+
+    <!-- DELIVERY FORM -->
+    <?php if(empty($s['delivered_at'])): ?>
+
+    <form method="POST">
+
+        <input
+            type="hidden"
+            name="booking_id"
+            value="<?= $s['id'] ?>"
+        >
+
+        <label class="mt-2">
+            <b>Delivery Notes</b>
+        </label>
+
+        <textarea
+            name="delivery_note"
+            class="form-control mb-2"
+            required
+            placeholder="Enter who delivered / remarks / notes"
+        ></textarea>
+
+        <button
+            type="submit"
+            name="deliver_booking"
+            class="btn btn-success w-100"
+            onclick="return confirm('Confirm delivery?')"
+        >
+            Delivered
+        </button>
+
+    </form>
+
+    <?php else: ?>
+
+        <div class="text-center text-success fw-bold">
+            ✔ Already Delivered
+        </div>
+
+    <?php endif; ?>
 
 </div>
 

@@ -90,15 +90,21 @@ foreach($orders as $o){
     }
 }
 
-/* ================= BOOKINGS (ONLY ACCEPTED) ================= */
+/* ================= BOOKINGS (ONLY ACCEPTED + DONE) ================= */
 
 foreach($bookings as $b){
 
     if(!is_array($b)) continue;
 
-    $status = strtolower($b['status'] ?? '');
+    $status = strtolower(trim($b['status'] ?? ''));
 
-    if($status !== 'accepted') continue;
+    // normalize (optional but recommended)
+    if($status === 'completed' || $status === 'finished'){
+        $status = 'done';
+    }
+
+    // 🔥 FIX: include done too
+    if(!in_array($status, ['accepted', 'done'])) continue;
 
     $d = parseDateOnly($b['created_at'] ?? '');
     if(!$d) continue;
@@ -123,7 +129,6 @@ foreach($bookings as $b){
         $selectedBookings[] = $b;
     }
 }
-
 /* ================= BUILD CHART ================= */
 
 ksort($calendar);
@@ -153,7 +158,11 @@ $monthlyBookingRevenue = 0;
 foreach($orders as $o){
     if(!is_array($o)) continue;
 
-    $month = date('Y-m', strtotime($o['created_at'] ?? ''));
+    $created = $o['created_at'] ?? '';
+    if(!$created) continue;
+
+    $month = date('Y-m', strtotime($created));
+
     if($month == $targetMonth){
         $monthlyOrderRevenue += floatval($o['total'] ?? 0);
     }
@@ -162,15 +171,20 @@ foreach($orders as $o){
 foreach($bookings as $b){
     if(!is_array($b)) continue;
 
-    $status = strtolower($b['status'] ?? '');
-    if($status !== 'accepted') continue;
+    $status = strtolower(trim($b['status'] ?? ''));
 
-    $month = date('Y-m', strtotime($b['created_at'] ?? ''));
+    // 🔥 FIX: include done + accepted
+    if(!in_array($status, ['accepted', 'done'])) continue;
+
+    $created = $b['created_at'] ?? '';
+    if(!$created) continue;
+
+    $month = date('Y-m', strtotime($created));
+
     if($month == $targetMonth){
         $monthlyBookingRevenue += floatval($b['booking_total'] ?? 0);
     }
 }
-
 /* ================= CALENDAR ================= */
 
 $year  = date('Y', strtotime($date));
@@ -197,7 +211,7 @@ return [
 
     "labels" => $labels,
 
-    // 🔥 NEW FIXED CHART DATA
+    
     "orderRevenueData" => $orderRevenueData,
     "bookingRevenueData" => $bookingRevenueData,
 

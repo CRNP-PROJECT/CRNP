@@ -90,6 +90,18 @@ if ($edit_id) {
         value="<?php echo $edit_item['price'] ?? ''; ?>"
         class="booking-add-input" required>
     </div>
+    <!-- QUANTITY -->
+<div class="booking-add-full">
+    <label class="booking-add-label">Quantity Available</label>
+    <input type="number"
+           name="quantity"
+           min="1"
+           placeholder="Enter quantity"
+           value="<?php echo $edit_item['quantity'] ?? ''; ?>"
+           class="booking-add-input"
+           required>
+</div>
+
 
     <!-- IMAGE -->
     <div class="booking-add-full">
@@ -130,11 +142,11 @@ if ($edit_id) {
 
 <div class="booking-add-table-wrapper">
 <table class="booking-add-table">
-
 <tr>
     <th>Image</th>
     <th>Name</th>
     <th>Price</th>
+    <th>Quantity</th>
     <th>Action</th>
 </tr>
 
@@ -152,6 +164,7 @@ if ($edit_id) {
     <td><?php echo $item['display_name'] ?? $item['name']; ?></td>
 
     <td>₱<?php echo $item['price']; ?></td>
+    <td><?php echo $item['quantity'] ?? 0; ?></td>
 
     <td class="booking-add-action">
         <a href="booking_add.php?edit=<?php echo $id; ?>">Edit</a>

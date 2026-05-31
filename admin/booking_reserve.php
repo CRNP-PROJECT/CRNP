@@ -37,90 +37,164 @@ if(!is_array($bookings)){
     </div>
 
     <ul class="navbar-menu">
-             <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
-
-                <a href="booking_add.php">Booking Items</a>
-
-                <a href="product_list.php">Products</a>
-
-                <a href="booking_reserve.php" class="active">Booking List</a>
-                
-                <li><a href="admin_log.php">Logout</a></li>
-            </div>
-        </li>
+        <a href="admin_index.php" class="navbar-brand">Admin Dashboard</a>
+        <a href="booking_add.php">Booking Items</a>
+        <a href="booking_reserve.php" class="active">Booking List</a>
+        <li><a href="admin_log.php">Logout</a></li>
     </ul>
 
 </nav>
 
 <div class="booking-reserve-container">
 
-    <h2 class="booking-reserve-title">Booking List</h2>
+<h2 class="booking-reserve-title">Booking List</h2>
 
-    <div class="booking-reserve-table-wrapper">
+<div class="booking-reserve-table-wrapper">
 
-        <table class="booking-reserve-table">
+<table class="booking-reserve-table">
 
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Contact</th>
-            <th>Address</th>
-            <th>Date</th>
-            <th>Items</th>
-            <th>Payment</th>
-        </tr>
-        </thead>
+<thead>
+<tr>
+    <th>Name</th>
+    <th>Contact</th>
+    <th>Address</th>
+    <th>Booking Date</th>
+    <th>Items</th>
+    <th>Total</th>
+    <th>Payment</th>
+    <th>Delivered</th>
+    <th>Delivered by</th>
+    <th>Return Date</th>
+    <th>Status</th>
+    <th>Action</th>
+</tr>
+</thead>
 
-        <tbody>
+<tbody>
 
-        <?php foreach($bookings as $id => $booking): ?>
+<?php foreach($bookings as $id => $booking): ?>
 
-        <tr>
+<tr>
 
-        <td><?php echo $booking['full_name'] ?? ''; ?></td>
-        <td><?php echo $booking['contact_number'] ?? ''; ?></td>
-        <td><?php echo $booking['address'] ?? ''; ?></td>
-        <td><?php echo $booking['appointment_time'] ?? ''; ?></td>
+    <td><?= $booking['full_name'] ?? '' ?></td>
+    <td><?= $booking['contact_number'] ?? '' ?></td>
+    <td><?= $booking['address'] ?? '' ?></td>
 
-        <!-- ITEMS -->
-        <td class="booking-reserve-items">
+    <!-- BOOKING DATE -->
+    <td>
+        <?= !empty($booking['appointment_time'])
+            ? date("M d, Y h:i A", strtotime($booking['appointment_time']))
+            : "" ?>
+    </td>
+
+    <!-- ITEMS -->
+    <td>
+    <?php
+    if(isset($booking['items']) && is_array($booking['items'])){
+
+        foreach($booking['items'] as $item){
+
+            $name = $item['name'] ?? 'Item';
+            $qty = $item['qty'] ?? 0;
+            $price = $item['price'] ?? 0;
+
+            echo "<div>• {$name} (x{$qty}) - ₱{$price}</div>";
+        }
+
+    }else{
+        echo "No items";
+    }
+    ?>
+    </td>
+
+    <!-- TOTAL -->
+    <td>₱<?= number_format($booking['booking_total'] ?? 0, 2) ?></td>
+
+    <!-- PAYMENT -->
+    <td>
+    <?php
+    $method = $booking['payment_method'] ?? 'counter';
+
+    echo ($method == "gcash")
+        ? "<span style='color:blue;font-weight:bold;'>GCash</span>"
+        : "<span style='color:gray;font-weight:bold;'>Counter</span>";
+    ?>
+    </td>
+
+    <!-- DELIVERED -->
+    <td>
+        <?= !empty($booking['delivered_at'])
+            ? date("M d, Y h:i A", strtotime($booking['delivered_at']))
+            : "Not Delivered" ?>
+    </td>
+
+    <!-- DELIVERED BY -->
+    <td>
+        <?= htmlspecialchars($booking['delivery_note'] ?? '-') ?>
+    </td>
+
+    <!-- RETURN DATE -->
+    <td>
+        <?= !empty($booking['returned_at'])
+            ? date("M d, Y h:i A", strtotime($booking['returned_at']))
+            : '-' ?>
+    </td>
+
+    <!-- STATUS -->
+    <td>
         <?php
-        if(isset($booking['rent_items']) && is_array($booking['rent_items'])){
+        $status = $booking['status'] ?? 'active';
 
-            foreach($booking['rent_items'] as $itemId => $qty){
-                if($qty > 0){
-                    echo "<div>Item ID: $itemId = $qty</div>";
-                }
-            }
-
+        if($status === 'returned'){
+            echo "<span style='color:green;font-weight:bold;'>Returned</span>";
+        }elseif($status === 'done'){
+            echo "<span style='color:orange;font-weight:bold;'>Delivered</span>";
         }else{
-            echo "No items";
+            echo "<span style='color:red;font-weight:bold;'>Active</span>";
         }
         ?>
-        </td>
+    </td>
 
-        <!-- PAYMENT -->
-        <td>
-        <?php
-        $method = $booking['payment_method'] ?? 'counter';
+    <!-- ACTION -->
+    <td>
 
-        if($method == "gcash"){
-            echo "<span class='booking-reserve-badge gcash'>GCash</span>";
-        }else{
-            echo "<span class='booking-reserve-badge counter'>Over Counter</span>";
-        }
-        ?>
-        </td>
+        <?php if(($booking['status'] ?? '') === 'done'): ?>
 
-        </tr>
+        <form method="POST" action="admin_process.php">
 
-        <?php endforeach; ?>
+            <!-- IMPORTANT -->
+            <input type="hidden" name="booking_id" value="<?= $id ?>">
 
-        </tbody>
+            <button type="submit"
+                    name="return_booking"
+                    onclick="return confirm('Confirm return?')"
+                    style="padding:6px 10px;background:#28a745;color:#fff;border:none;border-radius:5px;">
+                Mark Returned
+            </button>
 
-        </table>
+        </form>
 
-    </div>
+        <?php elseif(($booking['status'] ?? '') === 'returned'): ?>
+
+            <span style="color:green;font-weight:bold;">Completed</span>
+
+        <?php else: ?>
+
+            <span>-</span>
+
+        <?php endif; ?>
+
+    </td>
+
+</tr>
+
+<?php endforeach; ?>
+
+</tbody>
+
+</table>
+
+</div>
 
 </div>
 

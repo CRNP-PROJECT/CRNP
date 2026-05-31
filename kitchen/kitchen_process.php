@@ -10,8 +10,7 @@ $action = $_POST['action'] ?? '';
 
 switch($action){
 
-
-
+// ================= LOGIN =================
 case 'login':
 
     $email = trim($_POST['email'] ?? '');
@@ -40,6 +39,7 @@ case 'login':
     }
 
     die("Invalid credentials");
+    break;
 
 
 // ================= UPDATE ORDER STATUS =================
@@ -63,49 +63,47 @@ case 'update_status':
         die("Invalid kitchen status");
     }
 
+    // ================= GET ORDER =================
     $order = json_decode($rdb->retrieve("/orders/$order_id"), true);
 
     if(!$order){
         die("Order not found");
     }
 
-    // ================= PREPARING / READY =================
-    if($status !== "done"){
+    $now = date("Y-m-d H:i:s");
 
-        // ONLY update kitchen progress
-        $rdb->update("/orders", $order_id, [
-            "kitchen_status" => $status,
-            "kitchen_action_time" => date("Y-m-d H:i:s")
-        ]);
-    }
+    // ================= UPDATE ORDERS =================
+    $updateOrder = [
+        "kitchen_status" => $status,
+        "kitchen_action_time" => $now
+    ];
 
-    // ================= DONE =================
-    else {
+    $rdb->update("/orders", $order_id, $updateOrder);
 
-        // IMPORTANT: DO NOT change cashier status anymore
-        $rdb->update("/orders", $order_id, [
-            "kitchen_status" => "done",
-            "kitchen_action_time" => date("Y-m-d H:i:s"),
-            "processed_by_kitchen" => $_SESSION['kitchen_email']
-        ]);
+    // ================= SYNC HISTORY =================
+    $historyData = [
+        "order_id" => $order_id,
+        "full_name" => $order['full_name'] ?? 'N/A',
+        "table_number" => $order['table_number'] ?? '',
+        "payment_method" => $order['payment_method'] ?? '',
+        "products" => $order['products'] ?? [],
+        "total" => $order['total'] ?? 0,
+        "order_type" => !empty($order['cashier']) ? "WALK-IN" : "ONLINE",
+        "kitchen_status" => $status,
+        "kitchen_action_time" => $now,
+        "processed_by" => $_SESSION['kitchen_email']
+    ];
 
-        // LOG ONLY (DO NOT AFFECT ORDER HISTORY LOGIC)
-        $rdb->insert("/kitchen_history", [
-            "order_id" => $order_id,
-            "full_name" => $order['full_name'] ?? 'N/A',
-            "table_number" => $order['table_number'] ?? '',
-            "payment_method" => $order['payment_method'] ?? '',
-            "products" => $order['products'] ?? [],
-            "total" => $order['total'] ?? 0,
-            "order_type" => !empty($order['cashier']) ? "WALK-IN" : "ONLINE",
-            "kitchen_status" => "done",
-            "kitchen_action_time" => date("Y-m-d H:i:s"),
-            "processed_by" => $_SESSION['kitchen_email']
-        ]);
-    }
+    $rdb->update("/kitchen_history", $order_id, $historyData);
 
     header("Location: kitchen_index.php");
     exit;
 
+    break;
+
+
+// ================= DEFAULT =================
+default:
+    die("Invalid action");
 }
 ?>

@@ -128,35 +128,34 @@ switch($action) {
             }
         }
 
-        // TOTAL COMPUTATION
-        $cart = $_SESSION['cart'];
-        $total = 0;
-        $products_detail = [];
+       // TOTAL COMPUTATION
+$cart = $_SESSION['cart'];
+$total = 0;
+$products_detail = [];
 
-        foreach ($cart as $id => $qty) {
+foreach ($cart as $id => $qty) {
 
-            $product = json_decode($rdb->retrieve("/products/$id"), true);
+    $product = json_decode($rdb->retrieve("/products/$id"), true);
 
-            if ($product) {
+    if ($product) {
 
-                $price = floatval($product['price']);
-                $subtotal = $price * $qty;
-                $total += $subtotal;
+        $price = floatval($product['price']);
+        $subtotal = $price * $qty;
+        $total += $subtotal;
 
-                $products_detail[$id] = [
-                    'name' => $product['name'],
-                    'price' => $price,
-                    'qty' => $qty,
-                    'subtotal' => $subtotal,
-                    'category' => $product['category'] ?? 'unknown'
-                ];
-            }
-        }
+        $products_detail[$id] = [
+            'category' => $product['category'] ?? 'unknown',
+            'name' => $product['name'] ?? '',
+            'price' => $price,
+            'qty' => $qty,
+            'subtotal' => $subtotal
+        ];
+    }
+}
 
-        /* ✅ FIXED ORDER SAVE WITH APPOINTMENT TIME */
-        $appointment_time = $_POST['appointment_time'] ?? '';
+$appointment_time = $_POST['appointment_time'] ?? '';
 
-        $order_data = [
+$order_data = [
     'user_email' => $_SESSION['email'],
     'full_name' => $_POST['full_name'] ?? '',
     'contact_number' => $_POST['contact_number'] ?? '',
@@ -166,6 +165,8 @@ switch($action) {
     'appointment_timestamp' => strtotime($appointment_time),
 
     'total' => $total,
+
+    // SAVE PRODUCTS WITH NAME + CATEGORY
     'products' => $products_detail,
 
     'payment_method' => $payment_method,
@@ -176,111 +177,190 @@ switch($action) {
         ? "pending_verification"
         : "no_payment_required",
 
-    'payment_verified' => false,
+    'payment_verified' =>
+    ($payment_method === "counter")
+    ? true
+    : false,
     'status' => 'pending',
 
-    // ✅ FIXED HERE
     'created_at' => date("Y-m-d H:i:s"),
     'date' => date("Y-m-d"),
     'timestamp' => time()
 ];
-        $rdb->insert("/orders", $order_data);
 
-        unset($_SESSION['cart']);
+// IMPORTANT FIX
+$rdb->insert("/orders", $order_data);
 
-        header("Location: checkout_success.php");
+unset($_SESSION['cart']);
+
+header("Location: checkout_success.php");
+exit;
+
+    // ================= BOOKING =================
+case 'booking':
+
+    if (!isset($_SESSION['email'])) {
+        header("Location: user_login.php");
         exit;
+    }
 
+    $payment_method = $_POST['payment_method'] ?? 'counter';
+    $gcash_number = $_POST['gcash_number'] ?? '';
+    $booking_receipt = null;
 
-     // ================= BOOKING =================
-    case 'booking':
+    $rent_items_raw = json_decode(
+        $rdb->retrieve("/rent_items"),
+        true
+    ) ?? [];
 
-        if (!isset($_SESSION['email'])) {
-            header("Location: user_login.php");
-            exit;
-        }
+    $selected_items = $_POST['rent_items'] ?? [];
 
-        $payment_method = $_POST['payment_method'] ?? 'counter';
-        $gcash_number = $_POST['gcash_number'] ?? '';
-        $booking_receipt = null;
+    $booking_total = 0;
+    $booking_details = [];
 
-        $rent_items_raw = json_decode($rdb->retrieve("/rent_items"), true) ?? [];
-        $selected_items = $_POST['rent_items'] ?? [];
+    foreach ($selected_items as $id => $qty) {
 
-        $booking_total = 0;
-        $booking_details = [];
+        $qty = intval($qty);
 
-        foreach ($selected_items as $id => $qty) {
+        if ($qty <= 0) continue;
 
-            $qty = intval($qty);
-            if ($qty <= 0) continue;
+        if (isset($rent_items_raw[$id])) {
 
-            if (isset($rent_items_raw[$id])) {
+            $item = $rent_items_raw[$id];
 
-                $item = $rent_items_raw[$id];
-                $price = floatval($item['price'] ?? 0);
+            $available = intval($item['quantity'] ?? 0);
 
-                $subtotal = $price * $qty;
-                $booking_total += $subtotal;
+            // CHECK AVAILABLE STOCK
+            if ($qty > $available) {
 
-                $booking_details[$id] = [
-                    'name' => $item['display_name'] ?? $item['name'],
-                    'price' => $price,
-                    'qty' => $qty,
-                    'subtotal' => $subtotal
-                ];
+                die(
+                    ($item['display_name']
+                    ?? $item['name']
+                    ?? 'Item')
+                    . " only has "
+                    . $available
+                    . " available."
+                );
             }
+
+            $price = floatval($item['price'] ?? 0);
+
+            $subtotal = $price * $qty;
+            $booking_total += $subtotal;
+
+            $booking_details[$id] = [
+
+                'name' => $item['display_name']
+                    ?? $item['name']
+                    ?? 'Unnamed Item',
+
+                'price' => $price,
+                'qty' => $qty,
+                'subtotal' => $subtotal
+            ];
         }
+    }
 
-        if ($payment_method === "gcash") {
+    // GCash Upload
+    if ($payment_method === "gcash") {
 
-            if (!empty($_FILES['gcash_receipt']['name'])) {
+        if (!empty($_FILES['gcash_receipt']['name'])) {
 
-                $uploadDir = __DIR__ . "/bookings/";
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+            $uploadDir = __DIR__ . "/bookings/";
 
-                $fileName = time() . "_" . basename($_FILES["gcash_receipt"]["name"]);
-                $targetFile = $uploadDir . $fileName;
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
 
-                if (move_uploaded_file($_FILES["gcash_receipt"]["tmp_name"], $targetFile)) {
-                    $booking_receipt = "bookings/" . $fileName;
-                } else {
-                    die("Upload failed.");
-                }
+            $fileName =
+                time()
+                . "_"
+                . basename($_FILES["gcash_receipt"]["name"]);
+
+            $targetFile = $uploadDir . $fileName;
+
+            if (
+                move_uploaded_file(
+                    $_FILES["gcash_receipt"]["tmp_name"],
+                    $targetFile
+                )
+            ) {
+
+                $booking_receipt =
+                    "bookings/" . $fileName;
 
             } else {
-                die("GCash receipt is required.");
+
+                die("Upload failed.");
             }
+
+        } else {
+
+            die("GCash receipt is required.");
         }
+    }
 
-        $booking_data = [
-            'user_email' => $_SESSION['email'],
-            'full_name' => $_POST['full_name'] ?? '',
-            'contact_number' => $_POST['contact_number'] ?? '',
-            'address' => $_POST['address'] ?? '',
-            'appointment_time' => $_POST['appointment_time'] ?? '',
-            'items' => $booking_details,
-            'booking_total' => $booking_total,
+    // SAVE BOOKING
+    $booking_data = [
 
-            'payment_method' => $payment_method,
-            'gcash_number' => $gcash_number,
-            'gcash_receipt' => $booking_receipt,
+        'user_email' => $_SESSION['email'],
+        'full_name' => $_POST['full_name'] ?? '',
+        'contact_number' => $_POST['contact_number'] ?? '',
+        'address' => $_POST['address'] ?? '',
+        'appointment_time' => $_POST['appointment_time'] ?? '',
+        'return_time' => $_POST['return_time'] ?? '',
 
-            'payment_status' => ($payment_method === "gcash")
-                ? "pending_verification"
-                : "no_payment_required",
+        'items' => $booking_details,
+        'booking_total' => $booking_total,
 
-            'payment_verified' => false,
-            'status' => 'pending',
-            'created_at' => date("M d, Y h:i A")
-        ];
+        'payment_method' => $payment_method,
+        'gcash_number' => $gcash_number,
+        'gcash_receipt' => $booking_receipt,
 
-        $rdb->insert("/bookings", $booking_data);
+        'payment_status' =>
+            ($payment_method === "gcash")
+            ? "pending_verification"
+            : "no_payment_required",
 
-        header("Location: booking_success.php");
-        exit;
+        'payment_verified' =>
+        ($payment_method === "counter")
+        ? true
+        : false,
+        'status' => 'pending',
+        'created_at' => date("M d, Y h:i A")
+    ];
 
+    $rdb->insert("/bookings", $booking_data);
 
+    // DEDUCT STOCK AFTER SAVE
+    foreach ($selected_items as $id => $qty) {
+
+        $qty = intval($qty);
+
+        if ($qty <= 0) continue;
+
+        if (isset($rent_items_raw[$id])) {
+
+            $item = $rent_items_raw[$id];
+
+            $available =
+                intval($item['quantity'] ?? 0);
+
+            $new_quantity =
+                $available - $qty;
+
+            $rdb->update(
+                "rent_items",
+                $id,
+                [
+                    "quantity" => $new_quantity
+                ]
+            );
+        }
+    }
+
+    header("Location: booking_success.php");
+    exit;
     // ================= UPDATE PROFILE =================
     case 'update_profile':
 

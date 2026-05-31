@@ -11,21 +11,25 @@ if(!isset($_SESSION['kitchen_email'])){
 
 $rdb = new firebaseRDB($databaseURL);
 
-// ================= GET ORDERS =================
-$orders = json_decode($rdb->retrieve("/orders"), true) ?? [];
+// ================= GET HISTORY =================
+$rawHistory = json_decode($rdb->retrieve("/kitchen_history"), true) ?? [];
 
-// ================= FILTER DONE =================
 $history = [];
 
-foreach($orders as $id => $order){
+// ================= FILTER =================
+foreach($rawHistory as $id => $order){
 
-    if(strtolower($order['kitchen_status'] ?? '') !== 'done') continue;
+    $status = strtolower($order['kitchen_status'] ?? '');
+
+    // show only valid kitchen tracked orders
+    if(!in_array($status, ['accepted','preparing','ready','done'])){
+        continue;
+    }
 
     $order['_id'] = $id;
     $history[$id] = $order;
 }
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -77,7 +81,9 @@ foreach($orders as $id => $order){
             <p><?= strtoupper($order['order_type'] ?? 'ORDER') ?></p>
         </div>
 
-        <span class="kitchen-history-badge done">DONE</span>
+        <span class="kitchen-history-badge <?= strtolower($order['kitchen_status'] ?? '') ?>">
+    <?= strtoupper($order['kitchen_status'] ?? 'UNKNOWN') ?>
+</span>
     </div>
 
     <!-- INFO -->

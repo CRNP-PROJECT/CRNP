@@ -24,24 +24,43 @@ $bookings = json_decode($rdb->retrieve("/bookings"), true) ?? [];
 
 /* ================= FILTER FUNCTION ================= */
 function filterData($data, $email, $status_filter){
+
     $result = [];
 
     foreach($data as $id => $item){
 
-        $item_email = $item['email']
+        if(!is_array($item)) continue;
+
+        $item_email =
+            $item['email']
             ?? $item['user_email']
             ?? '';
 
-        if($item_email !== $email) continue;
+        if($item_email != $email){
+            continue;
+        }
 
-        $status = strtolower($item['status'] ?? 'pending');
+        $status = strtolower(trim($item['status'] ?? 'pending'));
 
-        if($status_filter !== 'all' && $status !== $status_filter){
+        // status filter
+        if(
+            $status_filter != 'all'
+            && $status != strtolower($status_filter)
+        ){
             continue;
         }
 
         $result[$id] = $item;
     }
+
+    // NEWEST FIRST
+    uasort($result, function($a,$b){
+
+        return
+            ($b['timestamp'] ?? 0)
+            -
+            ($a['timestamp'] ?? 0);
+    });
 
     return $result;
 }
@@ -126,7 +145,39 @@ $data = ($type_filter === 'bookings') ? $user_bookings : $user_orders;
         <?php endif; ?>
 
         <?php foreach($data as $id => $item): ?>
-        <?php $status = strtolower($item['status'] ?? 'pending'); ?>
+        <?php
+$orderStatus = strtolower(trim($item['status'] ?? 'pending'));
+$kitchenStatus = strtolower(trim($item['kitchen_status'] ?? ''));
+
+// normalize variants
+if (in_array($orderStatus, ['completed', 'finished'])) {
+    $orderStatus = 'done';
+}
+
+// FINAL DISPLAY STATUS (priority system)
+if ($orderStatus === 'rejected') {
+    $status = 'rejected';
+}
+elseif ($orderStatus === 'pending') {
+    $status = 'pending';
+}
+elseif ($orderStatus === 'accepted') {
+
+    // show kitchen progress if available
+    if (in_array($kitchenStatus, ['preparing', 'ready'])) {
+        $status = $kitchenStatus; // preparing / ready
+    } else {
+        $status = 'accepted';
+    }
+
+}
+elseif ($orderStatus === 'done') {
+    $status = 'done';
+}
+else {
+    $status = $orderStatus;
+}
+?>
 
         <div class="your-order-card">
 
@@ -138,9 +189,41 @@ $data = ($type_filter === 'bookings') ? $user_bookings : $user_orders;
                 </span>
             </div>
 
-            <div class="your-order-total">
-                ₱<?= number_format($item['total'] ?? 0, 2) ?>
-            </div>
+            <?php if($type_filter == 'orders'): ?>
+
+    <div class="your-order-info-label">
+        Order Total
+    </div>
+
+    <div class="your-order-total">
+        ₱<?= number_format($item['total'] ?? 0,2) ?>
+    </div>
+
+<?php else: ?>
+
+    <div class="your-order-info-label">
+        Booking Schedule
+    </div>
+
+    <div class="your-order-total">
+
+        <?php
+        $appt =
+            $item['appointment_timestamp']
+            ?? strtotime(
+                $item['appointment_time']
+                ?? ''
+            );
+        ?>
+
+        <?= $appt
+            ? date('M d, Y h:i A', $appt)
+            : 'No schedule'
+        ?>
+
+    </div>
+
+<?php endif; ?>
 
             <?php $products = $item['products'] ?? $item['items'] ?? []; ?>
 

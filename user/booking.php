@@ -1,13 +1,13 @@
 <?php
 session_start();
 
-include(__DIR__ . "/../config.php"); 
-include(__DIR__ . "/../firebaseRDB.php"); 
+include(__DIR__ . "/../config.php");
+include(__DIR__ . "/../firebaseRDB.php");
 
 if(!isset($_SESSION['email'])){
     header("Location: login.php");
     exit;
-} 
+}
 
 $username = $_SESSION['username'] ?? "User";
 $email = $_SESSION['email'];
@@ -41,6 +41,7 @@ if(!is_array($rent_items)){
     <div class="navbar-brand-container">
         <img src="../img/logo.png" class="logo">
     </div>
+
     <div class="navbar-right">
         <ul class="navbar-menu">
             <li><a href="index.php">Home</a></li>
@@ -55,6 +56,7 @@ if(!is_array($rent_items)){
             <span class="navbar-user-btn">
                 <?php echo htmlspecialchars($username); ?> ▼
             </span>
+
             <div class="navbar-dropdown-content">
                 <a href="your_profile.php">My Profile</a>
                 <a href="your_orders.php">Your Orders</a>
@@ -66,20 +68,22 @@ if(!is_array($rent_items)){
 
 <!-- MAIN -->
 <div class="booking-main-container">
-    
-    <h1 class="page-title-centered">
-    Booking & Reservation
+
+<h1 class="page-title-centered">
+Booking & Reservation
 </h1>
 
 <div class="booking-card">
 
-
-
-<form action="process.php" method="POST" enctype="multipart/form-data" class="booking-form" onsubmit="return validateBooking()">
+<form action="process.php"
+      method="POST"
+      enctype="multipart/form-data"
+      class="booking-form"
+      onsubmit="return validateBooking()">
 
 <input type="hidden" name="action" value="booking">
 
-<!-- NAME -->
+<!-- FULL NAME -->
 <div class="form-group">
 <label class="form-label">Full Name</label>
 <input type="text" name="full_name" class="form-input" required>
@@ -97,10 +101,24 @@ if(!is_array($rent_items)){
 <input type="text" name="address" class="form-input" required>
 </div>
 
-<!-- DATE -->
+<!-- APPOINTMENT DATE -->
 <div class="form-group">
-<label class="form-label">Date & Time</label>
-<input type="datetime-local" name="appointment_time" class="form-input" required>
+<label class="form-label">Date & Time of Appointment</label>
+<input
+    type="datetime-local"
+    name="appointment_time"
+    class="form-input"
+    required>
+</div>
+
+<!-- RETURN DATE -->
+<div class="form-group">
+<label class="form-label">Return Date & Time of Items</label>
+<input
+    type="datetime-local"
+    name="return_time"
+    class="form-input"
+    required>
 </div>
 
 <!-- RENT ITEMS -->
@@ -109,56 +127,77 @@ if(!is_array($rent_items)){
 <h3>Rental Items</h3>
 
 <?php if(empty($rent_items)): ?>
+
     <p>No rental items available.</p>
+
 <?php else: ?>
 
-    <?php foreach($rent_items as $id => $item): ?>
-        
-        <?php if(!is_array($item)) continue; ?>
+<?php foreach($rent_items as $id => $item): ?>
 
-        <div class="booking-row" style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+    <?php if(!is_array($item)) continue; ?>
 
-            <!-- IMAGE -->
-            <div>
-                <?php if(!empty($item['image'])): ?>
-                    <img src="../admin/<?php echo htmlspecialchars($item['image']); ?>" 
-                         style="width:60px;height:60px;object-fit:cover;border-radius:10px;">
-                <?php else: ?>
-                    <div style="width:60px;height:60px;background:#ddd;border-radius:10px;"></div>
-                <?php endif; ?>
-            </div>
+    <div class="booking-row"
+         style="display:flex;align-items:center;gap:15px;margin-bottom:15px;">
 
-            <!-- NAME -->
-            <div style="flex:1;">
-                <h4 style="margin:0;">
-                    <?php echo htmlspecialchars($item['display_name'] ?? $item['name']); ?>
-                </h4>
-            </div>
+        <!-- IMAGE -->
+        <div>
+            <?php if(!empty($item['image'])): ?>
+                <img src="../admin/<?php echo htmlspecialchars($item['image']); ?>"
+                     style="width:70px;height:70px;object-fit:cover;border-radius:10px;">
+            <?php else: ?>
+                <div style="width:70px;height:70px;background:#ddd;border-radius:10px;"></div>
+            <?php endif; ?>
+        </div>
 
-            <!-- QTY -->
-            <div>
-                <input 
-                    type="number" 
-                    name="rent_items[<?php echo $id; ?>]" 
-                    class="form-input qty-input"
-                    min="0" 
-                    value="0"
-                    style="width:80px;"
-                >
-            </div>
+        <!-- NAME + PRICE + STOCK -->
+        <div style="flex:1;">
+
+            <h4 style="margin:0;">
+                <?php
+                echo htmlspecialchars(
+                    $item['display_name']
+                    ?? $item['name']
+                    ?? 'Unnamed Item'
+                );
+                ?>
+            </h4>
+
+            <small>
+                ₱<?php echo number_format($item['price'] ?? 0,2); ?>
+                |
+                Available:
+                <b><?php echo $item['quantity'] ?? 0; ?></b>
+            </small>
 
         </div>
 
-    <?php endforeach; ?>
+        <!-- QTY -->
+        <div>
+            <input
+                type="number"
+                name="rent_items[<?php echo $id; ?>]"
+                class="form-input qty-input"
+                min="0"
+                max="<?php echo $item['quantity'] ?? 0; ?>"
+                value="0"
+                style="width:80px;">
+        </div>
+
+    </div>
+
+<?php endforeach; ?>
 
 <?php endif; ?>
 
 </div>
 
 <!-- TOTAL -->
-<div class="booking-group" style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:10px;">
+<div class="booking-group"
+     style="margin-top:20px;padding:15px;background:#f5f5f5;border-radius:10px;">
+
     <h3>Total</h3>
     <h2>₱ <span id="totalDisplay">0.00</span></h2>
+
 </div>
 
 <!-- PAYMENT -->
@@ -167,92 +206,114 @@ if(!is_array($rent_items)){
 <h3>Payment Method</h3>
 
 <label>
-<input type="radio" name="payment_method" value="counter" checked onclick="togglePayment('counter')">
+<input type="radio"
+       name="payment_method"
+       value="counter"
+       checked
+       onclick="togglePayment('counter')">
 Over the Counter
 </label>
 
 <label>
-<input type="radio" name="payment_method" value="gcash" onclick="togglePayment('gcash')">
-<img src="../img/gcash.png" style="width:20px; vertical-align:middle; margin-right:5px;">
+<input type="radio"
+       name="payment_method"
+       value="gcash"
+       onclick="togglePayment('gcash')">
+
+<img src="../img/gcash.png"
+     style="width:20px;vertical-align:middle;margin-right:5px;">
 GCash
 </label>
 
 <div id="gcashSection" style="display:none;">
 
-    <div class="gcash-container">
+<div class="gcash-container">
 
-        <div class="gcash-image">
-            <p class="gcash-scan">Scan Me to Pay</p>
+<div class="gcash-image">
 
-            <img src="../img/qr.png" id="gcashQR" alt="GCash QR">
+<p class="gcash-scan">Scan Me to Pay</p>
 
-            <p class="gcash-number">0912 345 6789</p>
+<img src="../img/qr.png" id="gcashQR" alt="GCash QR">
 
-            <button type="button" class="gcash-download" onclick="downloadQR()">
-                Download QR
-            </button>
-        </div>
+<p class="gcash-number">0912 345 6789</p>
 
-        <div class="gcash-fields">
-            <input type="text" name="gcash_number" class="form-input" placeholder="Enter GCash Number">
-            <input type="file" name="gcash_receipt" class="form-input" accept="image/*">
-        </div>
+<button type="button"
+        class="gcash-download"
+        onclick="downloadQR()">
+Download QR
+</button>
 
-    </div>
+</div>
 
+<div class="gcash-fields">
+    <input type="text"
+           name="gcash_number"
+           class="form-input"
+           placeholder="Enter GCash Number">
+
+    <input type="file"
+           name="gcash_receipt"
+           class="form-input"
+           accept="image/*">
+</div>
+
+</div>
 </div>
 
 <button type="submit" class="btn-booking-confirm">
 Confirm Booking
 </button>
 
+</div>
 </form>
-
 </div>
 </div>
 
-<!-- SCRIPT -->
 <script>
 
-// SHOW / HIDE GCASH
+// GCASH TOGGLE
 function togglePayment(type){
     document.getElementById("gcashSection").style.display =
         (type === "gcash") ? "block" : "none";
 }
 
-// SAFE PRICE MAP
+// PRICE MAP
 const prices = <?php echo json_encode(
-    is_array($rent_items)
-    ? array_map(fn($i) => floatval($i['price'] ?? 0), $rent_items)
-    : []
+    array_map(
+        fn($i)=>floatval($i['price'] ?? 0),
+        $rent_items
+    )
 ); ?>;
 
-// LIVE TOTAL
-function updateTotal() {
+// TOTAL
+function updateTotal(){
+
     let total = 0;
 
-    document.querySelectorAll(".qty-input").forEach(input => {
+    document.querySelectorAll(".qty-input").forEach(input=>{
 
         let match = input.name.match(/\[(.*?)\]/);
+
         if(!match) return;
 
         let id = match[1];
-        let qty = parseInt(input.value) || 0;
+        let qty = parseInt(input.value)||0;
 
-        if (prices[id]) {
+        if(prices[id]){
             total += prices[id] * qty;
         }
     });
 
-    document.getElementById("totalDisplay").innerText = total.toFixed(2);
+    document.getElementById("totalDisplay")
+        .innerText = total.toFixed(2);
 }
 
-// VALIDATION (VERY IMPORTANT)
+// VALIDATE
 function validateBooking(){
 
     let hasItem = false;
 
-    document.querySelectorAll(".qty-input").forEach(input => {
+    document.querySelectorAll(".qty-input").forEach(input=>{
         if(parseInt(input.value) > 0){
             hasItem = true;
         }
@@ -263,11 +324,34 @@ function validateBooking(){
         return false;
     }
 
+    let appointment =
+        document.querySelector(
+            '[name="appointment_time"]'
+        ).value;
+
+    let returnTime =
+        document.querySelector(
+            '[name="return_time"]'
+        ).value;
+
+    if(
+        appointment &&
+        returnTime &&
+        new Date(returnTime)
+        <=
+        new Date(appointment)
+    ){
+        alert(
+            "Return date must be after appointment date."
+        );
+        return false;
+    }
+
     return true;
 }
 
 // EVENTS
-document.querySelectorAll(".qty-input").forEach(input => {
+document.querySelectorAll(".qty-input").forEach(input=>{
     input.addEventListener("input", updateTotal);
 });
 

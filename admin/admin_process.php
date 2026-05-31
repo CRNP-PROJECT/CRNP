@@ -180,4 +180,119 @@ if(isset($_POST['action']) && $_POST['action'] == "admin_create_kitchen"){
     header("Location: create_kitchen.php?success=1");
     exit;
 }
+if(isset($_POST['return_booking'])){
+
+
+
+    include(__DIR__ . "/../config.php");
+
+    require_once(__DIR__ . "/../firebaseRDB.php");
+
+
+
+    $rdb = new firebaseRDB($databaseURL);
+
+
+
+    $bookingId = $_POST['booking_id'] ?? '';
+
+
+
+    if($bookingId == ''){
+
+        die("Missing booking ID");
+
+    }
+
+
+
+    $bookings = json_decode($rdb->retrieve("/bookings"), true) ?? [];
+
+    $rent_items = json_decode($rdb->retrieve("/rent_items"), true) ?? [];
+
+
+
+    if(!isset($bookings[$bookingId])){
+
+        die("Booking not found");
+
+    }
+
+
+
+    $booking = $bookings[$bookingId];
+
+
+
+    /* ================= RESTORE STOCK ================= */
+
+    if(!empty($booking['items']) && is_array($booking['items'])){
+
+
+
+        foreach($booking['items'] as $item){
+
+
+
+            $qty = intval($item['qty'] ?? 0);
+
+            $name = strtolower(trim($item['name'] ?? ''));
+
+
+
+            if($qty <= 0 || $name == '') continue;
+
+
+
+            foreach($rent_items as $rid => $ritem){
+
+
+
+                if(strtolower(trim($ritem['name'] ?? '')) === $name){     
+
+                    $current = intval($ritem['quantity'] ?? 0);
+
+
+
+                    $rdb->update("rent_items", $rid, [
+
+                        "quantity" => $current + $qty
+
+                    ]);
+
+
+
+                    break;
+
+                }
+
+            }
+
+        }
+
+    }
+
+
+
+    /* ================= UPDATE BOOKING ================= */
+
+    $rdb->update("bookings", $bookingId, [
+
+        "status" => "returned",
+
+        "returned_at" => date("Y-m-d H:i:s"),
+
+        "returned_by" => $_SESSION['admin_id'] ?? 'admin'
+
+    ]);
+
+
+
+    header("Location: booking_reserve.php?success=returned");
+
+    exit;
+
+}
+
+
 ?>

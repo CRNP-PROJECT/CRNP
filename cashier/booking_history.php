@@ -62,6 +62,7 @@ $filter = $_GET['filter'] ?? 'all';
 <div class="cashier-history-booking-tabs">
     <a href="?filter=all" class="<?= $filter=='all'?'active':'' ?>">All</a>
     <a href="?filter=accepted" class="<?= $filter=='accepted'?'active':'' ?>">Accepted</a>
+    <a href="?filter=done" class="<?= $filter=='done'?'active':'' ?>">Done</a>
     <a href="?filter=rejected" class="<?= $filter=='rejected'?'active':'' ?>">Rejected</a>
 </div>
 
@@ -76,9 +77,15 @@ foreach($data as $id => $b):
 
     $status = strtolower($b['status'] ?? '');
 
-    if($filter == 'accepted' && $status != 'accepted') continue;
-    if($filter == 'rejected' && $status != 'rejected') continue;
-    if($status != 'accepted' && $status != 'rejected') continue;
+   $status = strtolower(trim($b['status'] ?? ''));
+
+/* FILTER LOGIC */
+if ($filter == 'accepted' && $status != 'accepted') continue;
+if ($filter == 'rejected' && $status != 'rejected') continue;
+if ($filter == 'done' && $status != 'done') continue;
+
+/* DEFAULT VIEW (ALL) */
+if ($filter == 'all' && !in_array($status, ['accepted','rejected','done'])) continue;
 
     $hasData = true;
 
@@ -97,6 +104,7 @@ foreach($data as $id => $b):
     /* ================= FORMAT DATES ================= */
     $createdAt = $b['created_at'] ?? null;
     $appointment = $b['appointment_time'] ?? null;
+    $return_time = $b['return_time'] ?? null;
 
     $createdFormatted = $createdAt 
         ? date("M d, Y - h:i A", strtotime($createdAt)) 
@@ -104,6 +112,10 @@ foreach($data as $id => $b):
 
     $appointmentFormatted = $appointment 
         ? date("M d, Y - h:i A", strtotime($appointment)) 
+        : "N/A";
+
+    $returnFormatted = $return_time 
+        ? date("M d, Y - h:i A", strtotime($return_time)) 
         : "N/A";
 ?>
 
@@ -123,22 +135,37 @@ foreach($data as $id => $b):
     </div>
 
     <div class="cashier-history-booking-items">
-        <?php
-        $hasItems = false;
 
-        foreach($items as $name => $qty):
-            if($qty > 0):
-                $hasItems = true;
-        ?>
-            <div class="cashier-history-booking-item">
-                <?= $name ?> x<?= intval($qty) ?>
-            </div>
-        <?php endif; endforeach; ?>
+<?php
+$hasItems = false;
 
-        <?php if(!$hasItems): ?>
-            <div class="cashier-history-booking-item">No items</div>
-        <?php endif; ?>
-    </div>
+/* Normalize items */
+$rawItems = $b['items'] ?? [];
+
+if (is_array($rawItems)) {
+
+    foreach ($rawItems as $item) {
+
+        $name  = $item['name'] ?? 'Item';
+        $qty   = isset($item['qty']) ? (int)$item['qty'] : 0;
+        $price = isset($item['price']) ? (float)$item['price'] : 0;
+
+        if ($qty > 0) {
+            $hasItems = true;
+
+            echo '<div class="cashier-history-booking-item">';
+            echo htmlspecialchars($name) . " x{$qty} - ₱" . number_format($price, 2);
+            echo '</div>';
+        }
+    }
+}
+
+if (!$hasItems) {
+    echo '<div class="cashier-history-booking-item">No items</div>';
+}
+?>
+
+</div>
 
     <!-- ✅ FIXED DATE SECTION -->
     <div class="cashier-history-booking-date">
@@ -151,6 +178,12 @@ foreach($data as $id => $b):
         <p>
             <b>Appointment:</b>
             <?= $appointmentFormatted ?>
+
+        </p>
+
+        <p>
+            <b>Return Time:</b>
+            <?= $returnFormatted ?>
         </p>
 
     </div>

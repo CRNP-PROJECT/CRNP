@@ -59,7 +59,6 @@ foreach ($data as $id => $product) {
         <li><a href="admin_index.php">Admin Dashboard</a></li>
         <li><a href="add_product.php">Add Product</a></li>
         <li><a href="product_list.php" class="active">Product List</a></li>
-        <li><a href="booking_list.php">Rental Items</a></li>
         <li><a href="admin_log.php">Logout</a></li>
     </ul>
 

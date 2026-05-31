@@ -231,14 +231,48 @@ $today_bookings = $data['today_bookings'];
                             <tr><td colspan="3" style="text-align:center; padding:30px;">None for today</td></tr>
                         <?php else: ?>
 
-                            <?php foreach($today_bookings as $tb): ?>
-                            <tr>
-                                <td><?= date('h:i A', strtotime($tb['appointment_time'])) ?></td>
-                                <td><?= htmlspecialchars($tb['full_name'] ?? '') ?></td>
-                                <td><a href="scheduled_booking.php" class="status pending">View</a></td>
-                                
-                            </tr>
-                            <?php endforeach; ?>
+                            <?php
+$hasAccepted = false;
+?>
+
+<?php foreach($today_bookings as $tb): ?>
+
+    <?php
+    $status = strtolower($tb['status'] ?? 'pending');
+
+    // SHOW ONLY ACCEPTED
+    if($status != 'accepted'){
+        continue;
+    }
+
+    $hasAccepted = true;
+    ?>
+
+    <tr>
+        <td>
+            <?= date('h:i A', strtotime($tb['appointment_time'])) ?>
+        </td>
+
+        <td>
+            <?= htmlspecialchars($tb['full_name'] ?? '') ?>
+        </td>
+
+        <td>
+            <a href="scheduled_booking.php" class="status accepted">
+                View
+            </a>
+        </td>
+    </tr>
+
+<?php endforeach; ?>
+
+<?php if(!$hasAccepted): ?>
+<tr>
+    <td colspan="3" style="text-align:center; padding:30px;">
+        No accepted bookings today
+    </td>
+</tr>
+<?php endif; ?>
 
                         <?php endif; ?>
 
