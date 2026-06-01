@@ -16,14 +16,21 @@ foreach($orders as $id => $order){
 
     if(!is_array($order)) continue;
 
-    $status = strtolower($order['status'] ?? '');
+    // ================= NORMALIZED STATUS =================
+    $status =
+        strtolower(
+            $order['kitchen_status']
+            ?? $order['status']
+            ?? 'accepted'
+        );
+
+    // reject filter
     if($status === 'rejected') continue;
 
-    $kitchen_status = strtolower($order['kitchen_status'] ?? 'accepted');
+    // hide completed orders from live kitchen
+    if($status === 'done') continue;
 
-    // still hide completed orders from LIVE dashboard
-    if($kitchen_status === 'done') continue;
-
+    // ================= ITEMS =================
     $items_html = "";
 
     foreach(($order['products'] ?? []) as $p){
@@ -34,7 +41,7 @@ foreach($orders as $id => $order){
     // ================= BUTTON FLOW =================
     $buttons = "";
 
-    if($kitchen_status === "accepted"){
+    if($status === "accepted"){
         $buttons = "
         <form method='POST' action='kitchen_process.php'>
             <input type='hidden' name='action' value='update_status'>
@@ -43,7 +50,7 @@ foreach($orders as $id => $order){
         </form>";
     }
 
-    elseif($kitchen_status === "preparing"){
+    elseif($status === "preparing"){
         $buttons = "
         <form method='POST' action='kitchen_process.php'>
             <input type='hidden' name='action' value='update_status'>
@@ -52,7 +59,7 @@ foreach($orders as $id => $order){
         </form>";
     }
 
-    elseif($kitchen_status === "ready"){
+    elseif($status === "ready"){
         $buttons = "
         <form method='POST' action='kitchen_process.php'>
             <input type='hidden' name='action' value='update_status'>
@@ -61,17 +68,18 @@ foreach($orders as $id => $order){
         </form>";
     }
 
+    // ================= CARD HTML =================
     $html = "
     <div class='card'>
         <strong>" . htmlspecialchars($order['full_name'] ?? 'N/A') . "</strong><br>
-        <small>Status: " . strtoupper($kitchen_status) . "</small><br><br>
+        <small>Status: " . strtoupper($status) . "</small><br><br>
 
         $items_html
         <br>
         $buttons
     </div>";
 
-    // ================= SPLIT =================
+    // ================= SPLIT WALKIN / ONLINE =================
     if(!empty($order['cashier'])){
         $walkin_html .= $html;
     } else {

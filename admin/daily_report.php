@@ -95,19 +95,25 @@ $nextMonth = date('Y-m-d', strtotime($date . ' +1 month'));
     <div class="daily_report_kpi_grid">
 
         <div class="daily_report_kpi_card">
-            <h6>Daily Revenue</h6>
+            <h6>Order Revenue</h6>
             <h4><?= peso($dailyRevenue) ?></h4>
         </div>
 
         <div class="daily_report_kpi_card">
-            <h6>Bookings</h6>
-            <h4><?= $dailyBookings ?></h4>
+            <h6>No. Orders</h6>
+            <h4><?= $dailyOrders ?></h4>
         </div>
 
         <div class="daily_report_kpi_card">
             <h6>Booking Revenue</h6>
             <h4><?= peso($dailyBookingRevenue) ?></h4>
         </div>
+
+        <div class="daily_report_kpi_card">
+            <h6>No. Bookings</h6>
+            <h4><?= $dailyBookings ?></h4>
+        </div>
+
 
     </div>
 
@@ -246,7 +252,7 @@ $nextMonth = date('Y-m-d', strtotime($date . ' +1 month'));
         <div class="daily_report_card">
 
             <h5 class="daily_report_card_title">
-                Bookings (Accepted Only)
+                All Bookings 
             </h5>
 
             <?php foreach($selectedBookings as $b): ?>

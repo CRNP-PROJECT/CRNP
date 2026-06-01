@@ -178,6 +178,8 @@ if ($status !== 'accepted') continue;
     $bestSellingPerDayData = [];
     $bestSellingPerDayNames = [];
 
+
+
     if (!empty($bestSellingPerDay)) {
 
         // Get latest date
@@ -313,8 +315,8 @@ foreach ($bookings as $b) {
 
     $status = strtolower(trim($b['status'] ?? ''));
 
-    // include real completed + accepted bookings
-    if (!in_array($status, ['accepted', 'done'])) {
+    // include accepted, done, and returned bookings
+    if (!in_array($status, ['accepted', 'done', 'returned'])) {
         continue;
     }
 
@@ -327,113 +329,144 @@ foreach ($bookings as $b) {
         $latestBookingDate = $createdDate;
     }
 }
-    /* ================= RESET LOOP FOR PROCESSING ================= */
+    /* ================= BOOKING INIT ================= */
 
-    $bookingRevenueLatestDay = 0;
+$today = date("Y-m-d");
 
-    foreach ($bookings as $b) {
+$todayBookingSales = 0;
+$todayBookingOrders = 0;
 
-        if (!is_array($b)) continue;
+$bookingTotalSales = 0;
+$bookingTotalOrders = 0;
 
-        $status = strtolower(trim($b['status'] ?? ''));
+$bookingRevenuePerDay = [];
+$bookingOrdersPerDay = [];
+$bookingsPerDay = [];
 
-        /* status chart */
-        if (isset($bookingsStatus[$status])) {
-            $bookingsStatus[$status]++;
-        } else {
-            $bookingsStatus['pending']++;
-        }
+$bookingItems = [];
 
-        /* ONLY accepted bookings */
-        if (!in_array($status, ['accepted', 'done'])) continue;
+$bookingsStatus = ['pending'=>0,'accepted'=>0,'done'=>0,'rejected'=>0,'returned'=>0];
 
-        $bookingTotal = floatval($b['booking_total'] ?? 0);
+$latestBookingDate = null;
+$bookingRevenueLatestDay = 0;
 
-        /* ================= IMPORTANT FIX ================= */
-        $created = $b['created_at'] ?? null;
-        if (!$created) continue;
 
-        $createdDate = date('Y-m-d', strtotime($created));
-
-        /* appointment ONLY for optional schedule use */
-        $appointmentDate = $b['appointment_time'] ?? null;
-        if ($appointmentDate) {
-            $appointmentDate = date('Y-m-d', strtotime($appointmentDate));
-        }
-
-        /* ================= TOTAL SALES ================= */
-        $bookingTotalSales += $bookingTotal;
-        $bookingTotalOrders++;
-
-        /* ================= TODAY SALES (BASED ON CREATED_AT) ================= */
-        if ($createdDate === $today) {
-
-            $todayBookingSales += $bookingTotal;
-            $todayBookingOrders++;
-
-            $kpis['bookingRevenue'] += $bookingTotal;
-            $kpis['todayOrders']++;
-        }
-
-        /* ================= AOV ================= */
-        $todayBookingAOV = ($todayBookingOrders > 0)
-            ? ($todayBookingSales / $todayBookingOrders)
-            : 0;
-
-        /* ================= DAILY REVENUE ================= */
-        $bookingRevenuePerDay[$createdDate] =
-            ($bookingRevenuePerDay[$createdDate] ?? 0) + $bookingTotal;
-
-        $bookingOrdersPerDay[$createdDate] =
-            ($bookingOrdersPerDay[$createdDate] ?? 0) + 1;
-
-        $bookingsPerDay[$createdDate] =
-            ($bookingsPerDay[$createdDate] ?? 0) + 1;
-
-        /* ================= LATEST DAY REVENUE ================= */
-        if ($createdDate === $latestBookingDate) {
-            $bookingRevenueLatestDay += $bookingTotal;
-        }
-
-        /* ================= ITEMS ================= */
-        if (!empty($b['items'])) {
-
-            foreach ($b['items'] as $it) {
-
-                $name = $it['name'] ?? $it['display_name'] ?? 'Unknown';
-                $qty = intval($it['qty'] ?? 1);
-
-                $bookingItems[$name] =
-                    ($bookingItems[$name] ?? 0) + $qty;
-            }
-
-        } else {
-
-            $fallback = $b['item_name'] ?? 'Unknown';
-
-            $bookingItems[$fallback] =
-                ($bookingItems[$fallback] ?? 0) + 1;
-        }
-    }
-   $latestBookings = [
-    "labels" => [],
-    "data"   => []
-];
-
-$hourly = array_fill(0, 24, 0);
-$today  = date("Y-m-d");
+/* ================= SINGLE BOOKING LOOP ================= */
 
 foreach ($bookings as $b) {
 
     if (!is_array($b)) continue;
 
-   $status = strtolower(trim($b['status'] ?? ''));
+    $status = strtolower(trim($b['status'] ?? ''));
 
-if (!in_array($status, ['accepted', 'done'])) {
-    continue;
+    // status counter
+    if (isset($bookingsStatus[$status])) {
+        $bookingsStatus[$status]++;
+    } else {
+        $bookingsStatus['pending']++;
+    }
+
+    // only valid revenue statuses
+    if (!in_array($status, ['accepted', 'done', 'returned'])) continue;
+
+    $created = $b['created_at'] ?? null;
+    if (!$created) continue;
+
+    $createdDate = date('Y-m-d', strtotime($created));
+
+    $bookingTotal = floatval($b['booking_total'] ?? 0);
+
+    /* ================= TOTAL ================= */
+    $bookingTotalSales += $bookingTotal;
+    $bookingTotalOrders++;
+
+    /* ================= TODAY ================= */
+    if ($createdDate === $today) {
+        $todayBookingSales += $bookingTotal;
+        $todayBookingOrders++;
+    }
+
+    /* ================= DAILY ================= */
+    $bookingRevenuePerDay[$createdDate] =
+        ($bookingRevenuePerDay[$createdDate] ?? 0) + $bookingTotal;
+
+    $bookingOrdersPerDay[$createdDate] =
+        ($bookingOrdersPerDay[$createdDate] ?? 0) + 1;
+
+    $bookingsPerDay[$createdDate] =
+        ($bookingsPerDay[$createdDate] ?? 0) + 1;
+
+    /* ================= LATEST DAY ================= */
+    if ($latestBookingDate === null || $createdDate > $latestBookingDate) {
+        $latestBookingDate = $createdDate;
+    }
+
+    if ($createdDate === $latestBookingDate) {
+        $bookingRevenueLatestDay += $bookingTotal;
+    }
+
+    /* ================= ITEMS ================= */
+    $items = $b['items'] ?? [];
+
+    if (is_array($items)) {
+
+        foreach ($items as $it) {
+
+            $name = $it['name'] ?? $it['display_name'] ?? $it['item_name'] ?? null;
+            if (!$name) continue;
+
+            $qty = $it['qty'] ?? 1;
+            $qty = is_numeric($qty) ? (int)$qty : 1;
+
+            $bookingItems[$name] =
+                ($bookingItems[$name] ?? 0) + $qty;
+        }
+    } else {
+
+        $fallback = $b['item_name'] ?? 'Unknown';
+
+        $bookingItems[$fallback] =
+            ($bookingItems[$fallback] ?? 0) + 1;
+    }
 }
 
-    // ✅ FIXED: unified field
+
+/* ================= FINAL CALCULATIONS ================= */
+
+$bookingAOV = ($bookingTotalOrders > 0)
+    ? ($bookingTotalSales / $bookingTotalOrders)
+    : 0;
+
+$todayBookingAOV = ($todayBookingOrders > 0)
+    ? ($todayBookingSales / $todayBookingOrders)
+    : 0;
+
+
+/* ================= LATEST DAY SAFE ================= */
+
+if ($latestBookingDate !== null) {
+    $bookingRevenueLatestDay =
+        $bookingRevenuePerDay[$latestBookingDate] ?? 0;
+}
+
+
+/* ================= CHART OUTPUT ================= */
+
+$latestBookings = [
+    "labels" => [],
+    "data" => []
+];
+
+$hourly = array_fill(0, 24, 0);
+
+foreach ($bookings as $b) {
+
+    if (!is_array($b)) continue;
+
+    $status = strtolower(trim($b['status'] ?? ''));
+
+    if (!in_array($status, ['accepted', 'done', 'returned'])) continue;
+
     $time = $b['created_at'] ?? null;
     if (!$time) continue;
 
@@ -444,16 +477,17 @@ if (!in_array($status, ['accepted', 'done'])) {
     $hourly[$hour]++;
 }
 
-$latestBookings["labels"] = array_map(function($h){
-    return date("g:00 A", strtotime("$h:00"));
-}, range(0, 23));
+$latestBookings["labels"] = array_map(
+    fn($h) => date("g:00 A", strtotime("$h:00")),
+    range(0, 23)
+);
 
 $latestBookings["data"] = array_values($hourly);
 
 
-    /* ================= TODAY MOST BOOKED ================= */
+/* ================= TODAY MOST BOOKED ================= */
 
-   $todayMostBooked = [];
+$todayMostBooked = [];
 
 foreach ($bookings as $b) {
 
@@ -461,77 +495,89 @@ foreach ($bookings as $b) {
 
     $status = strtolower(trim($b['status'] ?? ''));
 
-    // ✅ ONLY valid bookings
-    if (!in_array($status, ['accepted', 'done', 'completed', 'finished'])) {
-        continue;
-    }
+    if (!in_array($status, ['accepted', 'done', 'returned'])) continue;
 
-    $time = $b['created_at'] ?? null;
-    if (!$time) continue;
+    $created = $b['created_at'] ?? null;
+    if (!$created) continue;
 
-    $date = date("Y-m-d", strtotime($time));
+    $date = date('Y-m-d', strtotime($created));
     if ($date !== $today) continue;
 
-    $items = $b['items'] ?? null;
-    if (!$items) continue;
+    $items = $b['items'] ?? [];
 
-    if (is_array($items)) {
+    if (!is_array($items)) continue;
 
-        foreach ($items as $i) {
+    foreach ($items as $i) {
 
-            $name = is_array($i) ? ($i['name'] ?? 'Item') : $i;
-            $qty  = is_array($i) ? (int)($i['qty'] ?? 1) : 1;
+        $name = $i['name'] ?? null;
+        if (!$name) continue;
 
-            if (!$name) continue;
+        $qty = $i['qty'] ?? 1;
+        $qty = is_numeric($qty) ? (int)$qty : 1;
 
-            $todayMostBooked[$name] =
-                ($todayMostBooked[$name] ?? 0) + $qty;
-        }
-
-    } else {
-
-        $todayMostBooked[$items] =
-            ($todayMostBooked[$items] ?? 0) + 1;
+        $todayMostBooked[$name] =
+            ($todayMostBooked[$name] ?? 0) + $qty;
     }
 }
-    /* ================= RETURN ================= */
 
-    return [
-        'kpis' => $kpis,
+/* ================= RETURN ================= */
 
-        /* ================= STATUS ================= */
-        'ordersStatus' => $ordersStatus,
-        'bookingsStatus' => $bookingsStatus,
-        'kitchenStatus' => $kitchenStatus,
+return [
+    'kpis' => $kpis,
 
-        /* ================= SALES ================= */
-        'bestSelling' => $productSales,
-        'bestSellingToday' => $bestSellingToday,
-        'bestSellingPerDay' => $bestSellingPerDay,
+    /* ================= STATUS ================= */
+    'ordersStatus' => $ordersStatus,
+    'bookingsStatus' => $bookingsStatus,
+    'kitchenStatus' => $kitchenStatus,
 
-        /* ================= ANALYTICS ================= */
-        'bookingsPerDay' => $bookingsPerDay,
-        'revenuePerDay' => $revenuePerDay,
-        'ordersByHour' => $ordersByHour,
-        'ordersByDayOfWeek' => $ordersByDayOfWeek,
+    /* ================= SALES ================= */
+    'bestSelling' => $productSales,
+    'bestSellingToday' => $bestSellingToday,
+    'bestSellingPerDay' => $bestSellingPerDay,
 
-        /* ================= CATEGORY ================= */
-        'categorySales' => $categorySales,
-        'categorySalesLatestDay' => $categorySalesLatestDay,
+    /* ================= ANALYTICS ================= */
+    'bookingsPerDay' => $bookingsPerDay,
+    'revenuePerDay' => $revenuePerDay,
+    'ordersByHour' => $ordersByHour,
+    'ordersByDayOfWeek' => $ordersByDayOfWeek,
 
-        /* ================= BOOKING ================= */
-        'bookingItems' => $bookingItems,
-        'rentItems' => $rentItems,
+    /* ================= CATEGORY ================= */
+    'categorySales' => $categorySales,
+    'categorySalesLatestDay' => $categorySalesLatestDay,
 
-        'bookingTotalSales' => $bookingTotalSales,
-        'bookingTotalOrders' => $bookingTotalOrders,
-        'bookingRevenuePerDay' => $bookingRevenuePerDay,
-        'bookingOrdersPerDay' => $bookingOrdersPerDay,
+    /* ================= BOOKING DATA ================= */
 
-        // 🔥 YOUR EXISTING
-        'bookingRevenueLatestDay' => $bookingRevenueLatestDay,
-        'latestBookingDate' => $latestBookingDate,
+    // items
+    'bookingItems' => $bookingItems,
+    'rentItems' => $rentItems,
 
-        // ✅ ADD THIS LINE
-        'latestBookings' => $latestBookings,
-    ];
+    // totals
+    'bookingTotalSales' => $bookingTotalSales,
+    'bookingTotalOrders' => $bookingTotalOrders,
+
+    // today
+    'todayBookingSales' => $todayBookingSales,
+    'todayBookingOrders' => $todayBookingOrders,
+
+    // averages (if you computed them earlier)
+    'bookingAOV' => ($bookingTotalOrders > 0)
+        ? ($bookingTotalSales / $bookingTotalOrders)
+        : 0,
+
+    'todayBookingAOV' => ($todayBookingOrders > 0)
+        ? ($todayBookingSales / $todayBookingOrders)
+        : 0,
+
+    // charts
+    'bookingRevenuePerDay' => $bookingRevenuePerDay,
+    'bookingOrdersPerDay' => $bookingOrdersPerDay,
+    'bookingsPerDay' => $bookingsPerDay,
+
+    // latest day
+    'bookingRevenueLatestDay' => $bookingRevenueLatestDay,
+    'latestBookingDate' => $latestBookingDate,
+
+    // charts / widgets
+    'latestBookings' => $latestBookings,
+    'todayMostBooked' => $todayMostBooked,
+];

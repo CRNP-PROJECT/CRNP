@@ -89,8 +89,7 @@ foreach($orders as $o){
         $selectedOrders[] = $o;
     }
 }
-
-/* ================= BOOKINGS (ONLY ACCEPTED + DONE) ================= */
+/* ================= BOOKINGS (FIXED) ================= */
 
 foreach($bookings as $b){
 
@@ -98,16 +97,18 @@ foreach($bookings as $b){
 
     $status = strtolower(trim($b['status'] ?? ''));
 
-    // normalize (optional but recommended)
-    if($status === 'completed' || $status === 'finished'){
+    // normalize all possible statuses
+    if(in_array($status, ['completed', 'finished'])) {
         $status = 'done';
     }
 
-    // 🔥 FIX: include done too
-    if(!in_array($status, ['accepted', 'done'])) continue;
+    // ✅ include ALL valid booking statuses
+    if(!in_array($status, ['accepted', 'done', 'returned'])) continue;
 
-    $d = parseDateOnly($b['created_at'] ?? '');
-    if(!$d) continue;
+    $createdRaw = $b['created_at'] ?? '';
+    if(!$createdRaw) continue;
+
+    $d = date('Y-m-d', strtotime($createdRaw));
 
     if(!isset($calendar[$d])){
         $calendar[$d] = [
@@ -123,6 +124,7 @@ foreach($bookings as $b){
     $amount = floatval($b['booking_total'] ?? 0);
     $calendar[$d]['bookingRevenue'] += $amount;
 
+    // selected day
     if($d == $date){
         $dailyBookings++;
         $dailyBookingRevenue += $amount;
@@ -169,12 +171,18 @@ foreach($orders as $o){
 }
 
 foreach($bookings as $b){
+
     if(!is_array($b)) continue;
 
     $status = strtolower(trim($b['status'] ?? ''));
 
-    // 🔥 FIX: include done + accepted
-    if(!in_array($status, ['accepted', 'done'])) continue;
+    // normalize statuses FIRST (IMPORTANT)
+    if(in_array($status, ['completed', 'finished'])) {
+        $status = 'done';
+    }
+
+    // ✅ FIX: include returned
+    if(!in_array($status, ['accepted', 'done', 'returned'])) continue;
 
     $created = $b['created_at'] ?? '';
     if(!$created) continue;

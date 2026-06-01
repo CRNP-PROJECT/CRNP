@@ -15,7 +15,7 @@ $data = include(__DIR__ . "/cashier_index_process.php");
 $today_order_sales = $data['today_order_sales'];
 $today_booking_sales = $data['today_booking_sales'];
 $today_total_sales = $data['today_total_sales'];
-$avg_order = $data['avg_order'];
+
 
 $pending_orders = $data['pending_orders'];
 $today_bookings = $data['today_bookings'];
@@ -85,13 +85,15 @@ $today_bookings = $data['today_bookings'];
                 <span class="cashier-dashboard-btn-text-main">Verify Order Payment</span>
             </a>
             <a href="booking_payment.php" class="cashier-dashboard-btn-large cashier-dashboard-green">
-                <span class="cashier-dashboard-btn-text-main">Veryfy Order Payment</span>
+                <span class="cashier-dashboard-btn-text-main">Verify Booking Payment</span>
             </a>
 
             <div class="cashier-dashboard-stat-row">
     <span>Order Sales Today</span>
     <span class="cashier-dashboard-stat-val">₱<?= number_format($today_order_sales, 2) ?></span>
         </div>
+
+            
 
         <div class="cashier-dashboard-stat-row">
     <span>Booking Sales Today</span>
@@ -103,10 +105,7 @@ $today_bookings = $data['today_bookings'];
     <span class="cashier-dashboard-stat-val">₱<?= number_format($today_total_sales, 2) ?></span>
     </div>
 
-    <div class="cashier-dashboard-stat-row">
-    <span>Avg Order</span>
-    <span class="cashier-dashboard-stat-val">₱<?= number_format($avg_order, 2) ?></span>
-        </div>
+    
             </div>
         
 
@@ -209,6 +208,70 @@ $today_bookings = $data['today_bookings'];
     </div>
 
 </div>
+
+<div class="cashier-dashboard-column">
+
+    <h2 class="cashier-dashboard-label">BOOKING RETURNING DATES</h2>
+
+    <div class="cashier-dashboard-card-table">
+
+        <table class="cashier-dashboard-data-table">
+
+            <thead>
+                <tr>
+                    <th>Return Date</th>
+                    <th>Time</th>
+                    <th>Guest</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+<?php if(empty($booking_returns)): ?>
+
+<tr>
+    <td colspan="4" style="text-align:center; padding:30px;">
+        No returns scheduled
+    </td>
+</tr>
+
+<?php else: ?>
+
+<?php foreach($booking_returns as $r): ?>
+
+<tr>
+
+    <td>
+        <?= date('M d, Y', strtotime($r['return_time'])) ?>
+    </td>
+
+    <td>
+        <?= date('h:i A', strtotime($r['return_time'])) ?>
+    </td>
+
+    <td>
+        <?= htmlspecialchars($r['full_name'] ?? '') ?>
+    </td>
+
+    <td>
+        <a href="return_booking.php?date=<?= date('Y-m-d', strtotime($r['return_time'])) ?>"
+           class="status accepted">
+            View
+        </a>
+    </td>
+
+</tr>
+
+<?php endforeach; ?>
+
+<?php endif; ?>
+
+</tbody>
+        </table>
+
+    </div>
+</div>
         
 
         <!-- RIGHT -->
@@ -233,6 +296,8 @@ $today_bookings = $data['today_bookings'];
 
                             <?php
 $hasAccepted = false;
+
+
 ?>
 
 <?php foreach($today_bookings as $tb): ?>

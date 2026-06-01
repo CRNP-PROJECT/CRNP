@@ -56,13 +56,13 @@ $filter = $_GET['filter'] ?? 'all';
 
 <div class="cashier-history-booking-header">
     <h1>Booking History</h1>
-    <p>View accepted and rejected bookings</p>
+    <p>View accepted, returned, and rejected bookings</p>
 </div>
 
 <div class="cashier-history-booking-tabs">
     <a href="?filter=all" class="<?= $filter=='all'?'active':'' ?>">All</a>
     <a href="?filter=accepted" class="<?= $filter=='accepted'?'active':'' ?>">Accepted</a>
-    <a href="?filter=done" class="<?= $filter=='done'?'active':'' ?>">Done</a>
+    <a href="?filter=returned" class="<?= $filter=='returned'?'active':'' ?>">Returned</a>
     <a href="?filter=rejected" class="<?= $filter=='rejected'?'active':'' ?>">Rejected</a>
 </div>
 
@@ -75,17 +75,24 @@ foreach($data as $id => $b):
 
     if(!is_array($b)) continue;
 
-    $status = strtolower($b['status'] ?? '');
+    $status = strtolower(trim($b['status'] ?? ''));
 
-   $status = strtolower(trim($b['status'] ?? ''));
+    // normalize statuses
+    if(in_array($status, ['completed', 'finished'])){
+        $status = 'done';
+    }
 
-/* FILTER LOGIC */
-if ($filter == 'accepted' && $status != 'accepted') continue;
-if ($filter == 'rejected' && $status != 'rejected') continue;
-if ($filter == 'done' && $status != 'done') continue;
+    /* ================= FIX FILTER ================= */
+    if ($filter == 'accepted' && $status != 'accepted') continue;
 
-/* DEFAULT VIEW (ALL) */
-if ($filter == 'all' && !in_array($status, ['accepted','rejected','done'])) continue;
+    if ($filter == 'rejected' && $status != 'rejected') continue;
+
+    if ($filter == 'done' && $status != 'done') continue;
+
+    if ($filter == 'returned' && $status != 'returned') continue;
+
+    /* 🔥 IMPORTANT FIX: include returned in ALL */
+    if ($filter == 'all' && !in_array($status, ['accepted','done','rejected','returned'])) continue;
 
     $hasData = true;
 
@@ -95,11 +102,8 @@ if ($filter == 'all' && !in_array($status, ['accepted','rejected','done'])) cont
         $payment_status = "OVER THE COUNTER";
     }
 
-    $items = [
-        'Tables' => $b['tables_qty'] ?? 0,
-        'Chairs' => $b['chairs_qty'] ?? 0,
-        'Skirting Cloth' => $b['skirting_cloth_qty'] ?? 0
-    ];
+    /* ================= FORMAT ITEMS ================= */
+    $items = $b['items'] ?? [];
 
     /* ================= FORMAT DATES ================= */
     $createdAt = $b['created_at'] ?? null;
@@ -139,12 +143,9 @@ if ($filter == 'all' && !in_array($status, ['accepted','rejected','done'])) cont
 <?php
 $hasItems = false;
 
-/* Normalize items */
-$rawItems = $b['items'] ?? [];
+if (is_array($items)) {
 
-if (is_array($rawItems)) {
-
-    foreach ($rawItems as $item) {
+    foreach ($items as $item) {
 
         $name  = $item['name'] ?? 'Item';
         $qty   = isset($item['qty']) ? (int)$item['qty'] : 0;
@@ -165,26 +166,14 @@ if (!$hasItems) {
 }
 ?>
 
-</div>
+    </div>
 
-    <!-- ✅ FIXED DATE SECTION -->
+    <!-- DATE SECTION -->
     <div class="cashier-history-booking-date">
 
-        <p>
-            <b>Created At:</b>
-            <?= $createdFormatted ?>
-        </p>
-
-        <p>
-            <b>Appointment:</b>
-            <?= $appointmentFormatted ?>
-
-        </p>
-
-        <p>
-            <b>Return Time:</b>
-            <?= $returnFormatted ?>
-        </p>
+        <p><b>Created At:</b> <?= $createdFormatted ?></p>
+        <p><b>Appointment:</b> <?= $appointmentFormatted ?></p>
+        <p><b>Return Time:</b> <?= $returnFormatted ?></p>
 
     </div>
 

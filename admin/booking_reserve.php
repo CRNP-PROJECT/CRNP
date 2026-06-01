@@ -74,6 +74,17 @@ if(!is_array($bookings)){
 
 <?php foreach($bookings as $id => $booking): ?>
 
+<?php
+// ONLY SHOW ACCEPTED / DONE / RETURNED BOOKINGS
+$status = strtolower($booking['status'] ?? '');
+
+if(!in_array($status, ['accepted','done','returned'])){
+    continue;
+}
+?>
+
+<tr>
+
 <tr>
 
     <td><?= $booking['full_name'] ?? '' ?></td>

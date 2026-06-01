@@ -14,14 +14,32 @@ $rdb = new firebaseRDB($databaseURL);
 $raw = $rdb->retrieve("/orders");
 $data = json_decode($raw, true) ?? [];
 
+/* FILTER */
+$filter = $_GET['filter'] ?? 'all';
+
 $history = [];
 
 foreach($data as $order){
 
     if(!is_array($order)) continue;
 
-    $status = strtolower($order['status'] ?? '');
-    $type   = strtolower($order['order_type'] ?? '');
+    $orderStatus   = strtolower(trim($order['status'] ?? ''));
+    $kitchenStatus = strtolower(trim($order['kitchen_status'] ?? ''));
+
+    // normalize
+    if(in_array($orderStatus, ['completed','finished'])){
+        $orderStatus = 'done';
+    }
+
+    // FINAL STATUS LOGIC (kitchen overrides everything)
+    if($kitchenStatus === 'done'){
+        $finalStatus = 'done';
+    } else {
+        $finalStatus = $orderStatus;
+    }
+
+    // order type detection
+    $type = strtolower($order['order_type'] ?? '');
 
     if($type === ''){
         if(isset($order['table_number']) || isset($order['cashier'])){
@@ -31,12 +49,17 @@ foreach($data as $order){
         }
     }
 
-    if($type === 'walkin' || in_array($status, ['accepted','rejected','done'])){
-        $order['order_type'] = $type;
+    // store final status
+    $order['final_status'] = $finalStatus;
+    $order['order_type']   = $type;
+
+    // only include valid statuses
+    if(in_array($finalStatus, ['accepted','rejected','done'])){
         $history[] = $order;
     }
 }
 
+/* sort newest first */
 usort($history, function($a, $b){
     return strtotime($b['cashier_action_time'] ?? $b['created_at'] ?? 0)
         <=> strtotime($a['cashier_action_time'] ?? $a['created_at'] ?? 0);
@@ -79,6 +102,14 @@ usort($history, function($a, $b){
     <p>All processed orders (walk-in & online)</p>
 </div>
 
+<!-- FILTER -->
+<div class="cashier-history-booking-tabs">
+    <a href="?filter=all" class="<?= $filter=='all'?'active':'' ?>">All</a>
+    <a href="?filter=accepted" class="<?= $filter=='accepted'?'active':'' ?>">Accepted</a>
+    <a href="?filter=done" class="<?= $filter=='done'?'active':'' ?>">Done</a>
+    <a href="?filter=rejected" class="<?= $filter=='rejected'?'active':'' ?>">Rejected</a>
+</div>
+
 <div class="history-container">
 
 <?php if(empty($history)): ?>
@@ -90,8 +121,14 @@ usort($history, function($a, $b){
 <?php foreach($history as $order): ?>
 
 <?php
-// ✅ PH TIME FORMATTING (CREATED + APPOINTMENT)
+/* FILTER LOGIC */
+$status = strtolower($order['final_status'] ?? '');
 
+if ($filter == 'accepted' && $status != 'accepted') continue;
+if ($filter == 'rejected' && $status != 'rejected') continue;
+if ($filter == 'done' && $status != 'done') continue;
+
+/* PH TIME FORMATTING */
 $created_raw = $order['created_at'] ?? '';
 $created = 'N/A';
 
@@ -126,14 +163,12 @@ if (!empty($appointment_raw)) {
     <p><b>Customer:</b> <?= htmlspecialchars($order['full_name'] ?? 'Walk-in') ?></p>
     <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
 
-    <!-- STATUS -->
     <p><b>Status:</b>
-        <span class="status <?= strtolower($order['status'] ?? '') ?>">
-            <?= strtoupper($order['status'] ?? 'unknown') ?>
+        <span class="status <?= $status ?>">
+            <?= strtoupper($status) ?>
         </span>
     </p>
 
-    <!-- PAYMENT -->
     <p><b>Payment Status:</b>
         <?php
             $payment = $order['payment_status'] ?? '';
@@ -170,10 +205,8 @@ if (!empty($appointment_raw)) {
         </ul>
     </div>
 
-    <!-- APPOINTMENT -->
     <p><b>Appointment:</b> <?= htmlspecialchars($appointment) ?></p>
 
-    <!-- CREATED DATE (PH TIME) -->
     <p class="date">
         <i class="fa-regular fa-calendar"></i>
         <b>Ordered:</b> <?= htmlspecialchars($created) ?>

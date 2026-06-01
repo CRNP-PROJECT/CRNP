@@ -66,7 +66,7 @@ foreach($bookings as $id => $b){
 
     if(!is_array($b)) continue;
 
-    // ✅ DATE (ONLY ONE SOURCE)
+    // ================= DATE =================
     $time_source = $b['created_at'] ?? null;
     if(!$time_source) continue;
 
@@ -76,42 +76,41 @@ foreach($bookings as $id => $b){
     $booking_date = date('Y-m-d', $time);
     $booking_month = date('Y-m', $time);
 
-    // ✅ AMOUNT (ONLY ONE SOURCE)
+    // ================= AMOUNT =================
     $total = floatval($b['booking_total'] ?? 0);
 
-    // ✅ STATUS RULE (UNIFIED)
+    // ================= STATUS =================
     $status = strtolower($b['status'] ?? '');
     $payment_status = strtolower($b['payment_status'] ?? '');
 
-    $is_paid =
-        $status === 'accepted' ||
-        $status === 'confirmed' ||
-        $payment_status === 'paid' ||
-        $payment_status === 'counter';
+    /**
+     * ✅ FIXED RULE:
+     * Booking is valid for sales if:
+     * - status is accepted / confirmed / done / returned
+     * - OR payment is already completed
+     */
+    $is_valid_booking =
+        in_array($status, ['accepted', 'confirmed', 'done', 'returned']) ||
+        in_array($payment_status, ['paid', 'counter', 'no_payment_required']);
 
     // ================= TODAY SALES =================
-    if($is_paid && $booking_date === $today){
+    if($is_valid_booking && $booking_date === $today){
         $today_booking_sales += $total;
         $booking_count++;
     }
 
     // ================= MONTHLY SALES =================
-    if($is_paid && $booking_month === $current_month){
+    if($is_valid_booking && $booking_month === $current_month){
         $monthly_booking_sales += $total;
     }
 
-    // ================= TODAY BOOKINGS LIST =================
+    // ================= TODAY LIST =================
     if($booking_date === $today){
         $b['id'] = $id;
         $today_bookings[] = $b;
     }
 }
 
-/* ================= AVG ORDER ================= */
-
-$avg_order = ($order_count > 0)
-    ? ($today_order_sales / $order_count)
-    : 0;
 
 /* ================= SORT BOOKINGS ================= */
 
@@ -217,6 +216,68 @@ usort($latest_pending_bookings, function($a, $b){
     return strtotime($b['appointment_time']) <=> strtotime($a['appointment_time']);
 });
 
+$booking_returns = [];
+
+foreach($bookings as $id => $b){
+
+    if(!is_array($b)) continue;
+
+    $status = strtolower($b['status'] ?? '');
+
+    // ONLY ACCEPTED / DONE / RETURNED
+    if(!in_array($status, ['accepted','done','returned'])){
+        continue;
+    }
+
+    $returnRaw = $b['return_time'] ?? '';
+    if(empty($returnRaw)) continue;
+
+    $returnDate = date('Y-m-d', strtotime($returnRaw));
+    $returnTime = date('h:i A', strtotime($returnRaw));
+
+    /* ================= FILTER BY DATE ================= */
+    $selected_date = $_GET['date'] ?? date("Y-m-d");
+
+    if($returnDate != $selected_date){
+        continue;
+    }
+
+    /* ================= FILTER TYPE ================= */
+    $filter = $_GET['filter'] ?? 'all';
+
+    if($filter == 'pending' && $status == 'returned'){
+        continue;
+    }
+
+    if($filter == 'returned' && $status != 'returned'){
+        continue;
+    }
+
+    /* ================= DUE SOON LOGIC ================= */
+    $daysLeft = (strtotime($returnRaw) - time()) / 86400;
+
+    $dueSoon = ($daysLeft <= 5 && $daysLeft >= 0);
+
+    /* ================= FINAL DATA ================= */
+    $booking_returns[] = [
+        "id" => $id,
+        "name" => $b['full_name'] ?? 'Unknown',
+        "contact" => $b['contact_number'] ?? '',
+        "address" => $b['address'] ?? '',
+        "total" => $b['booking_total'] ?? 0,
+
+        "return_time" => date("M d, Y h:i A", strtotime($returnRaw)),
+
+        "status" => $status,
+
+        "delivery_note" => $b['delivery_note'] ?? '',
+        "returned_at" => $b['returned_at'] ?? '',
+
+        // 🔥 IMPORTANT: FOR CALENDAR INDICATOR
+        "due_soon" => $dueSoon
+    ];
+
+}
 
 /* ================= RETURN DATA ================= */
 
@@ -224,7 +285,7 @@ return [
     'today_order_sales' => $today_order_sales,
     'today_booking_sales' => $today_booking_sales,
     'today_total_sales' => $today_order_sales + $today_booking_sales,
-    'avg_order' => $avg_order,
+    
 
     'pending_orders' => $pending_orders,
     'today_bookings' => $today_bookings,

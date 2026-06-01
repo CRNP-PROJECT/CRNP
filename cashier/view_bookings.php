@@ -41,6 +41,7 @@ $bookings = json_decode($bookings_raw, true) ?? [];
             <li><a href="cashier_index.php">Dashboard</a></li>
             <li><a href="view_bookings.php" class="active">Bookings</a></li>
             <li><a href="booking_history.php">History</a></li>
+            <li><a href="return_booking.php">return Booking</a></li>
             <li><a href="booking_payment.php">Payment Status</a></li>
             <li><a href="scheduled_booking.php">Booking scheduled</a></li>
     </div>
