@@ -70,7 +70,7 @@ $username = $_SESSION['username'] ?? "User";
         </p>
 
         <a href="index.php" class="booking-success-btn">
-            Back to Home
+            <span class="btn-arrow">&larr;</span>Back to Home
         </a>
 
     </div>

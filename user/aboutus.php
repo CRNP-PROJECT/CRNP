@@ -17,14 +17,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>About Us | CRNP</title>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="../styles.css">
-    <link rel="stylesheet" href="about_styles.css">
 </head>
 
 <body class="about-page-body">
@@ -42,7 +38,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <li><a href="booking.php" class="<?= $current_page == 'booking.php' ? 'active' : '' ?>">Booking</a></li>
             <li><a href="cart.php" class="<?= $current_page == 'cart.php' ? 'active' : '' ?>">Cart</a></li>
             <li><a href="your_orders.php" class="<?= $current_page == 'your_orders.php' ? 'active' : '' ?>">Orders</a></li>
-            <li><a href="aboutus.php" class="<?= $current_page == 'aboutus.php' ? 'active' : '' ?>">About</a></li>
+            <li><a href="aboutus.php" class="<?= $current_page == 'aboutus.php' ? 'active' : '' ?>">About Us</a></li>
         </ul>
 
         <div class="navbar-dropdown">
@@ -68,7 +64,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <!-- LEFT SIDE -->
         <div class="about-left">
 
-            <h1 class="about-header">About Us</h1>
+            <h1 class="about-header">ABOUT US</h1>
 
             <p class="about-subtitle">
                 Your trusted partner for events and celebrations.

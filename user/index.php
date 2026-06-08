@@ -71,8 +71,7 @@ if(is_array($data)) {
             <h1 class="dashboard-title">WHERE FLAVOR<br>LINGERS</h1>
             <p class="dashboard-text">
                 Welcome back, <?php echo htmlspecialchars($username); ?>! 
-                Experience the distinct culinary charm of Crates N' Plates—
-                where every meal is an invitation to stay a little longer.
+                Where comfort, conversation, and good food come together.
             </p>
             <div class="dashboard-buttons">
                 <a href="aboutus.php" class="dashboard-btn">About Us</a>

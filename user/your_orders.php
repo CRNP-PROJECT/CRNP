@@ -76,7 +76,7 @@ $data = ($type_filter === 'bookings') ? $user_bookings : $user_orders;
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Your Orders</title>
+<title>YOUR ORDERS</title>
 
 <link rel="stylesheet" href="../styles.css">
 
@@ -84,7 +84,7 @@ $data = ($type_filter === 'bookings') ? $user_bookings : $user_orders;
 
 <body class="your-order-page-body">
 
-<!-- ✅ NAVBAR -->
+<!-- NAVBAR -->
 <header class="navbar">
     <div class="navbar-brand-container">
         <img src="../img/logo.png" class="logo">
@@ -117,18 +117,15 @@ $data = ($type_filter === 'bookings') ? $user_bookings : $user_orders;
 <!-- ✅ MAIN CONTAINER -->
 <div class="your-order-container">
 
-    <!-- TITLE -->
     <h1 class="your-order-title">
-        Your <?= ucfirst($type_filter) ?>
+        YOUR <?= ucfirst($type_filter) ?> 
     </h1>
 
-    <!-- TYPE FILTER -->
     <div class="your-order-filter-bar">
-        <a href="?type=orders&status=all" class="<?= ($type_filter=='orders')?'active':'' ?>">Orders</a>
-        <a href="?type=bookings&status=all" class="<?= ($type_filter=='bookings')?'active':'' ?>">Bookings</a>
+        <a href="?type=orders&status=all" class="<?= ($type_filter=='orders')?'active':'' ?>">ORDERS</a>
+        <a href="?type=bookings&status=all" class="<?= ($type_filter=='bookings')?'active':'' ?>">BOOKINGS</a>
     </div>
 
-    <!-- STATUS FILTER -->
     <div class="your-order-filter-bar">
         <a href="?type=<?= $type_filter ?>&status=all" class="<?= ($status_filter=='all')?'active':'' ?>">All</a>
         <a href="?type=<?= $type_filter ?>&status=pending" class="<?= ($status_filter=='pending')?'active':'' ?>">Pending</a>
@@ -137,7 +134,6 @@ $data = ($type_filter === 'bookings') ? $user_bookings : $user_orders;
         <a href="?type=<?= $type_filter ?>&status=done" class="<?= ($status_filter=='done')?'active':'' ?>">Done</a>
     </div>
 
-    <!-- GRID -->
     <div class="your-order-grid">
 
         <?php if(empty($data)): ?>

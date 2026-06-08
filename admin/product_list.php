@@ -85,7 +85,7 @@ foreach ($data as $id => $product) {
 
         <a href="?category=Drinks"
            class="product-list-filter-btn <?php echo ($filter=='Drinks')?'product-list-filter-active':''; ?>">
-           Drinks
+           Alcohol
         </a>
 
         <a href="?category=Beverages"

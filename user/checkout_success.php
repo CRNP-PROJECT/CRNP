@@ -34,10 +34,6 @@ $user_email = $_SESSION['email'] ?? '';
 
     <div class="checkout-success-card">
 
-        <div class="checkout-success-icon">
-            ✓
-        </div>
-
         <h1 class="checkout-success-title">
             Order Confirmed
         </h1>
@@ -47,7 +43,7 @@ $user_email = $_SESSION['email'] ?? '';
         </p>
 
         <?php if($user_email): ?>
-            <p class="checkout-success-email">
+            <p class="checkout-success-text">
                 Confirmation sent to:<br>
                 <strong><?php echo htmlspecialchars($user_email); ?></strong>
             </p>
@@ -55,7 +51,7 @@ $user_email = $_SESSION['email'] ?? '';
 
         <div class="checkout-success-actions">
             <a href="products.php" class="checkout-success-btn">
-                Continue Shopping
+                <span class="btn-arrow">&larr;</span> Continue Shopping
             </a>
         </div>
 

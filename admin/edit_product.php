@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
                     <option value="Drinks"
                         <?php if(($product['category'] ?? '') == "Drinks") echo "selected"; ?>>
-                        Drinks
+                        Alcohol
                     </option>
 
                     <option value="Beverages"

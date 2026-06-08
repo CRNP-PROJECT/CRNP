@@ -132,8 +132,7 @@ $email = $user['email'] ?? '';
                     placeholder="••••••••">
             </div>
 
-            <button type="submit" class="your_profile-save">
-                <i class="fa-solid fa-floppy-disk"></i> Save Changes
+            <button type="submit" class="your_profile-save"> Save Changes
             </button>
 
         </form>

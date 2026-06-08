@@ -79,17 +79,16 @@ foreach($cart as $id => $qty){
 
 <!-- ✅ HEADER -->
 <div class="checkout-header">
-    <a href="cart.php" class="checkout-back">Back</a>
-    <h1>Checkout & Reservation</h1>
+    <a href="cart.php" class="checkout-back"><span class="btn-arrow">&larr;</span>BACK</a>
+    <h1>CHECKOUT & RESERVATION</h1>
 </div>
 
 <div class="checkout-container">
 <div class="checkout-grid">
 
-    <!-- ================= LEFT: ORDER SUMMARY ================= -->
     <div class="checkout-card checkout-summary">
 
-        <h2 class="checkout-title">Order Summary</h2>
+        <h2 class="checkout-title">ORDER SUMMARY</h2>
 
         <div class="checkout-items">
             <?php foreach($cart_items as $item): ?>
@@ -109,32 +108,27 @@ foreach($cart as $id => $qty){
 
     </div>
 
-    <!-- ================= RIGHT: FORM ================= -->
     <div class="checkout-card checkout-form">
 
-        <h2 class="checkout-title">Reservation Details</h2>
+        <h2 class="checkout-title">RESERVATION DETAILS</h2>
 
         <form action="process.php" method="POST" enctype="multipart/form-data">
 
                 <input type="hidden" name="action" value="confirm_checkout">
 
-           <!-- FULL NAME -->
-            <div class="checkout-row full">
+           <div class="checkout-row full">
                 <input type="text" name="full_name" placeholder="Full Name" required>
             </div>
 
-            <!-- CONTACT + GUEST -->
             <div class="checkout-row two">
                 <input type="text" name="contact_number" placeholder="Contact Number" required>
                 <input type="number" name="num_people" placeholder="Guest Count" required>
             </div>
 
-          <!-- DATE -->
-                <div class="checkout-row full">
+          <div class="checkout-row full">
                 <input type="datetime-local" name="appointment_time" required>
                 </div>
 
-            <!-- ================= PAYMENT ================= -->
             <div class="checkout-payment">
 
                 <label class="checkout-pay-option">
@@ -150,10 +144,8 @@ foreach($cart as $id => $qty){
 
             </div>
 
-            <!-- ================= GCASH ================= -->
             <div id="gcashBox" class="checkout-gcash">
 
-                <!-- LEFT QR -->
                 <div class="checkout-gcash-left">
                     <p class="checkout-gcash-text">Scan to Pay</p>
 
@@ -166,7 +158,6 @@ foreach($cart as $id => $qty){
                     </button>
                 </div>
 
-                <!-- RIGHT INPUTS -->
                 <div class="checkout-gcash-right">
                     <input type="text" name="gcash_number" placeholder="Enter GCash Number">
                     <input type="file" name="gcash_receipt" accept="image/*">
@@ -174,9 +165,8 @@ foreach($cart as $id => $qty){
 
             </div>
 
-            <!-- BUTTON -->
             <button type="submit" class="checkout-btn">
-                Confirm & Reserve
+                CONFIRM & RESERVE
             </button>
 
         </form>
