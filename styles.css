@@ -2969,3 +2969,142 @@ body::before {
         grid-template-columns: 1fr;
     }
 }
+
+/* KITCHEN LOGIN */
+
+.kitchen-login-body {
+    margin: 0;
+    padding: 0;
+    background: 
+        linear-gradient(
+        to right,
+        rgba(0,0,0,.72) 20%,
+        rgba(0,0,0,.45) 50%,
+        rgba(0,0,0,.20) 100%
+    ),
+    url('img/k.png') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Playfair';
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Wrapper to guarantee full centering */
+.kitchen-login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* The Login Card Box */
+.kitchen-login-card {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(139, 126, 116, 0.15); /* Soft warm shadow */
+    width: 100%;
+    max-width: 400px; /* Keeps the form tight and neat */
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Typography styling */
+.kitchen-login-title {
+    font-size: 30px;
+    font-weight: 600;
+    color: #2e2a27; /* Dark charcoal/wood tone */
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+.kitchen-login-subtitle {
+    font-size: 16px;
+    color: #7a726c; /* Muted warm gray */
+    margin-bottom: 32px;
+    margin-top: 0;
+}
+
+/* Form Grouping */
+.kitchen-login-group {
+    margin-bottom: 20px;
+    text-align: left; /* Keeps input labels aligned correctly above fields */
+}
+
+.kitchen-login-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    color: #4a443f;
+    margin-bottom: 6px;
+}
+
+/* Input Fields */
+.kitchen-login-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
+    border: 1px solid #dcd6d0;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #2e2a27;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kitchen-login-input:focus {
+    outline: none;
+    border-color: #607254; /* Sage green kitchen accent tone */
+    box-shadow: 0 0 0 3px rgba(96, 114, 84, 0.15);
+}
+
+/* Submit Button */
+.kitchen-login-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: #435334; /* Rich kitchen leafy green */
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 10px;
+}
+
+.kitchen-login-btn:hover {
+    background-color: #354229; /* Slightly darker green on hover */
+}
+/* Error Notification Styling */
+.kitchen-login-error-notif {
+    background-color: #fdf2f2; /* Soft red tint background */
+    color: #9b2c2c;            /* Deep dark red text */
+    border: 1px solid #f5c6c6;  /* Light red border */
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    text-align: center;
+    box-sizing: border-box;
+    animation: kitchenFadeIn 0.3s ease-in-out;
+}
+
+/* Smooth entry animation for the alert box */
+@keyframes kitchenFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
