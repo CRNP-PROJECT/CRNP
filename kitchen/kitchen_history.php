@@ -54,14 +54,17 @@ foreach($rawHistory as $id => $order){
         </ul>
     </div>
 </header>
-<!-- KEEP YOUR NAVBAR (no changes) -->
 
 <div class="kitchen-history-container">
 
-<h1 class="kitchen-history-title">Kitchen History</h1>
-<p class="kitchen-history-subtitle">Completed kitchen orders</p>
+    <div class="kitchen-history-header-wrapper">
+        <h1 class="kitchen-history-title">Kitchen</h1>
+        <h1 class="kitchen-history-title">History</h1>
+    </div>
+    
+    <p class="kitchen-history-subtitle">Completed kitchen orders</p>
 
-<div id="history-container" class="kitchen-history-grid">
+    <div id="history-container" class="kitchen-history-grid">
 
 <?php if(empty($history)): ?>
     <div class="kitchen-history-empty">
@@ -73,27 +76,22 @@ foreach($rawHistory as $id => $order){
 
 <div class="kitchen-history-card">
 
-    <!-- TOP -->
     <div class="kitchen-history-card-header">
-
         <div>
-            <h3><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></h3>
-            <p><?= strtoupper($order['order_type'] ?? 'ORDER') ?></p>
+            <div class="kitchen-history-name"><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></div>
+            <div class="kitchen-history-type"><?= strtoupper($order['order_type'] ?? 'ORDER') ?></div>
         </div>
-
         <span class="kitchen-history-badge <?= strtolower($order['kitchen_status'] ?? '') ?>">
-    <?= strtoupper($order['kitchen_status'] ?? 'UNKNOWN') ?>
-</span>
+            <?= strtoupper($order['kitchen_status'] ?? 'UNKNOWN') ?>
+        </span>
     </div>
 
-    <!-- INFO -->
     <div class="kitchen-history-info">
-        <p><strong>Order ID:</strong> <?= $order['_id'] ?></p>
-        <p><strong>Total:</strong> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
-        <p><strong>Completed:</strong> <?= $order['kitchen_action_time'] ?? 'N/A' ?></p>
+        <p><span>Order ID:</span> <?= $order['_id'] ?></p>
+        <p><span>Total:</span> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
+        <p><span>Completed:</span> <?= $order['kitchen_action_time'] ?? 'N/A' ?></p>
     </div>
 
-    <!-- ITEMS -->
     <div class="kitchen-history-items">
         <?php foreach(($order['products'] ?? []) as $item): ?>
             <div class="kitchen-history-item">
@@ -111,8 +109,11 @@ foreach($rawHistory as $id => $order){
 </div>
 </div>
 
-<!-- LIVE UPDATE (UNCHANGED LOGIC) -->
 <script>
+/* PURPOSE: Async Live Update Engine
+   This script runs in the background to automatically update the completed orders grid 
+   without requiring the user to manually hit refresh in their web browser.
+*/
 let lastHTML = document.getElementById("history-container").innerHTML;
 
 async function loadHistory() {
@@ -133,7 +134,33 @@ async function loadHistory() {
     }
 }
 
+/* Continuously checks for new changes every 5 seconds */
 setInterval(loadHistory, 5000);
+
+
+/* PURPOSE: Scroll-Activated Header Fading Animation
+   This listener watches window scrolling and dynamically drops the opacity of the 
+   titles to 0 once the user scrolls past 140px down, keeping the screen clutter-free.
+*/
+document.addEventListener("DOMContentLoaded", function () {
+    const historyTitles = document.querySelectorAll('.kitchen-history-title');
+    
+    window.addEventListener('scroll', function () {
+        let scrollTop = window.scrollY;
+        
+        /* Calculates opacity reduction based on scroll pixel distance */
+        let newOpacity = 1 - (scrollTop / 140);
+        
+        /* Clamp values to stay safely within standard 0.0 to 1.0 rendering parameters */
+        if (newOpacity < 0) newOpacity = 0;
+        if (newOpacity > 1) newOpacity = 1;
+        
+        /* Directly updates CSS opacity rule layers across each title row line */
+        historyTitles.forEach(title => {
+            title.style.opacity = newOpacity;
+        });
+    });
+});
 </script>
 
 </body>
