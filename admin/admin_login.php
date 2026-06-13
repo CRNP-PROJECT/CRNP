@@ -69,13 +69,6 @@ if(isset($_SESSION['admin_email'])){
         </div>
     </div>
 
-    <!-- RIGHT SIDE -->
-    <div class="admin-visual-side">
-        <div class="admin-profile-circle">
-            <img src="https://cdn-icons-png.flaticon.com/512/4140/4140047.png">
-        </div>
-    </div>
-
 </div>
 
 </body>
