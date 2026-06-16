@@ -37,7 +37,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <li><a href="products.php" class="<?= $current_page == 'products.php' ? 'active' : '' ?>">Products</a></li>
             <li><a href="booking.php" class="<?= $current_page == 'booking.php' ? 'active' : '' ?>">Booking</a></li>
             <li><a href="cart.php" class="<?= $current_page == 'cart.php' ? 'active' : '' ?>">Cart</a></li>
-            <li><a href="your_orders.php" class="<?= $current_page == 'your_orders.php' ? 'active' : '' ?>">Orders</a></li>
             <li><a href="aboutus.php" class="<?= $current_page == 'aboutus.php' ? 'active' : '' ?>">About Us</a></li>
         </ul>
 

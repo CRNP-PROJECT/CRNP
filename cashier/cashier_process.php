@@ -10,7 +10,49 @@ $action = $_POST['action'] ?? '';
 
 switch($action){
 
+case 'cancel_order':
 
+    $firebase_key = $_POST['order_id'] ?? '';
+    $cancel_note = trim($_POST['cancel_note'] ?? '');
+
+    if(empty($firebase_key)){
+        die("No order ID received");
+    }
+
+    $order = json_decode(
+        $rdb->retrieve("/orders/" . $firebase_key),
+        true
+    );
+
+    if(!$order){
+        die("Order not found");
+    }
+
+    $order['status'] = 'cashier_cancelled';
+
+    $order['cashier_name'] =
+        $_SESSION['cashier_name'] ?? '';
+
+    $order['cashier_email'] =
+        $_SESSION['cashier_email'] ?? '';
+
+    $order['cancelled_by'] =
+        ($_SESSION['cashier_name'] ?? '')
+        . ' (' .
+        ($_SESSION['cashier_email'] ?? '') .
+        ')';
+
+    $order['cancel_note'] = $cancel_note;
+    $order['cancelled_at'] = date('Y-m-d H:i:s');
+
+    $rdb->update(
+        "/orders",
+        $firebase_key,
+        $order
+    );
+
+    header("Location: cashier_orderHistory.php?success=cancelled");
+    exit;
 // ================= LOGIN =================
 case 'login':
 

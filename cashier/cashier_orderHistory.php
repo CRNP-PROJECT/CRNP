@@ -19,7 +19,7 @@ $filter = $_GET['filter'] ?? 'all';
 
 $history = [];
 
-foreach($data as $order){
+foreach($data as $key => $order){
 
     if(!is_array($order)) continue;
 
@@ -31,14 +31,14 @@ foreach($data as $order){
         $orderStatus = 'done';
     }
 
-    // FINAL STATUS LOGIC (kitchen overrides everything)
-    if($kitchenStatus === 'done'){
-        $finalStatus = 'done';
+    // FINAL STATUS LOGIC
+    
+     if($kitchenStatus === 'done'){   $finalStatus = 'done';
     } else {
         $finalStatus = $orderStatus;
     }
 
-    // order type detection
+    // order type
     $type = strtolower($order['order_type'] ?? '');
 
     if($type === ''){
@@ -49,14 +49,34 @@ foreach($data as $order){
         }
     }
 
-    // store final status
-    $order['final_status'] = $finalStatus;
-    $order['order_type']   = $type;
+    // FINAL STATUS
+if(in_array($orderStatus, [
+    'customer_cancelled',
+    'cashier_cancelled'
+])){
+    $finalStatus = $orderStatus;
+}
+elseif($kitchenStatus === 'done'){
+    $finalStatus = 'done';
+}
+else{
+    $finalStatus = $orderStatus;
+}
 
-    // only include valid statuses
-    if(in_array($finalStatus, ['accepted','rejected','done'])){
-        $history[] = $order;
-    }
+$order['final_status'] = $finalStatus;
+$order['order_type']   = $type;
+$order['firebase_key'] = $key;
+
+// ADD TO HISTORY
+if(in_array($finalStatus, [
+    'accepted',
+    'rejected',
+    'done',
+    'customer_cancelled',
+    'cashier_cancelled'
+])){
+    $history[] = $order;
+}
 }
 
 /* sort newest first */
@@ -81,19 +101,16 @@ usort($history, function($a, $b){
 <body class="cashier-order-history">
 
 <nav class="navbar">
-
     <div class="navbar-brand-container">
         <img src="../img/logo.png" class="logo" alt="Logo">
     </div>
 
     <ul class="navbar-menu">
-
         <li><a href="cashier_index.php">Dashboard</a></li>
         <li><a href="view_orders.php">Orders</a></li>
         <li><a href="cashier_orderHistory.php" class="active">Order History</a></li>
         <li><a href="payment_status.php">Payment Status</a></li>
         <li><a href="cashier_logout.php">Logout</a></li>
-
     </ul>
 </nav>
 
@@ -108,6 +125,7 @@ usort($history, function($a, $b){
     <a href="?filter=accepted" class="<?= $filter=='accepted'?'active':'' ?>">Accepted</a>
     <a href="?filter=done" class="<?= $filter=='done'?'active':'' ?>">Done</a>
     <a href="?filter=rejected" class="<?= $filter=='rejected'?'active':'' ?>">Rejected</a>
+    <a href="?filter=cancelled" class="<?= $filter=='cancelled'?'active':'' ?>">Cancelled</a>
 </div>
 
 <div class="history-container">
@@ -121,33 +139,21 @@ usort($history, function($a, $b){
 <?php foreach($history as $order): ?>
 
 <?php
-/* FILTER LOGIC */
 $status = strtolower($order['final_status'] ?? '');
 
+/* FILTER */
 if ($filter == 'accepted' && $status != 'accepted') continue;
 if ($filter == 'rejected' && $status != 'rejected') continue;
 if ($filter == 'done' && $status != 'done') continue;
-
-/* PH TIME FORMATTING */
-$created_raw = $order['created_at'] ?? '';
-$created = 'N/A';
-
-if (!empty($created_raw)) {
-    $dt1 = date_create($created_raw);
-    if ($dt1) {
-        $created = date_format($dt1, "M d, Y - h:i A");
-    }
+if($filter == 'cancelled'&& !in_array($status, ['customer_cancelled','cashier_cancelled'])){ continue;
 }
+
+/* TIME */
+$created_raw = $order['created_at'] ?? '';
+$created = $created_raw ? date("M d, Y - h:i A", strtotime($created_raw)) : 'N/A';
 
 $appointment_raw = $order['appointment_time'] ?? '';
-$appointment = 'Walk-in';
-
-if (!empty($appointment_raw)) {
-    $dt2 = date_create($appointment_raw);
-    if ($dt2) {
-        $appointment = date_format($dt2, "M d, Y - h:i A");
-    }
-}
+$appointment = $appointment_raw ? date("M d, Y - h:i A", strtotime($appointment_raw)) : 'Walk-in';
 ?>
 
 <div class="history-card">
@@ -155,7 +161,7 @@ if (!empty($appointment_raw)) {
     <div class="history-top">
         <h3>#<?= htmlspecialchars($order['order_id'] ?? '') ?></h3>
 
-        <span class="type <?= $order['order_type'] ?>">
+        <span class="type <?= htmlspecialchars($order['order_type']) ?>">
             <?= strtoupper($order['order_type']) ?>
         </span>
     </div>
@@ -163,31 +169,88 @@ if (!empty($appointment_raw)) {
     <p><b>Customer:</b> <?= htmlspecialchars($order['full_name'] ?? 'Walk-in') ?></p>
     <p><b>Total:</b> ₱<?= number_format($order['total'] ?? 0, 2) ?></p>
 
+    <!-- CANCEL BUTTON -->
+    <?php if(
+    $status === 'accepted'
+    && $order['order_type'] === 'walkin'
+): ?>
+    <form method="POST" action="cashier_process.php" style="margin-top:10px;">
+        <input type="hidden" name="action" value="cancel_order">
+        <input type="hidden" name="order_id" value="<?= $order['firebase_key'] ?>">
+
+        <input type="text" name="cancel_note" placeholder="Cancel reason / note" required>
+
+        <button type="submit" onclick="return confirm('Cancel this order?')">
+            Cancel Order
+        </button>
+    </form>
+    <?php endif; ?>
+
+    <!-- STATUS -->
     <p><b>Status:</b>
-        <span class="status <?= $status ?>">
-            <?= strtoupper($status) ?>
-        </span>
+    <span class="status <?= $status ?>">
+
+    <?php
+    if($status === 'customer_cancelled'){
+        echo 'CUSTOMER CANCELLED';
+    }
+    elseif($status === 'cashier_cancelled'){
+        echo 'CASHIER CANCELLED';
+    }
+    else{
+        echo strtoupper($status);
+    }
+    ?>
+
+    </span>
+</p>
+
+    <!-- CANCEL INFO -->
+    <?php if(
+    in_array($status, [
+        'customer_cancelled',
+        'cashier_cancelled'
+    ])
+): ?>
+
+    <p>
+        <b>Cancelled By:</b>
+        <?= htmlspecialchars(
+            $order['cancelled_by']
+            ?? $order['full_name']
+            ?? 'Customer'
+        ) ?>
     </p>
 
+    <p>
+        <b>Reason:</b>
+        <?= htmlspecialchars(
+            $order['cancel_note']
+            ?? $order['cancel_reason']
+            ?? '-'
+        ) ?>
+    </p>
+
+    <p>
+        <b>Cancelled At:</b>
+        <?= htmlspecialchars(
+            $order['cancelled_at']
+            ?? '-'
+        ) ?>
+    </p>
+
+<?php endif; ?>
+
+    <!-- PAYMENT -->
     <p><b>Payment Status:</b>
         <?php
             $payment = $order['payment_status'] ?? '';
 
-            if($payment === "paid"){
-                echo '<span class="status paid">PAID</span>';
-            }
-            elseif($payment === "not_paid"){
-                echo '<span class="status notpaid">NOT PAID</span>';
-            }
-            elseif($payment === "pending_verification"){
-                echo '<span class="status pending">PENDING</span>';
-            }
-            elseif($payment === "no_payment_required"){
-                echo '<span class="status pending">OVER THE COUNTER</span>';
-            }
-            else{
-                echo '<span class="status pending">NO PAYMENT</span>';
-            }
+            if($payment === "paid") echo '<span class="status paid">PAID</span>';
+            elseif($payment === "not_paid") echo '<span class="status notpaid">NOT PAID</span>';
+            elseif($payment === "pending_verification") echo '<span class="status pending">PENDING</span>';
+            elseif($payment === "no_payment_required") echo '<span class="status pending">OVER THE COUNTER</span>';
+            else echo '<span class="status pending">NO PAYMENT</span>';
         ?>
     </p>
 
@@ -195,13 +258,11 @@ if (!empty($appointment_raw)) {
     <div class="items">
         <b>Items:</b>
         <ul>
-            <?php if(!empty($order['products'])): ?>
-                <?php foreach($order['products'] as $item): ?>
-                    <li>
-                        <?= htmlspecialchars($item['name'] ?? '') ?> × <?= intval($item['qty'] ?? 0) ?>
-                    </li>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <?php foreach($order['products'] ?? [] as $item): ?>
+                <li>
+                    <?= htmlspecialchars($item['name'] ?? '') ?> × <?= intval($item['qty'] ?? 0) ?>
+                </li>
+            <?php endforeach; ?>
         </ul>
     </div>
 

@@ -24,34 +24,46 @@ $all_orders = [];
 
 foreach($orders as $id => $order){
 
-    $status = strtolower($order['status'] ?? '');
-    if($status === 'rejected') continue;
+    $status = strtolower(trim($order['status'] ?? ''));
 
-    $kitchen_status = strtolower($order['kitchen_status'] ?? 'accepted');
+    /* HIDE REJECTED + CANCELLED ORDERS */
+    if(in_array($status, [
+        'rejected',
+        'customer_cancelled',
+        'cancelled'
+    ])){
+        continue;
+    }
 
-    if($kitchen_status === 'done') continue;
+    $kitchen_status = strtolower(trim($order['kitchen_status'] ?? 'accepted'));
 
+    /* HIDE FINISHED KITCHEN ORDERS */
+    if($kitchen_status === 'done'){
+        continue;
+    }
+
+    /* NORMALIZE STATUS */
     if(!in_array($kitchen_status, ['accepted','preparing','ready'])){
         $kitchen_status = 'accepted';
     }
 
-    /* ================= FIX TIMESTAMP ================= */
+    /* FIX TIMESTAMP */
     $timestamp = $order['timestamp'] ?? null;
 
-    if (empty($timestamp)) {
+    if(empty($timestamp)){
         $timestamp = time();
     } else {
-        if (!is_numeric($timestamp)) {
+        if(!is_numeric($timestamp)){
             $timestamp = strtotime($timestamp);
         }
     }
 
-    /* ================= APPOINTMENT + CREATED ================= */
+    /* APPOINTMENT */
     $appointment_raw = $order['appointment_time'] ?? null;
-    $created_raw     = $order['created_at'] ?? null;
 
-    // convert appointment time
-    $appointment_ts = $appointment_raw ? strtotime($appointment_raw) : null;
+    $appointment_ts = $appointment_raw
+        ? strtotime($appointment_raw)
+        : null;
 
     $display_ts = $appointment_ts ?: $timestamp;
 

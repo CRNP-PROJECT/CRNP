@@ -75,7 +75,7 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
                 </a>
             </li>
 
-            <li><a href="your_orders.php">Orders</a></li>
+            
             <li><a href="aboutus.php">About</a></li>
         </ul>
 

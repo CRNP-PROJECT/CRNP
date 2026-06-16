@@ -16,6 +16,101 @@ if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
 
 switch($action) {
 
+case 'cancel_booking':
+
+        if(!isset($_SESSION['email'])){
+            header("Location: login.php");
+            exit;
+        }
+
+        $bookingId = $_POST['booking_id'] ?? '';
+        $reason = trim($_POST['cancel_reason'] ?? '');
+
+        if(empty($bookingId)){
+            die("Invalid booking.");
+        }
+
+        $booking = json_decode(
+            $rdb->retrieve("/bookings/".$bookingId),
+            true
+        );
+
+        if(!$booking){
+            die("Booking not found.");
+        }
+
+        $bookingEmail = $booking['email']
+            ?? $booking['user_email']
+            ?? '';
+
+        if($bookingEmail != $_SESSION['email']){
+            die("Unauthorized.");
+        }
+
+        $status = strtolower($booking['status'] ?? '');
+
+        if(in_array($status, ['done','rejected','cancelled'])){
+            die("Booking can no longer be cancelled.");
+        }
+
+        $booking['status'] = 'cancelled';
+        $booking['cancel_reason'] = $reason;
+        $booking['cancelled_at'] = date('Y-m-d H:i:s');
+
+        $rdb->update(
+            "/bookings",
+            $bookingId,
+            $booking
+        );
+
+        header("Location: your_orders.php?type=bookings&status=cancelled");
+        exit;
+
+    break;
+
+   
+
+case 'cancel_order':
+
+    $orderId = $_POST['order_id'] ?? '';
+    $reason = trim($_POST['cancel_reason'] ?? '');
+
+    if(empty($orderId)){
+        die("Order ID missing.");
+    }
+
+    $order = json_decode(
+        $rdb->retrieve("/orders/$orderId"),
+        true
+    );
+
+    if(!$order){
+        die("Order not found.");
+    }
+
+    if(($order['user_email'] ?? '') != ($_SESSION['email'] ?? '')){
+        die("Unauthorized.");
+    }
+
+    $status = strtolower($order['status'] ?? '');
+    $kitchenStatus = strtolower($order['kitchen_status'] ?? '');
+
+    if(
+        !in_array($status, ['pending','accepted']) ||
+        in_array($kitchenStatus, ['preparing','ready'])
+    ){
+        die("Order can no longer be cancelled.");
+    }
+
+    $order['status'] = 'cancelled';
+    $order['cancel_reason'] = $reason;
+    $order['cancelled_at'] = date('Y-m-d H:i:s');
+
+    $rdb->update("/orders", $orderId, $order);
+
+    header("Location: your_orders.php?type=orders");
+    exit;
+
    case 'add_to_cart':
 
     $product_id = $_POST['product_id'] ?? '';
@@ -426,5 +521,6 @@ case 'booking':
     default:
         header("Location: index.php");
         exit;
+
 }
 ?>

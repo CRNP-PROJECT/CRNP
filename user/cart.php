@@ -38,7 +38,6 @@ $total = 0;
             <li><a href="products.php">Products</a></li>
             <li><a href="booking.php">Booking</a></li>
             <li><a href="cart.php" class="active">Cart</a></li>
-            <li><a href="your_orders.php">Orders</a></li>
             <li><a href="aboutus.php">About</a></li>
         </ul>
         <div class="navbar-dropdown">

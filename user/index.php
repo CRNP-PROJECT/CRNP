@@ -58,7 +58,7 @@ if(is_array($data)) {
             <span class="navbar-user-btn"><i class="fa-regular fa-user"></i> <?php echo htmlspecialchars($username); ?></span>
             <div class="navbar-dropdown-content">
                 <a href="your_profile.php">My Profile</a>
-                <a href="your_orders.php">Orders</a>
+                <a href="your_orders.php">Your Orders</a>
                 <a href="../logout.php">Logout</a>
             </div>
         </div>

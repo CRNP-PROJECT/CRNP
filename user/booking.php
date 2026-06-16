@@ -46,7 +46,6 @@ if(!is_array($rent_items)){
             <li><a href="products.php">Products</a></li>
             <li><a href="booking.php" class="active">Booking</a></li>
             <li><a href="cart.php">Cart</a></li>
-            <li><a href="your_orders.php">Orders</a></li>
             <li><a href="aboutus.php">About</a></li>
         </ul>
 
@@ -93,8 +92,13 @@ if(!is_array($rent_items)){
                         <label class="form-label">DATE & TIME</label>
                         <input type="datetime-local" name="appointment_time" class="form-input" required>
                     </div>
+                    <!-- RETURN DATE -->
+                    <div class="form-group">
+                        <label class="form-label">Return Date & Time of Items</label>
+                        <input type="datetime-local"name="return_time"class="form-input"required>
+                    </div>
                     
-                    <input type="hidden" name="return_time" value="">
+                   
                 </div>
 
                 <div class="booking-center-divider"></div>
