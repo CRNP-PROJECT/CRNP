@@ -121,8 +121,8 @@ $todayBookingAOV = ($todayBookingOrders > 0)
 
     <ul class="navbar-menu">
         <li><a href="admin_index.php" class="active">Admin Dashboard</a></li>
-        <li><a href="create_cashier.php" class="active">Cashier </a></li>
-        <li><a href="create_kitchen.php" class="active">Kitchen </a></li>
+        <li><a href="create_cashier.php">Cashier </a></li>
+        <li><a href="create_kitchen.php">Kitchen </a></li>
 
         <li class="navbar-dropdown">
             <a href="#">Products ▼</a>

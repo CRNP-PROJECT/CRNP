@@ -124,107 +124,112 @@ foreach($all_orders as $order){
 
 <div class="container">
 
-<h1 class="kitchen-title">Kitchen Orders</h1>
+<div class="kitchen-history-header-wrapper">
+    <h1 class="kitchen-title">Kitchen</h1>
+    <h1 class="kitchen-title">Orders</h1>
+</div>
 
 <div class="orders-grid">
 
-    <!-- WALK-IN -->
     <div class="orders-column">
         <h2 class="orders-subtitle">Walk-in Orders</h2>
-
         <div id="walkin" class="orders-cards">
 
         <?php foreach($walkin_orders as $id => $order): ?>
-
         <div class="card walkin">
+            
+            <div class="kitchen-card-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+                <span class="kitchen-customer-name" style="font-weight: 550; color: #111; font-size: 16px; display: inline-block;">
+                    <?= htmlspecialchars($order['full_name'] ?? 'N/A') ?>
+                </span>
+                <span class="kitchen-order-type">Walk-in</span>
+            </div>
 
-            <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
+            <div class="kitchen-card-meta">
+                <div>Created: <?= date("M d, Y • h:i A", $order['timestamp']) ?></div>
+                <?php if(!empty($order['appointment_raw'])): ?>
+                    <div>Appointment: <?= date("M d, Y • h:i A", strtotime($order['appointment_raw'])) ?></div>
+                <?php endif; ?>
+            </div>
 
-            <!-- ================= TIME LABEL FIX ================= -->
-            <small>
-                ⏰ Created: <?= date("M d, Y • h:i A", $order['timestamp']) ?>
-            </small>
+            <?php 
+                $status_class = strtolower($order['_kitchen_status'] ?? 'pending');
+            ?>
+            <div class="kitchen-status-text status-<?= $status_class ?>">
+                <?= strtoupper($order['_kitchen_status']) ?>
+            </div>
 
-            <?php if(!empty($order['appointment_raw'])): ?>
-            <small>
-                📅 Appointment: <?= date("M d, Y • h:i A", strtotime($order['appointment_raw'])) ?>
-            </small>
-            <?php endif; ?>
-
-            <small class="type">WALK-IN</small>
-
-            <div class="status"><?= strtoupper($order['_kitchen_status']) ?></div>
-
-            <div class="items">
+            <div class="kitchen-items-box">
                 <?php foreach(($order['products'] ?? []) as $p): ?>
-                    <div><?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?></div>
+                    <div class="kitchen-item-row">
+                        <span><?= htmlspecialchars($p['name']) ?></span>
+                        <span class="qty-badge">x<?= intval($p['qty']) ?></span>
+                    </div>
                 <?php endforeach; ?>
             </div>
 
             <form method="POST" action="kitchen_process.php" class="status-buttons">
-
                 <input type="hidden" name="action" value="update_status">
                 <input type="hidden" name="order_id" value="<?= $id ?>">
 
-                <button name="status" value="preparing">Preparing</button>
-                <button name="status" value="ready">Ready</button>
-                <button name="status" value="done">Done</button>
-
+                <button name="status" value="preparing" class="<?= ($status_class === 'preparing') ? 'active' : '' ?>">Preparing</button>
+                <button name="status" value="ready" class="<?= ($status_class === 'ready') ? 'active' : '' ?>">Ready</button>
+                <button name="status" value="done" class="<?= ($status_class === 'done') ? 'active' : '' ?>">Done</button>
             </form>
 
         </div>
-
         <?php endforeach; ?>
 
         </div>
     </div>
 
-    <!-- ONLINE -->
     <div class="orders-column">
         <h2 class="orders-subtitle">Online Orders</h2>
-
         <div id="online" class="orders-cards">
 
         <?php foreach($online_orders as $id => $order): ?>
-
         <div class="card online">
 
-            <strong><?= htmlspecialchars($order['full_name'] ?? 'N/A') ?></strong>
+            <div class="kitchen-card-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+                <span class="kitchen-customer-name" style="font-weight: 550; color: #111; font-size: 16px; display: inline-block;">
+                    <?= htmlspecialchars($order['full_name'] ?? 'N/A') ?>
+                </span>
+                <span class="kitchen-order-type">Online</span>
+            </div>
 
-            <!-- ================= TIME LABEL FIX ================= -->
-            <small>
-                ⏰ Created: <?= date("M d, Y • h:i A", $order['timestamp']) ?>
-            </small>
+            <div class="kitchen-card-meta">
+                <div>Created: <?= date("M d, Y • h:i A", $order['timestamp']) ?></div>
+                <?php if(!empty($order['appointment_raw'])): ?>
+                    <div>Appointment: <?= date("M d, Y • h:i A", strtotime($order['appointment_raw'])) ?></div>
+                <?php endif; ?>
+            </div>
 
-            <?php if(!empty($order['appointment_raw'])): ?>
-            <small>
-                📅 Appointment: <?= date("M d, Y • h:i A", strtotime($order['appointment_raw'])) ?>
-            </small>
-            <?php endif; ?>
+            <?php 
+                $status_class = strtolower($order['_kitchen_status'] ?? 'pending');
+            ?>
+            <div class="kitchen-status-text status-<?= $status_class ?>">
+                <?= strtoupper($order['_kitchen_status']) ?>
+            </div>
 
-            <small class="type">ONLINE</small>
-
-            <div class="status"><?= strtoupper($order['_kitchen_status']) ?></div>
-
-            <div class="items">
+            <div class="kitchen-items-box">
                 <?php foreach(($order['products'] ?? []) as $p): ?>
-                    <div><?= htmlspecialchars($p['name']) ?> x <?= intval($p['qty']) ?></div>
+                    <div class="kitchen-item-row">
+                        <span><?= htmlspecialchars($p['name']) ?></span>
+                        <span class="qty-badge">x<?= intval($p['qty']) ?></span>
+                    </div>
                 <?php endforeach; ?>
             </div>
 
             <form method="POST" action="kitchen_process.php" class="status-buttons">
-
                 <input type="hidden" name="action" value="update_status">
                 <input type="hidden" name="order_id" value="<?= $id ?>">
 
-                <button name="status" value="preparing">Preparing</button>
-                <button name="status" value="ready">Ready</button>
-                <button name="status" value="done">Done</button>
-
+                <button name="status" value="preparing" class="<?= ($status_class === 'preparing') ? 'active' : '' ?>">Preparing</button>
+                <button name="status" value="ready" class="<?= ($status_class === 'ready') ? 'active' : '' ?>">Ready</button>
+                <button name="status" value="done" class="<?= ($status_class === 'done') ? 'active' : '' ?>">Done</button>
             </form>
 
         </div>
-
         <?php endforeach; ?>
 
         </div>
@@ -232,6 +237,24 @@ foreach($all_orders as $order){
 
 </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const dashboardTitles = document.querySelectorAll('.kitchen-title');
+    
+    window.addEventListener('scroll', function () {
+        let scrollTop = window.scrollY;
+        let newOpacity = 1 - (scrollTop / 140);
+        
+        if (newOpacity < 0) newOpacity = 0;
+        if (newOpacity > 1) newOpacity = 1;
+        
+        dashboardTitles.forEach(title => {
+            title.style.opacity = newOpacity;
+        });
+    });
+});
+</script>
 
 </body>
 </html>

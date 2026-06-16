@@ -38,7 +38,9 @@ case 'login':
         }
     }
 
-    die("Invalid credentials");
+    // If credentials don't match, redirect back with invalid error code
+    header("Location: kitchen_login.php?error=invalid");
+    exit;
     break;
 
 
