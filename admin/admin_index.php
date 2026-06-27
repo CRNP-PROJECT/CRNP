@@ -17,12 +17,36 @@ $chartData = include(__DIR__ . "/admin_charts.php");
 /* ================= SAFE DATA ================= */
 $kpis = $chartData['kpis'] ?? [];
 
-$ordersStatus = $chartData['ordersStatus'] ?? [
+$ordersStatus = [
     "pending" => 0,
     "accepted" => 0,
     "rejected" => 0,
-    "done" => 0
+    "cancelled" => 0
 ];
+
+foreach ($orders as $order) {
+
+    $status = strtolower(trim($order['status'] ?? ''));
+    $final  = strtolower(trim($order['final_status'] ?? ''));
+
+    // 1. cancelled comes from status
+    if ($status === 'cancelled') {
+        $ordersStatus['cancelled']++;
+        continue;
+    }
+
+    // 2. pending comes from status
+    if ($status === 'pending') {
+        $ordersStatus['pending']++;
+        continue;
+    }
+
+    // 3. accepted/rejected come from final_status
+    if (isset($ordersStatus[$final])) {
+        $ordersStatus[$final]++;
+    }
+}
+
 
 $kitchenStatus = $chartData['kitchenStatus'] ?? [
     "preparing" => 0,
@@ -34,6 +58,7 @@ $bookingsStatus = [
     "pending" => 0,
     "accepted" => 0,
     "rejected" => 0,
+    "cancelled" => 0,
     "done" => 0
 ];
 
@@ -313,22 +338,26 @@ $todayBookingAOV = ($todayBookingOrders > 0)
 
 <script>
 
-/* ORDERS */
 new Chart(document.getElementById('ordersChart'), {
-type:'doughnut',
-data:{
-labels:['Pending','Accepted','Rejected'],
-datasets:[{
-data:[
-<?= $ordersStatus['pending'] ?>,
-<?= $ordersStatus['accepted'] ?>,
-<?= $ordersStatus['rejected'] ?>
-],
-backgroundColor:['#F59E0B','#22C55E','#EF4444']
-}]
-}
+  type: 'doughnut',
+  data: {
+    labels: ['Pending', 'Accepted', 'Rejected', 'Cancelled'],
+    datasets: [{
+      data: [
+        <?= $ordersStatus['pending'] ?>,
+        <?= $ordersStatus['accepted'] ?>,
+        <?= $ordersStatus['rejected'] ?>,
+        <?= $ordersStatus['cancelled'] ?>
+      ],
+      backgroundColor: [
+        '#F59E0B',
+        '#22C55E',
+        '#EF4444',
+        '#6B7280'
+      ]
+    }]
+  }
 });
-
 new Chart(document.getElementById('kitchenChart'), {
 type: 'bar',
 data: {
@@ -356,14 +385,15 @@ options: {
 new Chart(document.getElementById('bookingsStatusChart'), {
 type:'doughnut',
 data:{
-labels:['Pending','Accepted','Rejected'],
+labels:['Pending','Accepted','Rejected','cancelled'],
 datasets:[{
 data:[
 <?= $bookingsStatus['pending'] ?>,
 <?= $bookingsStatus['accepted'] ?>,
-<?= $bookingsStatus['rejected'] ?>
+<?= $bookingsStatus['rejected'] ?>,
+<?= $bookingsStatus['cancelled'] ?>
 ],
-backgroundColor:['#F59E0B','#22C55E','#EF4444']
+backgroundColor:['#F59E0B','#22C55E','#EF4444','#6b6969']
 }]
 }
 });
