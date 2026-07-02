@@ -94,12 +94,6 @@ if(!is_array($rent_items)){
                         <label class="form-label">DATE & TIME OF APPOINTMENT</label>
                         <input type="datetime-local" name="appointment_time" class="form-input" required>
                     </div>
-                    <!-- RETURN DATE -->
-                    <div class="form-group">
-                        <label class="form-label">Return Date & Time of Items</label>
-                        <input type="datetime-local"name="return_time"class="form-input"required>
-                    </div>
-                    
                    
                     <div class="form-group">
                         <label class="form-label">RETURN DATE & TIME OF ITEMS</label>

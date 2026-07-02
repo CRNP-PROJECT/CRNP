@@ -107,56 +107,112 @@ $todayBookingAOV = ($todayBookingOrders > 0)
 <title>Admin Dashboard</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="../style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
-
 <body class="admin-dashboard-body">
 
-<nav class="navbar">
-    <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo">
-    </div>
-
-    <ul class="navbar-menu">
-        <li><a href="admin_index.php" class="active">Admin Dashboard</a></li>
-        <li><a href="create_cashier.php">Cashier </a></li>
-        <li><a href="create_kitchen.php">Kitchen </a></li>
-
-        <li class="navbar-dropdown">
-            <a href="#">Products ▼</a>
-            <div class="navbar-dropdown-content">
-                <a href="add_product.php">Add Product</a>
-                <a href="product_list.php">Product List</a>
+    <aside class="sidebar-navigation-aside" id="sidebar">
+        <div class="sidebar-header-brand-container">
+            <div class="brand-logo-wrapper">
+                <span class="logo-mini-text">CNP</span>
+                <span class="logo-full-text">Crates N' Plates</span>
             </div>
-        </li>
-        <li class="navbar-dropdown">
-            <a href="#">Bookings ▼</a>
-            <div class="navbar-dropdown-content">
-                <a href="booking_add.php">Add Booking Items</a>
-                <a href="booking_reserve.php">Booking List</a>
-                
+        </div>
+
+        <ul class="sidebar-menu-list">
+            <li>
+                <a href="admin_index.php" class="active">
+                    <i class="fa-solid fa-chart-pie nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Admin Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="create_cashier.php">
+                    <i class="fa-solid fa-cash-register nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Cashier Portal</span>
+                </a>
+            </li>
+            <li>
+                <a href="create_kitchen.php">
+                    <i class="fa-solid fa-utensils nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Kitchen Display</span>
+                </a>
+            </li>
+
+            <li class="sidebar-menu-dropdown-item">
+                <button type="button" class="sidebar-submenu-trigger-btn">
+                    <span class="submenu-trigger-left-block">
+                        <i class="fa-solid fa-boxes-stacked nav-vector-icon"></i>
+                        <span class="nav-item-label-text">Products Inventory</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down dropdown-arrow-indicator"></i>
+                </button>
+                <div class="nested-submenu-wrapper">
+                    <a href="add_product.php">Add Product</a>
+                    <a href="product_list.php">Product List</a>
+                </div>
+            </li>
+
+            <li class="sidebar-menu-dropdown-item">
+                <button type="button" class="sidebar-submenu-trigger-btn">
+                    <span class="submenu-trigger-left-block">
+                        <i class="fa-solid fa-calendar-check nav-vector-icon"></i>
+                        <span class="nav-item-label-text">Reservations</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down dropdown-arrow-indicator"></i>
+                </button>
+                <div class="nested-submenu-wrapper">
+                    <a href="booking_add.php">Add Booking Items</a>
+                    <a href="booking_list.php">Booking List</a>
+                    <a href="booking_reserve.php">Booking Reserve</a>
+                </div>
+            </li>
+
+            <li>
+                <a href="daily_report.php">
+                    <i class="fa-solid fa-receipt nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Daily Report</span>
+                </a>
+            </li>
+            
+            <li class="sidebar-logout-container">
+                <a href="admin_log.php">
+                    <i class="fa-solid fa-right-from-bracket nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="admin-dashboard-container">
+
+        <div class="admin-dashboard-navbar">
+            
+            <div class="admin-nav-greetings-flex-group">
+                <button class="sidebar-brand-toggle-btn" id="sidebarToggle" type="button">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div class="admin-dashboard-header">
+                    <h1 class="admin-dashboard-title">
+                        Welcome, <?= htmlspecialchars($admin_name) ?>!
+                    </h1>
+                    <p class="admin-dashboard-subtitle">
+                        <?= htmlspecialchars($admin_email) ?>
+                    </p>
+                </div>
             </div>
-        </li>
 
-        <li><a href="daily_report.php">Daily report</a></li>
-        <li><a href="admin_log.php">Logout</a></li>
-    </ul>
-</nav>
+            <div class="admin-header-clock-panel">
+                <div class="live-date-string" id="live-display-date">Initializing Date...</div>
+                <div class="live-time-string" id="live-display-time">00:00:00 AM</div>
+            </div>
+            
+        </div>
 
-<div class="admin-dashboard-container">
-
-<div class="admin-dashboard-header">
-    <h1 class="admin-dashboard-title">
-        Welcome, <?= htmlspecialchars($admin_name) ?>!
-    </h1>
-    <p class="admin-dashboard-subtitle">
-        <?= htmlspecialchars($admin_email) ?>
-    </p>
-</div>
-
-<!-- KPI -->
 <div class="admin-dashboard-kpi-grid">
 
     <div class="admin-dashboard-kpi-card">
@@ -174,8 +230,7 @@ $todayBookingAOV = ($todayBookingOrders > 0)
         <div class="admin-dashboard-kpi-label">Today's AOV</div>
     </div>
 
-    <!-- TODAY BOOKING KPI -->
-    <div class="admin-dashboard-kpi-card">
+        <div class="admin-dashboard-kpi-card">
         <div class="admin-dashboard-kpi-value">₱<?= number_format($todayBookingSales,2) ?></div>
         <div class="admin-dashboard-kpi-label">Today's Booking Sales</div>
     </div>
@@ -195,11 +250,8 @@ $todayBookingAOV = ($todayBookingOrders > 0)
         <div class="admin-dashboard-kpi-label">Total Users</div>
     </div>
 
-    
-
 </div>
 
-<!-- STATUS -->
 <div class="section-title">STATUS OVERVIEW</div>
 
 <div class="admin-dashboard-chart-grid">
@@ -221,42 +273,33 @@ $todayBookingAOV = ($todayBookingOrders > 0)
 
 </div>
 
-<!-- BOOKINGS -->
 <div class="section-title">BOOKINGS ANALYTICS</div>
 
 <div class="admin-dashboard-chart-grid">
 
-    
     <div class="admin-dashboard-chart-box">
     <h3>Latest Day Bookings</h3>
     <canvas id="latestBookingsChart"></canvas>
+    </div>
 
-</div>
-
-<div class="admin-dashboard-chart-box">
+    <div class="admin-dashboard-chart-box">
     <h3>Today's Most Booked Items</h3>
     <canvas id="todayMostBookedChart"></canvas>
-</div>
+    </div>
 
     <div class="admin-dashboard-chart-box">
     <h3>Latest Booking Revenue</h3>
     <canvas id="bookingLatestRevenueChart"></canvas>
-
-    
-</div>
+    </div>
 </div>
 
-
-</div>
-
-<!-- ORDERS -->
 <div class="section-title">ORDERS ANALYTICS</div>
 
 <div class="admin-dashboard-chart-grid">
     <div class="admin-dashboard-chart-box">
     <h3>Category Sales (Latest Day Orders)</h3>
     <canvas id="categoryLatestChart"></canvas>
-</div>
+    </div>
 
     <div class="admin-dashboard-chart-box">
         <h3>Revenue Today</h3>
@@ -264,22 +307,16 @@ $todayBookingAOV = ($todayBookingOrders > 0)
     </div>
 
     <div class="admin-dashboard-chart-grid">
-
-    <div class="admin-dashboard-chart-box">
-    <h3>Best Selling Per Day</h3>
-    <canvas id="bestSellingDayChart"></canvas>
+        <div class="admin-dashboard-chart-box">
+        <h3>Best Selling Per Day</h3>
+        <canvas id="bestSellingDayChart"></canvas>
+        </div>
+    </div>
 </div>
 
-</div>
-
-</div>
-
-<!-- ADVANCED -->
 <div class="section-title">PERFORMANCE ANALYTICS</div>
 
 <div class="admin-dashboard-chart-grid">
-
-   
     <div class="admin-dashboard-chart-box">
         <h3>Orders by Hour</h3>
         <canvas id="hourChart"></canvas>
@@ -306,12 +343,69 @@ $todayBookingAOV = ($todayBookingOrders > 0)
         <h3>Most Booked Items</h3>
         <canvas id="bookingItemsChart"></canvas>
     </div>
-
 </div>
 
 </div>
 
 <script>
+/* BRAND SIDEBAR CONTROLS & LIVE TICKING TIMEOUT SCRIPT BLOCK */
+document.addEventListener("DOMContentLoaded", function() {
+    const toggleBtn = document.getElementById("app-sidebar-toggle-trigger");
+    const bodyElement = document.body;
+    const dropdownContainers = document.querySelectorAll(".sidebar-menu-dropdown-item");
+
+    // 1. Sidebar Hide/Show Toggle Engine Control
+    toggleBtn.addEventListener("click", function() {
+        bodyElement.classList.toggle("sidebar-mini-state-active");
+        
+        // Auto-contract child menu links when collapsing down layout structure to icon mode
+        if (bodyElement.classList.contains("sidebar-mini-state-active")) {
+            dropdownContainers.forEach(container => container.classList.remove("submenu-expanded"));
+        }
+    });
+
+    // 2. Submenu Dropdown Expand Control Loop
+    dropdownContainers.forEach(container => {
+        const actionTrigger = container.querySelector(".sidebar-submenu-trigger-btn");
+        actionTrigger.addEventListener("click", function(e) {
+            e.preventDefault();
+            
+            // If minimized to icon state, restore sidebar panel workspace first before revealing contents
+            if (bodyElement.classList.contains("sidebar-mini-state-active")) {
+                bodyElement.classList.remove("sidebar-mini-state-active");
+                container.classList.add("submenu-expanded");
+                return;
+            }
+            container.classList.toggle("submenu-expanded");
+        });
+    });
+
+    // 3. High-Precision Real-Time Clock Module Engine
+    function startRealTimeHeaderClock() {
+        const dateTarget = document.getElementById("live-display-date");
+        const timeTarget = document.getElementById("live-display-time");
+        
+        if (!dateTarget || !timeTarget) return;
+
+        const currentMoment = new Date();
+        
+        // Output formatting constraints definition
+        const stringDateConfigs = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        
+        dateTarget.innerText = currentMoment.toLocaleDateString('en-US', stringDateConfigs);
+        timeTarget.innerText = currentMoment.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+    }
+    
+    // Fire instantiation cycle
+    startRealTimeHeaderClock();
+    setInterval(startRealTimeHeaderClock, 1000);
+});
+
 
 /* ORDERS */
 new Chart(document.getElementById('ordersChart'), {
@@ -534,8 +628,6 @@ new Chart(ctx, {
         datasets: [{
             label: "Bookings Today",
             data: latestBookings.data,
-
-            // 🔥 different colors per bar
             backgroundColor: [
                 '#3B82F6',
                 '#22C55E',
@@ -548,7 +640,6 @@ new Chart(ctx, {
                 '#A16207',
                 '#64748B'
             ],
-
             borderRadius: 6
         }]
     },
@@ -571,8 +662,6 @@ new Chart(document.getElementById('todayMostBookedChart'), {
         datasets: [{
             label: 'Bookings Today',
             data: <?= json_encode(array_values($todayMostBooked)) ?>,
-
-            
             backgroundColor: [
                 '#3B82F6',
                 '#22C55E',
@@ -600,7 +689,6 @@ new Chart(document.getElementById('todayMostBookedChart'), {
 // 🔥 MIDNIGHT AUTO REFRESH
 function checkMidnightReset() {
     const now = new Date();
-
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const seconds = now.getSeconds();
@@ -609,8 +697,63 @@ function checkMidnightReset() {
         location.reload();
     }
 }
-
 setInterval(checkMidnightReset, 1000);
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. DYNAMIC SIDEBAR DRAWER TOGGLE MODULE
+    const toggleButton = document.getElementById('sidebarToggle');
+    const sidebarElement = document.getElementById('sidebar');
+
+    if (toggleButton && sidebarElement) {
+        toggleButton.addEventListener('click', () => {
+            sidebarElement.classList.toggle('collapsed');
+        });
+    }
+
+    // 2. SUBMENU ACCORDION TRIGGER ENGINE
+    const submenuTriggers = document.querySelectorAll('.sidebar-submenu-trigger-btn');
+    
+    submenuTriggers.forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+            const parentItem = trigger.closest('.sidebar-menu-dropdown-item');
+            
+            // Check if sidebar is collapsed - ignore accordion dropdown click states if closed
+            if (sidebarElement && sidebarElement.classList.contains('collapsed')) return;
+
+            e.preventDefault();
+            parentItem.classList.toggle('submenu-expanded');
+        });
+    });
+
+    // 3. WORKING RE-TICKING DYNAMIC DISPLAY LIVE CLOCK HANDLER
+    const dateOutputString = document.getElementById('live-display-date');
+    const timeOutputString = document.getElementById('live-display-time');
+
+    function syncSystemClockTime() {
+        const currentMoment = new Date();
+        
+        // Human-friendly localized calendar parameters
+        const calendarConfig = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        
+        if (dateOutputString) {
+            dateOutputString.textContent = currentMoment.toLocaleDateString('en-US', calendarConfig);
+        }
+        
+        if (timeOutputString) {
+            timeOutputString.textContent = currentMoment.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+        }
+    }
+
+    // Fire time sync on startup and bind to continuous 1s updates
+    syncSystemClockTime();
+    setInterval(syncSystemClockTime, 1000);
+});
 
 </script>
 

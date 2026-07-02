@@ -39,147 +39,195 @@ foreach ($data as $id => $product) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Product List</title>
-
-<link rel="stylesheet" href="../style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+    <!-- Links to the new split-pane stylesheet below -->
+    <link rel="stylesheet" href="edit_product_local.css"> 
 </head>
 
-<body class="product-list-body">
+<body class="edit-product-body">
 
-<!-- ===== NAVBAR ===== -->
-<nav class="navbar">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar-navigation-aside" id="sidebar">
+        <div class="sidebar-header-brand-container">
+            <div class="brand-logo-wrapper">
+                <span class="logo-mini-text">CNP</span>
+                <span class="logo-full-text">Crates N' Plates</span>
+            </div>
+        </div>
 
-    <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo">
-    </div>
+        <ul class="sidebar-menu-list">
+            <li>
+                <a href="admin_index.php">
+                    <i class="fa-solid fa-chart-pie nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Admin Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="create_cashier.php">
+                    <i class="fa-solid fa-cash-register nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Cashier Portal</span>
+                </a>
+            </li>
+            <li>
+                <a href="create_kitchen.php">
+                    <i class="fa-solid fa-utensils nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Kitchen Display</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-dropdown-item submenu-expanded">
+                <button type="button" class="sidebar-submenu-trigger-btn">
+                    <span class="submenu-trigger-left-block">
+                        <i class="fa-solid fa-boxes-stacked nav-vector-icon"></i>
+                        <span class="nav-item-label-text">Products Inventory</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down dropdown-arrow-indicator"></i>
+                </button>
+                <div class="nested-submenu-wrapper">
+                    <a href="add_product.php">Add Product</a>
+                    <a href="product_list.php" class="active">Product List</a>
+                </div>
+            </li>
+            <li class="sidebar-menu-dropdown-item">
+                <button type="button" class="sidebar-submenu-trigger-btn">
+                    <span class="submenu-trigger-left-block">
+                        <i class="fa-solid fa-calendar-check nav-vector-icon"></i>
+                        <span class="nav-item-label-text">Reservations</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down dropdown-arrow-indicator"></i>
+                </button>
+                <div class="nested-submenu-wrapper">
+                    <a href="booking_add.php">Add Booking Items</a>
+                    <a href="booking_list.php">Booking List</a>
+                    <a href="booking_reserve.php">Booking Reserve</a>
+                </div>
+            </li>
+            <li>
+                <a href="daily_report.php">
+                    <i class="fa-solid fa-receipt nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Daily Report</span>
+                </a>
+            </li>
+            <li class="sidebar-logout-container">
+                <a href="admin_log.php">
+                    <i class="fa-solid fa-right-from-bracket nav-vector-icon"></i>
+                    <span class="nav-item-label-text">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
 
-    <ul class="navbar-menu">
-        <li><a href="admin_index.php">Admin Dashboard</a></li>
-        <li><a href="add_product.php">Add Product</a></li>
-        <li><a href="product_list.php" class="active">Product List</a></li>
-        <li><a href="admin_log.php">Logout</a></li>
-    </ul>
+    <!-- ===== WORKSPACE INNER WRAPPER ===== -->
+    <div class="edit-product-container"> 
 
-</nav>
+        <!-- SUBTLE HEADER ACTION ROW -->
+        <header class="edit-view-header-row">
 
-<!-- ===== MAIN ===== -->
-<div class="product-list-container">
+            <div class="header-left-title-group">
+            </div>
+            <div class="header-right-actions-group">
+                <a href="product_list.php" class="edit-back-to-list-btn">
+                    <i class="fa-solid fa-arrow-left"></i> <span>Return to List</span>
+                </a>
+            </div>
+        </header>
 
-    <!-- HEADER -->
-    <div class="product-list-header">
+        <!-- ===== SPLIT-PANE WORKSPACE DECK ===== -->
+        <div class="workspace-split-deck">
+            
+            <!-- LEFT COLUMN: CONTEXT META CARD -->
+            <div class="workspace-meta-summary-pane">
+                <div class="meta-badge">Inventory Item</div>
+                <h1 class="edit-panel-main-title">
+                    <?php echo htmlspecialchars($product['name'] ?? 'AMERICAO'); ?>
+                </h1>
+                <p class="edit-product-subtitle">You are modifying item properties and real-time parameters within your system inventory records.</p>
+                
+                <div class="meta-indicators-grid">
+                    <div class="indicator-stat-chip">
+                        <span class="stat-label">Current Base Valuation</span>
+                        <span class="stat-value">₱<?php echo htmlspecialchars($product['price'] ?? '110.00'); ?></span>
+                    </div>
+                    <div class="indicator-stat-chip">
+                        <span class="stat-label">Assigned Category</span>
+                        <span class="stat-value-tag"><?php echo htmlspecialchars($product['category'] ?? 'Beverages'); ?></span>
+                    </div>
+                </div>
+            </div>
 
-    <h1 class="product-list-title">Product List</h1>
+            <!-- RIGHT COLUMN: REFINED INPUT FORM PANE -->
+            <div class="workspace-form-fields-pane">
+                <form method="POST">
 
-    <div class="product-list-filters">
-        <a href="?category=All"
-           class="product-list-filter-btn <?php echo ($filter=='All')?'product-list-filter-active':''; ?>">
-           All
-        </a>
+                    <div class="edit-product-group">
+                        <label class="edit-product-label">Product Name</label>
+                        <input type="text" name="name"
+                            value="<?php echo htmlspecialchars($product['name'] ?? 'AMERICAO'); ?>"
+                            class="edit-product-input" required autocomplete="off">
+                    </div>
 
-        <a href="?category=Food"
-           class="product-list-filter-btn <?php echo ($filter=='Food')?'product-list-filter-active':''; ?>">
-           Food
-        </a>
+                    <div class="edit-product-group">
+                        <label class="edit-product-label">Price (₱)</label>
+                        <input type="number" step="0.01" name="price"
+                            value="<?php echo htmlspecialchars($product['price'] ?? '110.00'); ?>"
+                            class="edit-product-input" required>
+                    </div>
 
-        <a href="?category=Drinks"
-           class="product-list-filter-btn <?php echo ($filter=='Drinks')?'product-list-filter-active':''; ?>">
-           Alcohol
-        </a>
+                    <div class="edit-product-group">
+                        <label class="edit-product-label">Category Assignment</label>
+                        <div class="edit-select-custom-wrapper">
+                            <select name="category" class="edit-product-select" required>
+                                <option value="Food" <?php if(($product['category'] ?? '') == "Food") echo "selected"; ?>>Food</option>
+                                <option value="Drinks" <?php if(($product['category'] ?? '') == "Drinks") echo "selected"; ?>>Alcohol</option>
+                                <option value="Beverages" <?php if(($product['category'] ?? 'Beverages') == "Beverages") echo "selected"; ?>>Beverages</option>
+                            </select>
+                        </div>
+                    </div>
 
-        <a href="?category=Beverages"
-           class="product-list-filter-btn <?php echo ($filter=='Beverages')?'product-list-filter-active':''; ?>">
-           Beverages
-        </a>
-    </div>
+                    <div class="edit-product-group">
+                        <label class="edit-product-label">Description / Ingredients Outline</label>
+                        <textarea name="description" class="edit-product-textarea" required><?php echo htmlspecialchars($product['description'] ?? 'STRONG'); ?></textarea>
+                    </div>
 
-</div>
+                    <div class="edit-form-actions-row">
+                        <button type="submit" class="edit-product-btn-submit">
+                            Save Changes <i class="fa-solid fa-circle-check" style="margin-left: 6px;"></i>
+                        </button>
+                    </div>
 
-       <div class="product-list-topbar">
-         <a href="add_product.php" class="product-list-btn product-list-btn-primary">
-        + Add Product
-         </a>
+                </form>
+            </div>
+
         </div>
 
     </div>
 
-    <!-- EMPTY STATE -->
-    <?php if(empty($products)): ?>
-        <div class="product-list-card">
-            <p class="product-list-text-muted">No products found.</p>
-        </div>
+    <!-- SIDEBAR INTERACTION SCRIPTS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebarElement = document.getElementById('sidebar');
+            const toggleButton = document.getElementById('sidebarToggle');
 
-    <!-- TABLE -->
-    <?php else: ?>
-        <div class="product-list-table-wrapper">
+            if (toggleButton && sidebarElement) {
+                toggleButton.addEventListener('click', () => {
+                    sidebarElement.classList.toggle('collapsed');
+                });
+            }
 
-            <table class="product-list-table">
+            const submenuTriggers = document.querySelectorAll('.sidebar-submenu-trigger-btn');
+            submenuTriggers.forEach(trigger => {
+                trigger.addEventListener('click', (e) => {
+                    const parentItem = trigger.closest('.sidebar-menu-dropdown-item');
+                    if (sidebarElement && sidebarElement.classList.contains('collapsed')) return;
 
-                <thead>
-                    <tr>
-                        <th>Image</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Description</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    <?php foreach ($products as $id => $product): ?>
-
-                    <tr>
-
-                        <!-- IMAGE -->
-                        <td>
-                            <img src="uploads/<?php echo basename($product['image']); ?>" 
-                                class="product-list-img"
-                                alt="<?php echo htmlspecialchars($product['name']); ?>">
-                        </td>
-
-                        <!-- NAME -->
-                        <td><?php echo htmlspecialchars($product['name']); ?></td>
-
-                        <!-- CATEGORY -->
-                        <td><?php echo htmlspecialchars($product['category'] ?? 'N/A'); ?></td>
-
-                        <!-- PRICE -->
-                        <td>₱<?php echo number_format($product['price'], 2); ?></td>
-
-                        <!-- DESCRIPTION -->
-                        <td><?php echo htmlspecialchars($product['description']); ?></td>
-
-                        <!-- ACTIONS -->
-                        <td class="product-list-actions">
-
-                            <a href="edit_product.php?id=<?php echo $id; ?>"
-                               class="product-list-btn product-list-btn-secondary product-list-btn-sm">
-                               Edit
-                            </a>
-
-                            <a href="product_list.php?delete=<?php echo $id; ?>"
-                               class="product-list-btn product-list-btn-danger product-list-btn-sm"
-                               onclick="return confirm('Delete this product?')">
-                               Delete
-                            </a>
-
-                        </td>
-
-                    </tr>
-
-                    <?php endforeach; ?>
-
-                </tbody>
-
-            </table>
-
-        </div>
-    <?php endif; ?>
-
-</div>
-
+                    e.preventDefault();
+                    parentItem.classList.toggle('submenu-expanded');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
