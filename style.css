@@ -3013,5 +3013,26 @@ body.edit-product-body button.edit-product-btn:active {
     .daily_report_two_column{
         grid-template-columns:1fr;
     }
+    .daily_report_kpi_grid{
+        grid-template-columns:1fr;
+        gap:12px;
+    }
+
+    .daily_report_card{
+        padding:16px;
+    }
+
+    .daily_report_day_box{
+        min-height:100px;
+        padding:10px;
+    }
+
+    .daily_report_title{
+        font-size:2rem;
+    }
 
 }
+
+git add .
+git commit -m "UPDATE"
+git push -u origin main
