@@ -1,7 +1,7 @@
 
 
-//https://console.cloud.google.com/auth/clients/1029428356414-ituvg05tojmq3sva030sab3cdog78fra.apps.googleusercontent.com?project=crnp-31b28
-//$CLIENT_ID = "1029428356414-ituvg05tojmq3sva030sab3cdog78fra.apps.googleusercontent.com"
+//https://console.cloud.google.com/auth/clients/704090839289-fefs43tnpg5tivrd67hq5te923amgt3g.apps.googleusercontent.com?project=crdn-local
+//$CLIENT_ID = "704090839289-fefs43tnpg5tivrd67hq5te923amgt3g.apps.googleusercontent.com"
 
 
 <?php

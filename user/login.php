@@ -16,7 +16,7 @@
 <body class="user-auth-body">
 
     <div id="g_id_onload"
-        data-client_id="1029428356414-ituvg05tojmq3sva030sab3cdog78fra.apps.googleusercontent.com"
+        data-client_id="704090839289-fefs43tnpg5tivrd67hq5te923amgt3g.apps.googleusercontent.com"
         data-callback="handleCredentialResponse">
     </div>
 
@@ -102,7 +102,7 @@ function handleCredentialResponse(response) {
 
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = "google_login.php"; // adjust path
+    form.action = "google_login.php";
 
     const input = document.createElement("input");
     input.type = "hidden";

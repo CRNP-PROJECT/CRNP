@@ -16,7 +16,7 @@
 
     <!-- GOOGLE CONFIG -->
     <div id="g_id_onload"
-        data-client_id="1029428356414-ituvg05tojmq3sva030sab3cdog78fra.apps.googleusercontent.com"
+        data-client_id="704090839289-fefs43tnpg5tivrd67hq5te923amgt3g.apps.googleusercontent.com"
         data-callback="handleCredentialResponse">
     </div>
 
