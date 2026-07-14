@@ -283,34 +283,25 @@ class CashierProcess
 
         if (!empty($booking['items']) && is_array($booking['items'])) {
 
-            foreach ($booking['items'] as $item) {
+            foreach ($booking['items'] as $id => $item) {
 
                 $qty = intval($item['qty'] ?? 0);
-                $name = strtolower(trim($item['name'] ?? ''));
 
-                if ($qty <= 0 || $name == '') {
+                if ($qty <= 0) {
                     continue;
                 }
 
-                foreach ($rent_items as $rid => $ritem) {
+                $current = intval(
+                    ($rent_items[$id]['quantity'] ?? 0)
+                );
 
-                    if (
-                        strtolower(trim($ritem['name'] ?? '')) === $name
-                    ) {
-
-                        $current = intval($ritem['quantity'] ?? 0);
-
-                        $this->rdb->update(
-                            "/rent_items",
-                            $rid,
-                            [
-                                "quantity" => $current + $qty
-                            ]
-                        );
-
-                        break;
-                    }
-                }
+                $this->rdb->update(
+                    "/rent_items",
+                    $id,
+                    [
+                        "quantity" => $current + $qty
+                    ]
+                );
             }
         }
     }

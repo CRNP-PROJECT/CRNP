@@ -3,8 +3,8 @@
 include("../config.php");
 include("../firebaseRDB.php");
 
-$email = $_POST['email'];
-$password = $_POST['password'];
+$email = $_POST['email'] ?? '';
+$password = $_POST['password'] ?? '';
 
 // Validation
 if($email == ""){
