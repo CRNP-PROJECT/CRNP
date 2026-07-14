@@ -1,1 +1,11 @@
-/vendor/
+# Environment configuration (contains secrets — never commit)
+.env
+
+# Uploads (user-generated content)
+uploads/*
+!uploads/.htaccess
+!uploads/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db

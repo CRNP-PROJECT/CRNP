@@ -1,266 +1,313 @@
-
-
 <?php
-session_start();
+/**
+ * booking.php — Customer rental booking.
+ * Lists rent_items with a qty picker per row, validates appointment/return
+ * windows, persists to /bookings, and decrements rent stock.
+ *
+ * Also handles ?cancel=<id> (GET or POST) for owner-scoped cancellations
+ * that restore rent stock.
+ */
+require_once __DIR__ . '/../init.php';
+require_user();
 
-include(__DIR__ . "/../config.php");
-include(__DIR__ . "/../firebaseRDB.php");
+$db = getDB();
+$activeNav = 'rent';
+$pageTitle = 'Rent Tableware';
+$layout    = 'wide';
 
-if(!isset($_SESSION['email'])){
-    header("Location: login.php");
-    exit;
+/* ---------- Cancel a booking (GET or POST) ---------- */
+$cancelId = $_GET['cancel'] ?? post('cancel');
+if ($cancelId) {
+    $booking = $db->retrieve('/bookings/' . $cancelId);
+    if (!is_array($booking) || empty($booking)) {
+        flash('Booking not found.', 'danger');
+        redirect('/user/your_orders.php');
+    }
+    if (strcasecmp((string)($booking['user_email'] ?? ''), user_email()) !== 0) {
+        flash('You can only cancel your own bookings.', 'danger');
+        redirect('/user/your_orders.php');
+    }
+    $status = (string)($booking['status'] ?? '');
+    if (!in_array($status, ['pending', 'accepted'], true)) {
+        flash('That booking can no longer be cancelled.', 'warn');
+        redirect('/user/your_orders.php');
+    }
+    /* Restore stock using the Firebase KEY stored in items. */
+    $items = $booking['items'] ?? [];
+    if (is_array($items)) {
+        foreach ($items as $itemId => $row) {
+            if (!is_array($row)) continue;
+            restore_rent_stock($db, (string)$itemId, (int)($row['qty'] ?? 0));
+        }
+    }
+    try {
+        $db->update('/bookings', $cancelId, [
+            'status'       => 'cancelled',
+            'cancelled_at' => now(),
+        ]);
+        flash('Booking cancelled. Stock has been returned.', 'ok');
+    } catch (Throwable $ex) {
+        flash('Stock was restored but the status update failed: ' . $ex->getMessage(), 'warn');
+    }
+    redirect('/user/your_orders.php');
 }
 
-$username = $_SESSION['username'] ?? "User";
-$email = $_SESSION['email'];
+/* ---------- POST: create booking ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+    $full_name        = trim(post('full_name'));
+    $contact          = trim(post('contact'));
+    $address          = trim(post('address'));
+    $appointment_time = trim(post('appointment_time'));
+    $return_time      = trim(post('return_time'));
+    $method           = post('payment_method', 'counter');
+    if (!in_array($method, ['gcash', 'counter'], true)) $method = 'counter';
 
-$rdb = new firebaseRDB($databaseURL);
+    $errors = [];
+    if ($full_name === '')        $errors[] = 'Please enter your full name.';
+    if ($contact   === '')        $errors[] = 'Please enter a contact number.';
+    if ($address   === '')        $errors[] = 'Please enter a pickup or delivery address.';
+    if ($appointment_time === '' || $return_time === '') {
+        $errors[] = 'Please choose both appointment and return times.';
+    } elseif ($appointment_time >= $return_time) {
+        $errors[] = 'Return time must be after the appointment time.';
+    }
 
-// GET RENT ITEMS
-$items_raw = $rdb->retrieve("/rent_items");
-$rent_items = json_decode($items_raw, true);
+    /* Collect requested qtys and re-fetch rent_items for fresh stock. */
+    $qtys = post('qtys', []);
+    if (!is_array($qtys)) $qtys = [];
+    $rentItems = rows($db->retrieve('/rent_items'));
 
-if(!is_array($rent_items)){
-    $rent_items = [];
+    $items = [];
+    $total = 0.0;
+    foreach ($qtys as $itemId => $q) {
+        $q = (int) $q;
+        if ($q <= 0) continue;
+        $itemId = (string) $itemId;
+        if (!isset($rentItems[$itemId])) {
+            $errors[] = 'One of the selected items is no longer available.';
+            continue;
+        }
+        $row   = $rentItems[$itemId];
+        $avail = (int) ($row['quantity'] ?? 0);
+        $label = $row['display_name'] ?? $row['name'] ?? 'Item';
+        if ($avail <= 0) {
+            $errors[] = '"' . $label . '" is no longer available.';
+            continue;
+        }
+        if ($q > $avail) {
+            $errors[] = 'Only ' . $avail . ' of "' . $label . '" are available.';
+            continue;
+        }
+        $price = (float) ($row['price'] ?? 0);
+        $sub   = $price * $q;
+        $items[$itemId] = [
+            'name'     => $label,
+            'qty'      => $q,
+            'price'    => $price,
+            'subtotal' => $sub,
+        ];
+        $total += $sub;
+    }
+
+    if (!$items && !$errors) {
+        $errors[] = 'Please choose at least one item to book.';
+    }
+
+    /* Receipt upload — only when everything else validates. */
+    $receipt = null;
+    if (!$errors && $method === 'gcash') {
+        if (!isset($_FILES['receipt']) || $_FILES['receipt']['error'] === UPLOAD_ERR_NO_FILE) {
+            $errors[] = 'Please upload your GCash receipt.';
+        } else {
+            try {
+                $receipt = save_upload('receipt', UPLOAD_ROOT . '/user/bookings');
+                if (!$receipt) {
+                    $errors[] = 'Receipt upload failed. Please try again.';
+                }
+            } catch (Throwable $ex) {
+                $errors[] = $ex->getMessage();
+            }
+        }
+    }
+
+    if (!$errors) {
+        $payment_status = $method === 'gcash' ? 'pending_verification' : 'no_payment_required';
+        $booking = [
+            'user_id'         => $_SESSION['user_id'] ?? '',
+            'user_email'      => user_email(),
+            'user_name'       => user_name(),
+            'items'           => $items,
+            'total'           => $total,
+            'appointment_time'=> $appointment_time,
+            'return_time'     => $return_time,
+            'full_name'       => $full_name,
+            'contact'         => $contact,
+            'address'         => $address,
+            'payment_method'  => $method,
+            'payment_status'  => $payment_status,
+            'receipt'         => $receipt,
+            'status'          => 'pending',
+            'created_at'      => now(),
+        ];
+
+        try {
+            $newId = $db->insert('/bookings', $booking);
+            if (!$newId) {
+                throw new RuntimeException('Firebase did not return a booking id.');
+            }
+            /* Decrement rent stock after a successful insert. */
+            foreach ($items as $itemId => $row) {
+                decrement_rent_stock($db, (string)$itemId, (int)$row['qty']);
+            }
+            flash('Booking request submitted! We will confirm shortly.', 'ok');
+            redirect('/user/your_orders.php');
+        } catch (Throwable $ex) {
+            flash('Could not submit your booking: ' . $ex->getMessage(), 'danger');
+        }
+    } else {
+        foreach ($errors as $err) {
+            flash($err, 'danger');
+        }
+    }
 }
+
+/* ---------- Render ---------- */
+$rentItems = rows($db->retrieve('/rent_items'));
+uasort($rentItems, function ($a, $b) {
+    return strcasecmp((string)($a['name'] ?? ''), (string)($b['name'] ?? ''));
+});
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../styles.css">
-    <title>Booking / Reservation</title>
-</head>
-
-<body class="booking-page-body">
-
-<header class="navbar">
-    <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo">
-    </div>
-
-    <div class="navbar-right">
-        <ul class="navbar-menu">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="products.php">Products</a></li>
-            <li><a href="booking.php" class="active">Booking</a></li>
-            <li><a href="cart.php">Cart</a></li>
-            <li><a href="aboutus.php">About</a></li>
-        </ul>
-
-        <div class="navbar-dropdown">
-            <span class="navbar-user-btn">
-                <?php echo htmlspecialchars($username); ?> ▼
-            </span>
-            <div class="navbar-dropdown-content">
-                <a href="your_profile.php">My Profile</a>
-                <a href="your_orders.php">Your Orders</a>
-                <a href="../logout.php">Logout</a>
-            </div>
-        </div>
-    </div>
-</header>
-
-<div class="booking-main-container">
-
-    <h1 class="page-title-centered">BOOKING & RESERVATION</h1>
-
-    <div class="booking-card">
-        <form action="process.php" method="POST" enctype="multipart/form-data" class="booking-form" onsubmit="return validateBooking()">
-            <input type="hidden" name="action" value="booking">
-
-            <div class="booking-split-columns">
-                
-                <div class="booking-left-column">
-                    <div class="form-group">
-                        <label class="form-label">FULL NAME</label>
-                        <input type="text" name="full_name" class="form-input" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">CONTACT NUMBER</label>
-                        <input type="text" name="contact_number" class="form-input" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">ADDRESS</label>
-                        <input type="text" name="address" class="form-input" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">DATE & TIME OF APPOINTMENT</label>
-                        <input type="datetime-local" name="appointment_time" class="form-input" required>
-                    </div>
-                   
-                    <div class="form-group">
-                        <label class="form-label">RETURN DATE & TIME OF ITEMS</label>
-                        <input type="datetime-local" name="return_time" class="form-input" required>
-                    </div>
-                </div>
-
-                <div class="booking-center-divider"></div>
-
-                <div class="booking-right-column">
-                    <h3 class="column-title-right">RENTAL ITEMS</h3>
-                    
-                    <div class="rental-items-scrollbox">
-                        <?php if(empty($rent_items)): ?>
-                            <p style="color: #ccc; text-align: center; margin-top: 20px;">No rental items available.</p>
-                        <?php else: ?>
-                            <?php foreach($rent_items as $id => $item): ?>
-                                <?php if(!is_array($item)) continue; ?>
-                                <div class="ui-item-row" style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
-                                    <div class="ui-item-thumb">
-                                        <?php if(!empty($item['image'])): ?>
-                                            <img src="../admin/<?php echo htmlspecialchars($item['image']); ?>" style="width:70px; height:70px; object-fit:cover; border-radius:10px;">
-                                        <?php else: ?>
-                                            <div style="width:70px; height:70px; background:#ddd; border-radius:10px;"></div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="ui-item-meta" style="flex:1;">
-                                        <span class="ui-item-title" style="display:block; font-weight:bold; margin:0;">
-                                            <?php echo htmlspecialchars($item['display_name'] ?? $item['name'] ?? 'Unnamed Item'); ?>
-                                        </span>
-                                        <small style="color:#111;">
-                                            ₱<?php echo number_format($item['price'] ?? 0, 2); ?> | Available: <b><?php echo $item['quantity'] ?? 0; ?></b>
-                                        </small>
-                                    </div>
-                                    <div class="ui-item-qty-selector">
-                                        <input type="number" 
-                                               name="rent_items[<?php echo $id; ?>]" 
-                                               class="qty-input form-input" 
-                                               min="0" 
-                                               max="<?php echo $item['quantity'] ?? 0; ?>" 
-                                               value="0" 
-                                               style="width:80px;">
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-            </div>
-
-            <h3 class="payment-section-heading">Payment Method</h3>
-            
-            <div class="booking-bottom-action-row">
-                <div class="payment-pill-choices">
-                    <label class="payment-pill-btn">
-                        <input type="radio" name="payment_method" value="counter" checked onclick="togglePayment('counter')">
-                        <span class="pill-custom-text">
-                            <span class="radio-circle"></span>
-                            OVER THE COUNTER
-                        </span>
-                    </label>
-
-                    <label class="payment-pill-btn">
-                        <input type="radio" name="payment_method" value="gcash" onclick="togglePayment('gcash')">
-                        <span class="pill-custom-text">
-                            <span class="radio-circle"></span>
-                            <img src="../img/gcash.png" class="gcash-inline-icon" alt="GCash" style="width:20px; vertical-align:middle; margin-right:5px;">
-                            GCASH
-                        </span>
-                    </label>
-                </div>
-
-                <div class="ui-total-display-pill">
-                    <span class="total-label-text">TOTAL</span>
-                    <span class="total-numeric-value">₱<span id="totalDisplay">0.00</span></span>
-                </div>
-            </div>
-
-            <div id="gcashSection" style="display:none; margin: 20px auto; max-width: 500px;">
-                <div class="gcash-container" style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; text-align: center;">
-                    <div class="gcash-image">
-                        <p class="gcash-scan" style="color:#fff; margin-bottom: 10px;">Scan Me to Pay</p>
-                        <img src="../img/qr.png" id="gcashQR" alt="GCash QR" style="width:140px; border-radius:10px; margin-bottom:10px;">
-                        <p class="gcash-number" style="color:#fff; font-weight:bold; margin-bottom: 15px;">0912 345 6789</p>
-                        <button type="button" class="gcash-download" onclick="downloadQR()" style="margin-bottom:15px; display:inline-block;">
-                            Download QR
-                        </button>
-                    </div>
-                    <div class="gcash-fields">
-                        <input type="text" name="gcash_number" class="form-input" placeholder="Enter GCash Number" style="margin-bottom:10px;">
-                        <input type="file" name="gcash_receipt" class="form-input" accept="image/*">
-                    </div>
-                </div>
-            </div>
-
-            <div class="action-submit-centering">
-                <button type="submit" class="btn-booking-confirm">Confirm Booking</button>
-            </div>
-
-        </form>
-    </div>
+<div class="page-head">
+  <span class="eyebrow">Rentals · For private dinners &amp; events</span>
+  <h1>Rent tableware &amp; equipment</h1>
+  <p>Reserve pieces from our cellar. Pick your appointment and return times, and we'll have everything ready for you.</p>
 </div>
 
+<form method="post" enctype="multipart/form-data" class="form-grid" novalidate>
+  <?= csrf_field() ?>
+  <div class="card">
+    <div class="card__head">
+      <h2>Choose items</h2>
+      <small class="muted">Enter 0 to skip an item</small>
+    </div>
+    <div class="card__body" style="padding:0">
+      <?php if (!$rentItems): ?>
+        <div class="empty" style="border:0">
+          <div class="empty__icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </div>
+          <h3>No rental items available</h3>
+          <p>The cellar is being restocked — please check back soon.</p>
+        </div>
+      <?php else: ?>
+        <div class="table-wrap" style="border:0">
+          <table class="tbl">
+            <thead>
+              <tr><th>Item</th><th>Description</th><th class="num">Rate</th><th class="num">Available</th><th class="num">Qty</th></tr>
+            </thead>
+            <tbody>
+              <?php foreach ($rentItems as $id => $r):
+                $avail = (int) ($r['quantity'] ?? 0);
+                $label = $r['display_name'] ?? $r['name'] ?? 'Item';
+                $desc  = trim($r['description'] ?? '');
+                $prev  = isset($_POST['qtys'][$id]) ? (int) $_POST['qtys'][$id] : 0;
+              ?>
+                <tr>
+                  <td>
+                    <strong><?= e($label) ?></strong>
+                    <?php if (!empty($r['display_name']) && !empty($r['name']) && $r['display_name'] !== $r['name']): ?>
+                      <div class="muted" style="font-size:12px"><?= e($r['name']) ?></div>
+                    <?php endif; ?>
+                  </td>
+                  <td class="muted"><?= $desc !== '' ? e($desc) : '—' ?></td>
+                  <td class="num"><?= money($r['price'] ?? 0) ?></td>
+                  <td class="num <?= $avail <= 0 ? 'muted' : '' ?>"><?= $avail ?></td>
+                  <td class="num">
+                    <input class="input" type="number" name="qtys[<?= e($id) ?>]" value="<?= $prev ?>" min="0" max="<?= max(0, $avail) ?>" style="width:84px;text-align:center" <?= $avail <= 0 ? 'disabled' : '' ?> inputmode="numeric">
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <div class="card card--pad">
+    <div class="card__head" style="padding:0 0 14px;border-bottom:1px solid var(--line-2);margin-bottom:18px"><h2>Appointment &amp; details</h2></div>
+
+    <div class="form-grid">
+      <div class="form-grid--2">
+        <div class="field">
+          <label for="appointment_time">Appointment time</label>
+          <input class="input" type="datetime-local" id="appointment_time" name="appointment_time" value="<?= e(post('appointment_time')) ?>" required>
+        </div>
+        <div class="field">
+          <label for="return_time">Return time</label>
+          <input class="input" type="datetime-local" id="return_time" name="return_time" value="<?= e(post('return_time')) ?>" required>
+        </div>
+      </div>
+
+      <div class="form-grid--2">
+        <div class="field">
+          <label for="full_name">Full name</label>
+          <input class="input" type="text" id="full_name" name="full_name" value="<?= e(post('full_name', user_name())) ?>" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="contact">Contact number</label>
+          <input class="input" type="tel" id="contact" name="contact" value="<?= e(post('contact')) ?>" required autocomplete="tel" placeholder="0917 000 0000">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="address">Pickup / delivery address</label>
+        <textarea class="textarea" id="address" name="address" required autocomplete="street-address" placeholder="House no., street, barangay, city"><?= e(post('address')) ?></textarea>
+      </div>
+
+      <div class="field">
+        <label>Payment method</label>
+        <div class="row">
+          <label class="checkbox-row"><input type="radio" name="payment_method" value="counter" <?= post('payment_method', 'counter') === 'counter' ? 'checked' : '' ?> data-pay="counter"> Pay at counter</label>
+          <label class="checkbox-row"><input type="radio" name="payment_method" value="gcash"   <?= post('payment_method')          === 'gcash'   ? 'checked' : '' ?> data-pay="gcash"> GCash</label>
+        </div>
+      </div>
+
+      <div class="field" id="receipt-field" style="display:none">
+        <label for="receipt">GCash receipt</label>
+        <input class="input" type="file" id="receipt" name="receipt" accept="image/png,image/jpeg,image/webp">
+        <span class="hint">Upload a screenshot of your GCash transfer. JPG, PNG, or WebP (max 5MB).</span>
+      </div>
+    </div>
+
+    <div class="form-actions" style="margin-top:20px">
+      <button class="btn btn--gold btn--lg" type="submit">Submit booking request</button>
+    </div>
+  </div>
+</form>
+
 <script>
-// GCASH TOGGLE
-function togglePayment(type){
-    document.getElementById("gcashSection").style.display =
-        (type === "gcash") ? "block" : "none";
-}
-
-// PRICE MAP
-const prices = <?php echo json_encode(
-    is_array($rent_items)
-    ? array_map(
-        fn($i)=>floatval($i['price'] ?? 0),
-        $rent_items
-    )
-    : []
-); ?>;
-
-// TOTAL
-function updateTotal(){
-    let total = 0;
-    document.querySelectorAll(".qty-input").forEach(input=>{
-        let match = input.name.match(/\[(.*?)\]/);
-        if(!match) return;
-        
-        let id = match[1];
-        let qty = parseInt(input.value)||0;
-        
-        if(prices[id]){
-            total += prices[id] * qty;
-        }
-    });
-    document.getElementById("totalDisplay").innerText = total.toFixed(2);
-}
-
-// VALIDATE
-function validateBooking(){
-    let hasItem = false;
-    document.querySelectorAll(".qty-input").forEach(input=>{
-        if(parseInt(input.value) > 0){
-            hasItem = true;
-        }
-    });
-
-    if(!hasItem){
-        alert("Please select at least one item to rent.");
-        return false;
-    }
-
-    let appointment = document.querySelector('[name="appointment_time"]').value;
-    let returnTime = document.querySelector('[name="return_time"]').value;
-
-    if(appointment && returnTime && new Date(returnTime) <= new Date(appointment)){
-        alert("Return date must be after appointment date.");
-        return false;
-    }
-
-    return true;
-}
-
-// EVENTS
-document.querySelectorAll(".qty-input").forEach(input=>{
-    input.addEventListener("input", updateTotal);
-});
+(function () {
+  var counter = document.querySelector('[data-pay="counter"]');
+  var gcash   = document.querySelector('[data-pay="gcash"]');
+  var field   = document.getElementById('receipt-field');
+  var receipt = document.getElementById('receipt');
+  if (!counter || !gcash || !field || !receipt) return;
+  function sync() {
+    var isGcash = gcash.checked;
+    field.style.display = isGcash ? '' : 'none';
+    receipt.required    = isGcash;
+  }
+  counter.addEventListener('change', sync);
+  gcash.addEventListener('change', sync);
+  sync();
+})();
 </script>
-</body>
-</html>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

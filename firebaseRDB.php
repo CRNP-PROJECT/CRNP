@@ -1,75 +1,132 @@
 <?php
-/*
- * class name: firebaseRDB
- * version: 1.0
- * author: Devisty
+/**
+ * firebaseRDB — thin cURL wrapper over the Firebase Realtime Database REST API.
+ *
+ *   retrieve($path, $queryKey, $queryType, $queryVal)  -> array (GET)
+ *   insert($table, $data)                              -> new key (POST)
+ *   update($table, $id, $data)                         -> patched data (PATCH)
+ *   delete($table, $id)                                -> true (DELETE)
+ *
+ * insert/update/delete throw on {"error": ...} responses.
+ * On cURL failure the error is logged and retrieve() returns [].
  */
+class firebaseRDB {
+    public const EQUAL = 'EQUAL';
+    public const LIKE  = 'LIKE';
 
-class firebaseRDB{
-   function __construct($url=null) {
-      if(isset($url)){
-         $this->url = $url;
-      }else{
-         throw new Exception("Database URL must be specified");
-      }
-   }
+    /** @var string */
+    public $url;
 
-   public function grab($url, $method, $par=null){
-      $ch = curl_init();
-      curl_setopt($ch, CURLOPT_URL, $url);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-      if(isset($par)){
-         curl_setopt($ch, CURLOPT_POSTFIELDS, $par);
-      }
-      curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-      curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-      curl_setopt($ch, CURLOPT_TIMEOUT, 120);
-      curl_setopt($ch, CURLOPT_HEADER, 0);
-      $html = curl_exec($ch);
-      if ($html === false) {
-         error_log("Firebase curl error: " . curl_error($ch));
-         return '{}';
-      }
-      return $html;
-   }
+    /** @var string */
+    private $lastError = '';
 
+    public function __construct(string $url) {
+        $this->url = rtrim($url, '/');
+    }
 
-   public function insert($table, $data){
-      $path = $this->url."/$table.json";
-      $grab = $this->grab($path, "POST", json_encode($data));
-      if (str_starts_with($grab, '{"error'))
-         throw new Exception("Firebase insert error: " . $grab);
-      return $grab;
-   }
+    /**
+     * GET a node. When $queryKey is supplied a server-side query is attempted;
+     * returns an associative array (decoded). On cURL failure returns [].
+     */
+    public function retrieve(string $path, ?string $queryKey = null, string $queryType = self::EQUAL, $queryVal = null) {
+        $url = $this->url . '/' . ltrim($path, '/') . '.json';
+        if ($queryKey !== null && $queryVal !== null) {
+            $val = (string)$queryVal;
+            if ($queryType === self::LIKE) {
+                // prefix match
+                $url .= '?orderBy="' . rawurlencode($queryKey) . '"&startAt="' . rawurlencode($val) . '"&endAt="' . rawurlencode($val) . '\uf8ff"';
+            } else {
+                $url .= '?orderBy="' . rawurlencode($queryKey) . '"&equalTo="' . rawurlencode($val) . '"';
+            }
+        }
+        $resp = $this->_exec($url, 'GET');
+        if ($resp === null) {
+            return [];
+        }
+        $data = json_decode($resp, true);
+        return $data === null ? [] : $data;
+    }
 
-   public function update($table, $uniqueID, $data){
-      $path = $this->url."/$table/$uniqueID.json";
-      $grab = $this->grab($path, "PATCH", json_encode($data));
-      if (str_starts_with($grab, '{"error'))
-         throw new Exception("Firebase update error: " . $grab);
-      return $grab;
-   }
+    /** POST — creates a new auto-key. Returns the new Firebase push key. */
+    public function insert(string $table, array $data) {
+        $url  = $this->url . '/' . ltrim($table, '/') . '.json';
+        $resp = $this->_exec($url, 'POST', json_encode($data, JSON_UNESCAPED_UNICODE));
+        if ($resp === null) {
+            throw new RuntimeException('Firebase insert failed (cURL).');
+        }
+        $arr = json_decode($resp, true);
+        $this->_guardError($arr);
+        return $arr['name'] ?? null;
+    }
 
-   public function delete($table, $uniqueID){
-      $path = $this->url."/$table/$uniqueID.json";
-      $grab = $this->grab($path, "DELETE");
-      return $grab;
-   }
+    /** PATCH — partial update of a child node. */
+    public function update(string $table, string $id, array $data) {
+        $url  = $this->url . '/' . ltrim($table, '/') . '/' . rawurlencode($id) . '.json';
+        $resp = $this->_exec($url, 'PATCH', json_encode($data, JSON_UNESCAPED_UNICODE));
+        if ($resp === null) {
+            throw new RuntimeException('Firebase update failed (cURL).');
+        }
+        $arr = json_decode($resp, true);
+        $this->_guardError($arr);
+        return $arr;
+    }
 
-   public function retrieve($dbPath, $queryKey=null, $queryType=null, $queryVal =null){
-      if(isset($queryType) && isset($queryKey) && isset($queryVal)){
-         $queryVal = urlencode($queryVal);
-         if($queryType == "EQUAL"){
-               $pars = "orderBy=\"$queryKey\"&equalTo=\"$queryVal\"";
-         }elseif($queryType == "LIKE"){
-               $pars = "orderBy=\"$queryKey\"&startAt=\"$queryVal\"";
-         }
-      }
-      $pars = isset($pars) ? "?$pars" : "";
-      $path = $this->url."/$dbPath.json$pars";
-      $grab = $this->grab($path, "GET");
-      return $grab;
-   }
+    /** PATCH a whole node directly (e.g. /settings) without a child id. */
+    public function updateNode(string $path, array $data) {
+        $url  = $this->url . '/' . ltrim($path, '/') . '.json';
+        $resp = $this->_exec($url, 'PATCH', json_encode($data, JSON_UNESCAPED_UNICODE));
+        if ($resp === null) {
+            throw new RuntimeException('Firebase updateNode failed (cURL).');
+        }
+        $arr = json_decode($resp, true);
+        $this->_guardError($arr);
+        return $arr;
+    }
 
+    /** DELETE — remove a child node. */
+    public function delete(string $table, string $id): bool {
+        $url  = $this->url . '/' . ltrim($table, '/') . '/' . rawurlencode($id) . '.json';
+        $resp = $this->_exec($url, 'DELETE');
+        if ($resp === null) {
+            throw new RuntimeException('Firebase delete failed (cURL).');
+        }
+        $arr = json_decode($resp, true);
+        $this->_guardError($arr);
+        return true;
+    }
+
+    public function lastError(): string {
+        return $this->lastError;
+    }
+
+    private function _exec(string $url, string $method, ?string $body = null): ?string {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        if ($body !== null) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($body),
+            ]);
+        }
+        $resp = curl_exec($ch);
+        if (curl_errno($ch)) {
+            $this->lastError = curl_error($ch);
+            error_log('[firebaseRDB] cURL error: ' . $this->lastError . ' | ' . $url);
+            return null;
+        }
+        return $resp === false ? null : $resp;
+    }
+
+    /** @param mixed $arr decoded JSON */
+    private function _guardError($arr): void {
+        if (is_array($arr) && isset($arr['error'])) {
+            $msg = is_string($arr['error']) ? $arr['error'] : json_encode($arr['error']);
+            throw new RuntimeException('Firebase error: ' . $msg);
+        }
+    }
 }

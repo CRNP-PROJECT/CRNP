@@ -1,276 +1,167 @@
 <?php
-session_start();
+/**
+ * products.php — Customer shop.
+ * Lists all products with a hero banner, server-side search, and a Buy-Now
+ * action that adds to the session cart.
+ */
+require_once __DIR__ . '/../init.php';
+require_user();
 
-include(__DIR__ . "/../config.php");
-include(__DIR__ . "/../firebaseRDB.php");
+$db = getDB();
+$activeNav = 'shop';
+$pageTitle = 'Shop the Menu';
+$layout    = 'wide';
 
-if (!isset($_SESSION['email'])) {
-    header("Location: login.php");
-    exit;
-}
+/* ---------- POST: buy now ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+    $pid = post('product_id');
+    $qty = max(1, (int) post('qty', 1));
 
-$username = $_SESSION['username'] ?? "User";
-
-$rdb = new firebaseRDB($databaseURL);
-
-$filter = $_GET['category'] ?? "All";
-
-$products = [];
-$productNames = [];
-
-// FETCH PRODUCTS
-try {
-    $retrieve = $rdb->retrieve("/products");
-    $data = json_decode($retrieve, true);
-
-    if (is_array($data)) {
-        foreach ($data as $id => $product) {
-            $category = $product['category'] ?? 'Food';
-
-            if ($filter === "All" || $category === $filter) {
-                $products[$id] = $product;
-                $productNames[] = $product['name'];
-            }
-        }
+    if ($pid === '') {
+        flash('Invalid request.', 'danger');
+        redirect('/user/products.php');
     }
-} catch(Exception $e) {
-    echo "Error: " . $e->getMessage();
+
+    $p = $db->retrieve('/products/' . $pid);
+    if (!is_array($p) || empty($p)) {
+        flash('Item not found.', 'danger');
+        redirect('/user/products.php');
+    }
+
+    $stock = (int) ($p['stock'] ?? 0);
+    if ($stock <= 0) {
+        flash('Sorry, "' . ($p['name'] ?? 'that item') . '" is sold out.', 'danger');
+        redirect('/user/products.php');
+    }
+
+    $cart  = get_cart();
+    $cur   = isset($cart[$pid]) ? (int) $cart[$pid]['qty'] : 0;
+    $newQty = min($stock, $cur + $qty);
+
+    $cart[$pid] = [
+        'id'    => $pid,
+        'name'  => $p['name']  ?? 'Item',
+        'price' => (float) ($p['price'] ?? 0),
+        'qty'   => $newQty,
+        'image' => $p['image'] ?? '',
+        'stock' => $stock,
+    ];
+    set_cart($cart);
+
+    flash('Added "' . ($p['name'] ?? 'item') . '" to your cart.', 'ok');
+    redirect('/user/cart.php');
 }
 
-$cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
+/* ---------- GET: list + search ---------- */
+$q         = trim($_GET['q'] ?? '');
+$products  = rows($db->retrieve('/products'));
+if ($q !== '') {
+    $products = filter_like($products, 'name', $q);
+}
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../styles.css">
-
-<title>Products</title>
-</head>
-
-<body class="products-page-body">
-
-<!-- NAVBAR -->
-<header class="navbar">
-
-    <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo">
-    </div>
-
-    <div class="navbar-right">
-
-        <ul class="navbar-menu">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="products.php" class="active">Products</a></li>
-            <li><a href="booking.php">Booking</a></li>
-
-            <!-- 🔥 REALTIME CART COUNT -->
-            <li>
-                <a href="cart.php">
-                    Cart (<span id="cart-count"><?php echo $cartCount; ?></span>)
-                </a>
-            </li>
-
-            
-            <li><a href="aboutus.php">About</a></li>
-        </ul>
-
-        <!-- SEARCH -->
-        <form action="products.php" method="GET" class="search-box" style="position: relative;">
-            <button type="submit" style="background:none; border:none; cursor:pointer; color:inherit;">
-                <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
-
-            <input type="text" name="search" placeholder="Search..." class="navbar-search" autocomplete="off">
-
-            <div id="suggestion-box"></div>
-        </form>
-
-        <!-- USER -->
-        <div class="navbar-dropdown">
-            <span class="navbar-user-btn">
-                <i class="fa-regular fa-user"></i>
-                <?php echo htmlspecialchars($username); ?>
-            </span>
-
-            <div class="navbar-dropdown-content">
-                <a href="your_profile.php">My Profile</a>
-                <a href="your_orders.php">Your Orders</a>
-                <a href="../logout.php">Logout</a>
-            </div>
-        </div>
-
-    </div>
-</header>
-
-<!-- PRODUCTS -->
-<div class="product-scoped">
-
-    <div class="page-header">
-        <h1 class="page-title">AVAILABLE PRODUCTS</h1>
-
-        <div class="filter-container">
-            <a href="?category=All" class="filter-btn <?php echo ($filter=='All')?'filter-active':''; ?>">All</a>
-            <a href="?category=Food" class="filter-btn <?php echo ($filter=='Food')?'filter-active':''; ?>">Food</a>
-            <a href="?category=Drinks" class="filter-btn <?php echo ($filter=='Drinks')?'filter-active':''; ?>">Alcohol</a>
-            <a href="?category=Beverages" class="filter-btn <?php echo ($filter=='Beverages')?'filter-active':''; ?>">Beverages</a>
-        </div>
-    </div>
-
-    <div class="product-grid">
-
-        <?php foreach($products as $id => $product): ?>
-        <div class="product-card">
-
-            <img src="../admin/<?php echo htmlspecialchars($product['image']); ?>">
-
-            <div class="product-card-body">
-
-                <h3><?php echo htmlspecialchars($product['name']); ?></h3>
-                <p>₱<?php echo number_format($product['price'], 2); ?></p>
-
-                <!-- ADD TO CART -->
-                <form class="add-to-cart-form" method="POST">
-                    <input type="hidden" name="action" value="add_to_cart">
-                    <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-
-                    <button type="submit" class="btn">
-                        <i ></i> Add to Cart
-                    </button>
-                </form>
-
-                <!-- BUY NOW -->
-                <form action="process.php" method="POST">
-                    <input type="hidden" name="action" value="buy_now">
-                    <input type="hidden" name="product_id" value="<?php echo $id; ?>">
-
-                    <button type="submit" class="btn">
-                        Buy Now
-                    </button>
-                </form>
-
-            </div>
-        </div>
-        <?php endforeach; ?>
-
-    </div>
-</div>
-
-<!-- TOAST STYLE -->
 <style>
-.toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #c5a072;
-    color: #000;
-    padding: 12px 18px;
-    border-radius: 8px;
-    font-weight: 500;
-    z-index: 9999;
-    opacity: 0;
-    transition: 0.3s;
-}
+  .hero { background-image: linear-gradient(160deg, rgba(42,33,24,.82), rgba(24,18,16,.92)), url('/assets/img/shop-bg.png'); background-size: cover; background-position: center; }
 </style>
 
-<!-- SCRIPT -->
-<script>
-const allProducts = <?php echo json_encode($productNames); ?>;
-const input = document.querySelector('.navbar-search');
-const box = document.getElementById('suggestion-box');
+<div class="hero">
+  <span class="eyebrow">Today's table</span>
+  <h1>Crates of flavor, plated with care.</h1>
+  <p>Hand-cut meats, market vegetables, and a cellar of small-batch spices &mdash; composed into plates worth lingering over.</p>
+  <div class="hero__actions">
+    <a class="btn btn--gold" href="#menu">Browse the menu</a>
+    <a class="btn btn--outline" href="/user/booking.php" style="border-color:rgba(244,231,200,.4);color:#f4e7c8">Rent tableware</a>
+  </div>
+</div>
 
-// SEARCH
-input.addEventListener('input', function () {
-    const val = this.value.trim().toLowerCase();
-    box.innerHTML = '';
+<div class="page-head mt-6">
+  <div class="page-head__row">
+    <div>
+      <span class="eyebrow">The menu</span>
+      <h1><?= $q !== '' ? 'Results for "' . e($q) . '"' : 'All dishes' ?></h1>
+      <p><?= count($products) ?> item<?= count($products) === 1 ? '' : 's' ?><?= $q !== '' ? ' matched your search.' : ' crafted fresh, served with intention.' ?></p>
+    </div>
+    <form method="get" class="input-group" role="search" action="/user/products.php" style="max-width:340px;">
+      <input class="input" type="search" name="q" value="<?= e($q) ?>" placeholder="Search dishes…" aria-label="Search dishes">
+      <button class="btn btn--outline btn--sm" type="submit">Search</button>
+      <?php if ($q !== ''): ?>
+        <a class="btn btn--ghost btn--sm" href="/user/products.php">Clear</a>
+      <?php endif; ?>
+    </form>
+  </div>
+</div>
 
-    if (val.length < 2) {
-        box.style.display = 'none';
-        return;
-    }
+<section id="menu">
+  <?php if (!$products): ?>
+    <div class="empty">
+      <div class="empty__icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+      </div>
+      <h3>No dishes found</h3>
+      <p><?= $q !== '' ? 'Try a different search term, or browse the full menu.' : 'The kitchen is resting. Please check back soon.' ?></p>
+      <?php if ($q !== ''): ?>
+        <a class="btn btn--gold mt-2" href="/user/products.php">Show full menu</a>
+      <?php endif; ?>
+    </div>
+  <?php else: ?>
+    <div class="grid grid--products">
+      <?php foreach ($products as $id => $p):
+        $stock   = (int) ($p['stock'] ?? 0);
+        $soldOut = $stock <= 0;
+        $low     = !$soldOut && $stock <= 5;
+        $desc    = trim($p['description'] ?? $p['short'] ?? '');
+        if (mb_strlen($desc) > 130) {
+            $desc = mb_substr($desc, 0, 127) . '…';
+        }
+        $img = upload_web('admin/item', $p['image'] ?? '');
+      ?>
+        <article class="product">
+          <div class="product__media">
+            <img src="<?= e($img) ?>" alt="<?= e($p['name'] ?? 'Dish') ?>" loading="lazy">
+            <?php if ($soldOut): ?>
+              <span class="badge badge--muted" style="position:absolute;top:10px;left:10px">Sold out</span>
+            <?php elseif ($low): ?>
+              <span class="badge badge--warn" style="position:absolute;top:10px;left:10px">Low stock</span>
+            <?php endif; ?>
+          </div>
+          <div class="product__body">
+            <?php if (!empty($p['category'])): ?>
+              <span class="product__cat"><?= e($p['category']) ?></span>
+            <?php endif; ?>
+            <h3 class="product__name"><?= e($p['name'] ?? 'Untitled') ?></h3>
+            <?php if ($desc !== ''): ?>
+              <p class="product__desc"><?= e($desc) ?></p>
+            <?php endif; ?>
+            <div class="product__foot">
+              <div>
+                <div class="product__price"><?= money($p['price'] ?? 0) ?></div>
+                <?php if ($soldOut): ?>
+                  <div class="product__stock out">Sold out</div>
+                <?php elseif ($low): ?>
+                  <div class="product__stock low">Only <?= $stock ?> left</div>
+                <?php else: ?>
+                  <div class="product__stock">In stock: <?= $stock ?></div>
+                <?php endif; ?>
+              </div>
+              <form method="post" action="/user/products.php">
+                <?= csrf_field() ?>
+                <input type="hidden" name="product_id" value="<?= e($id) ?>">
+                <input type="hidden" name="qty" value="1">
+                <button class="btn btn--gold btn--sm" type="submit" <?= $soldOut ? 'disabled' : '' ?>>
+                  <?= $soldOut ? 'Sold out' : 'Buy now' ?>
+                </button>
+              </form>
+            </div>
+          </div>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</section>
 
-    const matches = allProducts.filter(p => p.toLowerCase().includes(val));
-
-    matches.forEach(m => {
-        const item = document.createElement('div');
-        item.innerText = m;
-        item.style.padding = "8px";
-        item.style.cursor = "pointer";
-        item.style.background = "white";
-        item.style.color = "black";
-
-        item.onclick = () => {
-            input.value = m;
-            input.form.submit();
-        };
-
-        box.appendChild(item);
-    });
-
-    box.style.display = matches.length ? 'block' : 'none';
-});
-
-// CLOSE DROPDOWN
-document.addEventListener('click', e => {
-    if (!input.contains(e.target) && !box.contains(e.target)) {
-        box.style.display = 'none';
-    }
-});
-
-// AJAX ADD TO CART (REALTIME COUNT)
-document.querySelectorAll(".add-to-cart-form").forEach(form => {
-    form.addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const formData = new FormData(this);
-
-        fetch("process.php", {
-            method: "POST",
-            body: formData
-        })
-        .then(res => res.text())
-        .then(data => {
-
-            if (data.trim() === "success") {
-
-                let cart = document.getElementById("cart-count");
-                if (cart) {
-                    cart.innerText = parseInt(cart.innerText || 0) + 1;
-                }
-
-                showToast("🛒 Added to cart!");
-
-            } else {
-                showToast("⚠️ Failed to add item");
-            }
-
-        })
-        .catch(() => {
-            showToast("❌ Server error");
-        });
-    });
-});
-
-// TOAST
-function showToast(msg) {
-    let t = document.createElement("div");
-    t.className = "toast";
-    t.innerText = msg;
-
-    document.body.appendChild(t);
-
-    setTimeout(() => t.style.opacity = "1", 50);
-
-    setTimeout(() => {
-        t.style.opacity = "0";
-        setTimeout(() => t.remove(), 300);
-    }, 2000);
-}
-</script>
-
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

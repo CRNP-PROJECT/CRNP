@@ -1,194 +1,291 @@
 <?php
-session_start();
-include(__DIR__ . "/../config.php");
-include(__DIR__ . "/../firebaseRDB.php");
+/**
+ * checkout.php — Customer order checkout.
+ * Validates contact info, builds the order from the session cart, persists
+ * to /orders, decrements stock, clears the cart, and emails a receipt.
+ */
+require_once __DIR__ . '/../init.php';
+require_user();
 
-if(!isset($_SESSION['email'])){
-    header("Location: login.php");
-    exit;
+$db = getDB();
+$activeNav = 'shop';
+$pageTitle = 'Checkout';
+$layout    = 'narrow';
+
+/* ---------- Prefill: pull stored profile fields for the current user ----------
+ * Falls back to session-level name/email when no /user record exists yet
+ * or when individual fields are missing. */
+$profileName    = user_name();
+$profileContact = '';
+$profileAddress = '';
+$userId = $_SESSION['user_id'] ?? '';
+if ($userId !== '') {
+    $rec = $db->retrieve('/user/' . $userId);
+    if (is_array($rec)) {
+        if (!empty($rec['name']))    $profileName    = (string) $rec['name'];
+        if (!empty($rec['contact'])) $profileContact = (string) $rec['contact'];
+        if (!empty($rec['address'])) $profileAddress = (string) $rec['address'];
+    }
 }
 
-$username = $_SESSION['username'] ?? 'User';
-
-$rdb = new firebaseRDB($databaseURL);
-$cart = $_SESSION['cart'] ?? [];
-
-if(empty($cart)){
-    header("Location: cart.php");
-    exit;
+/* Build pickup-time options: Tue–Sun, 11:00–21:30 in 30-min slots. */
+$pickupSlots = [];
+for ($m = 11 * 60; $m <= 21 * 60 + 30; $m += 30) {
+    $pickupSlots[] = sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
 }
 
-$cart_items = [];
-$total = 0;
-
-foreach($cart as $id => $qty){
-    $product = json_decode($rdb->retrieve("/products/$id"), true);
-    if(!$product) continue;
-
-    $product['qty'] = $qty;
-    $product['subtotal'] = floatval($product['price']) * $qty;
-    $total += $product['subtotal'];
-    $cart_items[$id] = $product;
+/* Guard: empty cart can't be checked out. */
+$cart = get_cart();
+if (!$cart) {
+    flash('Your cart is empty. Add a few dishes first.', 'warn');
+    redirect('/user/products.php');
 }
+
+/* ---------- POST: confirm checkout ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+    $full_name = trim(post('full_name'));
+    $contact   = trim(post('contact'));
+    $address   = trim(post('address'));
+    $pickup    = trim(post('pickup_time', ''));
+    $method    = post('payment_method', 'counter');
+    if (!in_array($method, ['gcash', 'counter'], true)) {
+        $method = 'counter';
+    }
+
+    $errors = [];
+    if ($full_name === '') $errors[] = 'Please enter your full name.';
+    if ($contact   === '') $errors[] = 'Please enter a contact number.';
+    if ($address   === '') $errors[] = 'Please enter a delivery address.';
+    if ($pickup === '' || !in_array($pickup, $pickupSlots, true)) {
+        $errors[] = 'Please choose a pickup time.';
+    }
+
+    /* Refresh cart snapshot so we don't trust stale stock. */
+    $cart = get_cart();
+    if (!$cart) {
+        flash('Your cart emptied before checkout.', 'warn');
+        redirect('/user/products.php');
+    }
+
+    /* Build items map { productId => {name, qty, price, subtotal} }. */
+    $items = [];
+    $total = 0.0;
+    foreach ($cart as $pid => $item) {
+        $qty   = (int)   ($item['qty']   ?? 1);
+        $price = (float) ($item['price'] ?? 0);
+        $sub   = $price * $qty;
+        $items[$pid] = [
+            'name'     => $item['name'] ?? 'Item',
+            'qty'      => $qty,
+            'price'    => $price,
+            'subtotal' => $sub,
+        ];
+        $total += $sub;
+    }
+
+    /* Receipt upload (only when everything else validates). */
+    $receipt = null;
+    if (!$errors && $method === 'gcash') {
+        if (!isset($_FILES['receipt']) || $_FILES['receipt']['error'] === UPLOAD_ERR_NO_FILE) {
+            $errors[] = 'Please upload your GCash receipt.';
+        } else {
+            try {
+                $receipt = save_upload('receipt', UPLOAD_ROOT . '/user/bookings');
+                if (!$receipt) {
+                    $errors[] = 'Receipt upload failed. Please try again.';
+                }
+            } catch (Throwable $ex) {
+                $errors[] = $ex->getMessage();
+            }
+        }
+    }
+
+    if (!$errors) {
+        $payment_status = $method === 'gcash' ? 'pending_verification' : 'no_payment_required';
+        $order = [
+            'user_id'          => $_SESSION['user_id'] ?? '',
+            'user_email'       => user_email(),
+            'user_name'        => user_name(),
+            'items'            => $items,
+            'total'            => $total,
+            'full_name'        => $full_name,
+            'contact'          => $contact,
+            'address'          => $address,
+            'pickup_time'      => $pickup,
+            'payment_method'   => $method,
+            'payment_status'   => $payment_status,
+            'payment_verified' => false,
+            'receipt'          => $receipt,
+            'status'           => 'pending',
+            'created_at'       => now(),
+        ];
+
+        try {
+            $newId = $db->insert('/orders', $order);
+            if (!$newId) {
+                throw new RuntimeException('Firebase did not return an order id.');
+            }
+            /* Decrement stock only after a successful insert. */
+            foreach ($items as $pid => $row) {
+                decrement_product_stock($db, $pid, (int) $row['qty']);
+            }
+            set_cart([]);
+
+            /* P0: send a branded receipt email. Order is already saved, so a
+               mail failure must NOT fail the checkout — warn the customer. */
+            try {
+                $orderData = $order;
+                $orderData['id'] = $newId;
+                $customerEmail = $order['user_email'] ?: user_email();
+                if ($customerEmail !== '') {
+                    $sent = sendOrderReceipt($customerEmail, $orderData);
+                    if (!$sent) {
+                        flash('Order placed, but confirmation email could not be sent.', 'warn');
+                    }
+                }
+            } catch (Throwable $mailEx) {
+                error_log('[checkout] sendOrderReceipt failed for order ' . $newId . ': ' . $mailEx->getMessage());
+                flash('Order placed, but confirmation email could not be sent.', 'warn');
+            }
+
+            flash('Order placed! We will be in touch shortly.', 'ok');
+            redirect('/user/your_orders.php');
+        } catch (Throwable $ex) {
+            flash('Could not place your order: ' . $ex->getMessage(), 'danger');
+        }
+    } else {
+        foreach ($errors as $err) {
+            flash($err, 'danger');
+        }
+    }
+}
+
+/* Re-fetch cart in case it changed (e.g., empty mid-flow). */
+$cart = get_cart();
+if (!$cart) {
+    flash('Your cart is empty. Add a few dishes first.', 'warn');
+    redirect('/user/products.php');
+}
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Checkout | CRNP</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../styles.css">
-<link rel="stylesheet" href="checkout_styles.css">
-
-</head>
-
-<body class="checkout-page">
-
-<!-- ✅ NAVBAR -->
-<header class="navbar">
-    <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo">
-    </div>
-
-    <div class="navbar-right">
-        <ul class="navbar-menu">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="products.php">Products</a></li>
-            <li><a href="booking.php">Booking</a></li>
-            <li><a href="cart.php" class="active">Cart</a></li>
-            <li><a href="your_orders.php">Orders</a></li>
-            <li><a href="aboutus.php">About</a></li>
-        </ul>
-
-        <div class="navbar-dropdown">
-            <span class="navbar-user-btn">
-                <?php echo htmlspecialchars($username); ?> ▼
-            </span>
-
-            <div class="navbar-dropdown-content">
-                <a href="your_profile.php">My Profile</a>
-                <a href="your_orders.php">Your Orders</a>
-                <a href="../logout.php">Logout</a>
-            </div>
-        </div>
-    </div>
-</header>
-
-<!-- ✅ HEADER -->
-<div class="checkout-header">
-    <a href="cart.php" class="checkout-back"><span class="btn-arrow">&larr;</span>BACK</a>
-    <h1>CHECKOUT & RESERVATION</h1>
+<div class="page-head">
+  <span class="eyebrow">Checkout · Step 2 of 2</span>
+  <h1>Confirm your order</h1>
+  <p>Almost there. Tell us where to send it and how you'd like to pay.</p>
 </div>
 
-<div class="checkout-container">
-<div class="checkout-grid">
+<form method="post" enctype="multipart/form-data" class="form-grid" novalidate>
+  <?= csrf_field() ?>
+  <input type="hidden" name="confirmCheckout" value="1">
 
-    <div class="checkout-card checkout-summary">
-
-        <h2 class="checkout-title">ORDER SUMMARY</h2>
-
-        <div class="checkout-items">
-            <?php foreach($cart_items as $item): ?>
-            <div class="checkout-item">
-                <div>
-                    <strong><?= htmlspecialchars($item['name']); ?></strong>
-                    <span>x<?= $item['qty']; ?></span>
-                </div>
-                <div>₱<?= number_format($item['subtotal'],2); ?></div>
-            </div>
+  <div class="card">
+    <div class="card__head"><h2>Order summary</h2><small class="muted"><?= count($cart) ?> item<?= count($cart) === 1 ? '' : 's' ?></small></div>
+    <div class="card__body" style="padding:0">
+      <div class="table-wrap" style="border:0">
+        <table class="tbl">
+          <thead>
+            <tr><th>Item</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Subtotal</th></tr>
+          </thead>
+          <tbody>
+            <?php foreach ($cart as $pid => $item):
+              $qty  = (int)   ($item['qty']   ?? 1);
+              $unit = (float) ($item['price'] ?? 0);
+              $sub  = $unit * $qty;
+            ?>
+              <tr>
+                <td><?= e($item['name'] ?? 'Item') ?></td>
+                <td class="num"><?= $qty ?></td>
+                <td class="num"><?= money($unit) ?></td>
+                <td class="num"><?= money($sub) ?></td>
+              </tr>
             <?php endforeach; ?>
-        </div>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="t-right muted" style="text-transform:uppercase;font-size:12px;letter-spacing:.08em">Total</td>
+              <td class="num"><strong style="font-family:var(--serif);font-size:1.1rem"><?= money(cart_total()) ?></strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
 
-        <div class="checkout-total">
-            TOTAL: ₱<?= number_format($total,2); ?>
-        </div>
+  <div class="card card--pad">
+    <div class="card__head" style="padding:0 0 14px;border-bottom:1px solid var(--line-2);margin-bottom:18px"><h2>Delivery &amp; payment</h2></div>
 
+    <div class="form-grid">
+      <div class="form-grid--2">
+        <div class="field">
+          <label for="full_name">Full name</label>
+          <input class="input" type="text" id="full_name" name="full_name" value="<?= e(post('full_name', $profileName)) ?>" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="contact">Contact number</label>
+          <input class="input" type="tel" id="contact" name="contact" value="<?= e(post('contact', $profileContact)) ?>" required autocomplete="tel" placeholder="0917 000 0000">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="address">Delivery address</label>
+        <textarea class="textarea" id="address" name="address" required autocomplete="street-address" placeholder="House no., street, barangay, city"><?= e(post('address', $profileAddress)) ?></textarea>
+      </div>
+
+      <div class="field">
+        <label for="pickup_time">Pickup time</label>
+        <select class="select" id="pickup_time" name="pickup_time" required>
+          <option value="" disabled <?= post('pickup_time', '') === '' ? 'selected' : '' ?>>Choose a pickup time</option>
+          <?php foreach ($pickupSlots as $slot):
+            $label = date('g:i A', strtotime($slot));
+            $sel   = post('pickup_time', '') === $slot ? 'selected' : '';
+          ?>
+            <option value="<?= e($slot) ?>" <?= $sel ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <span class="hint">Pick up at our Iloilo City counter. Open Tue–Sun, 11:00 AM – 10:00 PM.</span>
+      </div>
+
+      <div class="field">
+        <label>Payment method</label>
+        <div class="row">
+          <label class="checkbox-row"><input type="radio" name="payment_method" value="counter" <?= post('payment_method', 'counter') === 'counter' ? 'checked' : '' ?> data-pay="counter"> Pay at counter</label>
+          <label class="checkbox-row"><input type="radio" name="payment_method" value="gcash"   <?= post('payment_method')          === 'gcash'   ? 'checked' : '' ?> data-pay="gcash"> GCash</label>
+        </div>
+      </div>
+
+      <div class="field" id="receipt-field" style="display:none">
+        <label for="receipt">GCash receipt</label>
+        <input class="input" type="file" id="receipt" name="receipt" accept="image/png,image/jpeg,image/webp">
+        <span class="hint">Upload a screenshot of your GCash transfer. JPG, PNG, or WebP (max 5MB).</span>
+      </div>
     </div>
 
-    <div class="checkout-card checkout-form">
-
-        <h2 class="checkout-title">RESERVATION DETAILS</h2>
-
-        <form action="process.php" method="POST" enctype="multipart/form-data">
-
-                <input type="hidden" name="action" value="confirm_checkout">
-
-           <div class="checkout-row full">
-                <input type="text" name="full_name" placeholder="Full Name" required>
-            </div>
-
-            <div class="checkout-row two">
-                <input type="text" name="contact_number" placeholder="Contact Number" required>
-                <input type="number" name="num_people" placeholder="Guest Count" required>
-            </div>
-
-          <div class="checkout-row full">
-                <input type="datetime-local" name="appointment_time" required>
-                </div>
-
-            <div class="checkout-payment">
-
-                <label class="checkout-pay-option">
-                    <input type="radio" name="payment_method" value="counter" checked onclick="togglePayment('counter')">
-                    Over the Counter
-                </label>
-
-                <label class="checkout-pay-option checkout-gcash-option">
-                    <input type="radio" name="payment_method" value="gcash" onclick="togglePayment('gcash')">
-                    <img src="../img/gcash.png" alt="GCash">
-                    GCash
-                </label>
-
-            </div>
-
-            <div id="gcashBox" class="checkout-gcash">
-
-                <div class="checkout-gcash-left">
-                    <p class="checkout-gcash-text">Scan to Pay</p>
-
-                    <img src="../img/qr.png" alt="QR Code">
-
-                    <span class="checkout-gcash-number">0912 345 6789</span>
-
-                    <button type="button" class="checkout-download" onclick="downloadQR()">
-                        Download QR
-                    </button>
-                </div>
-
-                <div class="checkout-gcash-right">
-                    <input type="text" name="gcash_number" placeholder="Enter GCash Number">
-                    <input type="file" name="gcash_receipt" accept="image/*">
-                </div>
-
-            </div>
-
-            <button type="submit" class="checkout-btn">
-                CONFIRM & RESERVE
-            </button>
-
-        </form>
-
+    <div class="form-actions" style="margin-top:20px">
+      <button class="btn btn--gold btn--lg" type="submit">Place order</button>
+      <a class="btn btn--ghost" href="/user/cart.php">Back to cart</a>
     </div>
-
-</div>
-</div>
+  </div>
+</form>
 
 <script>
-function togglePayment(type){
-    document.getElementById("gcashBox").style.display =
-        (type === "gcash") ? "flex" : "none";
-}
-
-function downloadQR(){
-    const link = document.createElement('a');
-    link.href = "../img/qr.png";
-    link.download = "gcash-qr.png";
-    link.click();
-}
+(function () {
+  var counter = document.querySelector('[data-pay="counter"]');
+  var gcash   = document.querySelector('[data-pay="gcash"]');
+  var field   = document.getElementById('receipt-field');
+  var receipt = document.getElementById('receipt');
+  if (!counter || !gcash || !field || !receipt) return;
+  function sync() {
+    var isGcash = gcash.checked;
+    field.style.display   = isGcash ? '' : 'none';
+    receipt.required      = isGcash;
+  }
+  counter.addEventListener('change', sync);
+  gcash.addEventListener('change', sync);
+  sync();
+})();
 </script>
 
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

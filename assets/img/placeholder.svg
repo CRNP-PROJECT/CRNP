@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#efe8da"/>
+      <stop offset="1" stop-color="#e2d8c4"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="480" fill="url(#g)"/>
+  <g fill="none" stroke="#c8a45c" stroke-width="3" opacity="0.7">
+    <circle cx="320" cy="210" r="60"/>
+    <path d="M300 250c0 30 40 30 40 0M285 150c0-25 70-25 70 0"/>
+  </g>
+  <text x="320" y="370" font-family="Georgia, serif" font-size="26" fill="#8a7f70" text-anchor="middle">CRATES N&#39; PLATES</text>
+</svg>

@@ -1,87 +1,208 @@
 <?php
-session_start();
+/**
+ * verify_otp.php — confirms a 6-digit OTP for a pending customer signup.
+ * Supports ?resend=1&email=... to regenerate and re-email a fresh code.
+ */
+require_once __DIR__ . '/../init.php';
+security_headers();
 
-// No OTP in session → redirect back to signup
-if (!isset($_SESSION['otp'])) {
-    header("Location: sign_up.php");
-    exit;
+$email = trim((string) ($_GET['email'] ?? post('email', '')));
+$email = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
+
+$isResend = isset($_GET['resend']) && $_GET['resend'] === '1';
+
+// ---------- Resend branch ----------
+if ($isResend) {
+    if ($email === '') {
+        flash('We couldn\'t find that email. Please sign up again.', 'danger');
+        redirect('/user/signup.php');
+    }
+    $db        = getDB();
+    $existing  = filter_by(rows($db->retrieve('/user')), 'email', $email);
+    if (!$existing) {
+        flash('We couldn\'t find that email. Please sign up again.', 'danger');
+        redirect('/user/signup.php');
+    }
+    $id   = (string) array_key_first($existing);
+    $user = reset($existing);
+
+    if (!empty($user['email_verified'])) {
+        flash('Your email is already verified — please sign in.', 'info');
+        redirect('/user/login.php');
+    }
+
+    // Rate limit: 3 OTP sends per 15 minutes per email.
+    if (!rate_limit('signup_otp_' . $email, 3, 900)) {
+        flash('Too many code requests for that email. Please try again in 15 minutes.', 'danger');
+        redirect('/user/verify_otp.php?email=' . urlencode($email));
+    }
+
+    $otp     = gen_otp();
+    $expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+
+    try {
+        $db->update('/user', $id, ['otp' => $otp, 'otp_expires' => $expires]);
+    } catch (Throwable $e) {
+        flash('Could not issue a new code. Please try again shortly.', 'danger');
+        redirect('/user/verify_otp.php?email=' . urlencode($email));
+    }
+
+    $sent = sendOTP($email, $otp);
+    if (!$sent) {
+        // P0: never leak the OTP in production. Only surface the dev
+        // fallback when the host has explicitly opted into DEV_MODE.
+        if (defined('DEV_MODE') && DEV_MODE) {
+            flash('SMTP not configured — new OTP is ' . $otp . ' (dev only).', 'warn');
+        } else {
+            flash('Could not send verification email. Please try again or contact support.', 'danger');
+        }
+    } else {
+        flash('A new code was sent to ' . $email . '.', 'info');
+    }
+    redirect('/user/verify_otp.php?email=' . urlencode($email));
 }
 
-$email = htmlspecialchars($_SESSION['otp_email'] ?? '');
-$expires_at = $_SESSION['otp_expires'] ?? 0;
-$is_expired = time() > $expires_at;
-$resend_at = $_SESSION['otp_resend_at'] ?? 0;
-$cooldown = $resend_at - time();
-$error = $_GET['error'] ?? '';
+// ---------- Verify branch ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+    $otp = trim((string) post('otp', ''));
+    $errors = [];
+
+    if ($email === '') {
+        $errors[] = 'Missing email. Please sign up again.';
+    }
+    if (strlen($otp) === 0) {
+        $errors[] = 'Please enter the 6-digit code.';
+    }
+
+    $user = null;
+    $userId = null;
+    if (!$errors) {
+        $db       = getDB();
+        $existing = filter_by(rows($db->retrieve('/user')), 'email', $email);
+        if (!$existing) {
+            $errors[] = 'We couldn\'t find that account. Please sign up again.';
+        } else {
+            $userId = (string) array_key_first($existing);
+            $user   = reset($existing);
+        }
+    }
+
+    if (!$errors) {
+        $validOtp     = isset($user['otp']) && hash_equals((string) $user['otp'], $otp);
+        $notExpired   = !empty($user['otp_expires']) && strtotime($user['otp_expires']) > time();
+        if ($validOtp && $notExpired) {
+            try {
+                $db = getDB();
+                $db->update('/user', $userId, [
+                    'email_verified' => true,
+                    'otp'            => null,
+                    'otp_expires'    => null,
+                ]);
+            } catch (Throwable $e) {
+                $errors[] = 'Could not verify your email. Please try again.';
+            }
+        } else {
+            $errors[] = 'Invalid or expired code. Please try again or resend a new one.';
+        }
+    }
+
+    if (!$errors) {
+        flash('Email verified — please sign in.', 'ok');
+        redirect('/user/login.php');
+    }
+
+    foreach ($errors as $err) {
+        flash($err, 'danger');
+    }
+}
+
+$flashes = get_flashes();
 ?>
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Verify OTP | Crates N' Plates</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../styles.css">
-<style>
-.otp-body { background: #f8f6f2; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: Inter, sans-serif; }
-.otp-card { background: #fff; padding: 40px; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.08); max-width: 420px; width: 100%; text-align: center; }
-.otp-card h1 { font-size: 24px; margin-bottom: 8px; color: #1a1a1a; }
-.otp-card p { color: #666; margin-bottom: 24px; font-size: 14px; }
-.otp-input { font-size: 28px; letter-spacing: 8px; text-align: center; padding: 12px; width: 100%; border: 2px solid #ddd; border-radius: 10px; outline: none; box-sizing: border-box; font-weight: 600; }
-.otp-input:focus { border-color: #a67c52; }
-.otp-btn { background: #1a1a1a; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 600; width: 100%; cursor: pointer; margin-top: 16px; }
-.otp-btn:hover { background: #333; }
-.otp-error { color: #d32f2f; font-size: 14px; margin-bottom: 12px; }
-.otp-resend { margin-top: 20px; font-size: 13px; color: #999; }
-.otp-resend a { color: #a67c52; text-decoration: none; }
-.otp-email { font-weight: 600; color: #1a1a1a; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verify your email &middot; <?= e(BRAND_NAME) ?></title>
+  <meta name="description" content="<?= e(BRAND_NAME) ?> — <?= e(BRAND_TAGLINE) ?>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <script>(function(){try{var t=localStorage.getItem('ss-theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(!t&&m)){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <style>
+    .theme-toggle--floating { position: fixed; top: 16px; right: 16px; z-index: 100; width: 42px; height: 42px; }
+    @media (min-width: 901px) { .theme-toggle--floating { top: 20px; right: 24px; } }
+  </style>
+  <link rel="icon" href="/assets/img/logo.png">
 </head>
-<body class="otp-body">
+<body>
+<button class="theme-toggle theme-toggle--floating" type="button" aria-label="Toggle dark mode" aria-pressed="false" data-theme-toggle title="Toggle theme">
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+<div class="auth">
+  <aside class="auth__aside">
+    <a class="brand" href="/user/login.php">
+      <span class="brand__mark"><img src="/assets/img/logo.png" alt="CRATES N' PLATES" class="brand__logo"></span>
+      <span>
+        <span class="brand__name"><?= e(BRAND_NAME) ?></span><br>
+        <span class="brand__tag"><?= e(BRAND_TAGLINE) ?></span>
+      </span>
+    </a>
 
-<div class="otp-card">
-    <h1>Verify Email</h1>
-    <p>Enter the 6-digit code sent to<br><span class="otp-email"><?= $email ?></span></p>
+    <div>
+      <span class="eyebrow" style="font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);">One last step</span>
+      <h1>Let's confirm it's really you.</h1>
+      <p>We've sent a 6-digit verification code to your inbox. Codes expire in 10 minutes — keep this window open while you check your email.</p>
+    </div>
 
-    <?php if ($error === 'expired'): ?>
-        <div class="otp-error">OTP expired. Request a new one.</div>
-    <?php elseif ($error === 'invalid'): ?>
-        <div class="otp-error">Invalid OTP. Try again.</div>
-    <?php elseif ($error === 'cooldown'): ?>
-        <div class="otp-error">Please wait before resending.</div>
-    <?php endif; ?>
+    <small style="color:#9c8f7b;">&copy; <?= date('Y') ?> <?= e(BRAND_NAME) ?>. All rights reserved.</small>
+  </aside>
 
-    <?php if ($is_expired): ?>
-        <div class="otp-error">This code has expired.</div>
-        <div class="otp-resend"><a href="send_otp.php?resend=1">Resend OTP</a></div>
-    <?php elseif ($cooldown > 0): ?>
-        <form method="POST" action="signup_action.php">
-            <input type="text" name="otp" class="otp-input" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="000000" required autocomplete="off">
-            <button type="submit" class="otp-btn">Verify & Create Account</button>
-        </form>
-        <div class="otp-resend">Resend in <span id="otp-cooldown"><?= $cooldown ?></span>s</div>
-        <script>
-        (function(){
-            var el = document.getElementById('otp-cooldown');
-            var s = parseInt(el.textContent, 10);
-            if (isNaN(s)) return;
-            var t = setInterval(function(){
-                s--;
-                if (s <= 0) { clearInterval(t); location.reload(); }
-                else el.textContent = s;
-            }, 1000);
-        })();
-        </script>
-    <?php else: ?>
-        <form method="POST" action="signup_action.php">
-            <input type="text" name="otp" class="otp-input" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="000000" required autocomplete="off">
-            <button type="submit" class="otp-btn">Verify & Create Account</button>
-        </form>
-        <div class="otp-resend">
-            Didn't receive it? <a href="send_otp.php?resend=1">Resend OTP</a>
+  <main class="auth__main">
+    <div class="auth__card card card--pad-lg">
+      <h2>Enter verification code</h2>
+      <p class="muted mt-0" style="margin-top:2px;">
+        Sent to <strong style="color:var(--ink);"><?= e($email ?: 'your email') ?></strong>.
+      </p>
+
+      <?php foreach ($flashes as $f): ?>
+        <div class="alert alert--<?= e($f['type']) ?>" role="status">
+          <span><?= e($f['message']) ?></span>
         </div>
-    <?php endif; ?>
-</div>
+      <?php endforeach; ?>
 
+      <form method="post" action="/user/verify_otp.php" autocomplete="one-time-code" novalidate>
+        <?= csrf_field() ?>
+        <input type="hidden" name="email" value="<?= e($email) ?>">
+        <div class="form-grid mt-4">
+          <div class="field">
+            <label for="otp">6-digit code</label>
+            <input class="input" id="otp" name="otp" type="text" inputmode="numeric"
+                   pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"
+                   placeholder="000000" style="text-align:center;letter-spacing:.6em;font-size:1.2rem;"
+                   value="<?= e(post('otp', '')) ?>" required>
+            <span class="hint">Check your spam folder if you don't see it within a minute.</span>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn--gold btn--lg btn--block" type="submit">Verify email</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="row row--between mt-4" style="font-size:14px;">
+        <a class="muted" href="/user/signup.php">Use a different email</a>
+        <a href="/user/verify_otp.php?resend=1&email=<?= e(urlencode($email)) ?>">Resend code</a>
+      </div>
+
+      <p class="auth__switch">
+        Already verified? <a href="/user/login.php">Sign in</a>
+      </p>
+    </div>
+  </main>
+</div>
+<script src="/assets/js/app.js"></script>
 </body>
 </html>

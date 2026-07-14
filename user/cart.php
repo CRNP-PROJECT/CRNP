@@ -1,321 +1,128 @@
 <?php
-session_start();
-include(__DIR__ . "/../config.php");
-include(__DIR__ . "/../firebaseRDB.php");
+/**
+ * cart.php — Customer shopping cart.
+ * Lists cart items with quantity steppers, supports update / remove, and
+ * forwards to checkout.
+ */
+require_once __DIR__ . '/../init.php';
+require_user();
 
-if (!isset($_SESSION['email'])) {
-    header("Location: login.php");
-    exit;
+$db = getDB();
+$activeNav = 'cart';
+$pageTitle = 'Your Cart';
+$layout    = 'narrow';
+
+/* ---------- POST: update / remove ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+    $action = post('action');
+    $cart   = get_cart();
+    $id     = post('item_id');
+
+    if ($action === 'update' && $id !== '' && isset($cart[$id])) {
+        $stock = max(1, (int) ($cart[$id]['stock'] ?? 1));
+        $cur   = (int) ($cart[$id]['qty'] ?? 1);
+        $delta = post('delta', '');
+        $typed = (int) post('qty', $cur);
+
+        if ($delta !== '') {
+            $base  = $typed;              // input reflects what user sees
+            $newQ  = $base + (int) $delta;
+        } else {
+            $newQ  = $typed;              // user pressed Enter / Update
+        }
+        $newQ = max(1, min($stock, $newQ));
+
+        $cart[$id]['qty'] = $newQ;
+        set_cart($cart);
+        flash('Quantity updated.', 'ok');
+        redirect('/user/cart.php');
+    }
+
+    if ($action === 'remove' && $id !== '' && isset($cart[$id])) {
+        unset($cart[$id]);
+        set_cart($cart);
+        flash('Item removed from your cart.', 'ok');
+        redirect('/user/cart.php');
+    }
+
+    flash('Could not process that action.', 'warn');
+    redirect('/user/cart.php');
 }
 
-$username = $_SESSION['username'] ?? "User";
-$rdb = new firebaseRDB($databaseURL);
-$cart = $_SESSION['cart'] ?? [];
-$total = 0;
+$cart = get_cart();
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles.css">
-    <title>Your Cart</title>
-</head>
-
-<body class="cart-page-body">
-
-
-<header class="navbar">
-    <div class="navbar-brand-container">
-        <img src="../img/logo.png" class="logo">
-    </div>
-    <div class="navbar-right">
-        <ul class="navbar-menu">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="products.php">Products</a></li>
-            <li><a href="booking.php">Booking</a></li>
-            <li><a href="cart.php" class="active">Cart</a></li>
-            <li><a href="aboutus.php">About</a></li>
-        </ul>
-        <div class="navbar-dropdown">
-            <span class="navbar-user-btn">
-                <i class="fa-regular fa-user"></i> <?php echo htmlspecialchars($username); ?> ▼
-            </span>
-            <div class="navbar-dropdown-content">
-                <a href="your_profile.php">My Profile</a>
-                <a href="your_orders.php">Your Orders</a>
-                <a href="../logout.php">Logout</a>
-            </div>
-        </div>
-    </div>
-</header>
-
-<div class="cart-wrapper">
-
-    <h1 class="cart-title">
-        YOUR CART (<?php echo array_sum($cart); ?> ITEMS)
-    </h1>
-
-    <?php if(empty($cart)): ?>
-
-        <p class="cart-empty">Your cart is empty.</p>
-
-    <?php else: ?>
-
-        <!-- TABLE HEADER -->
-        <div class="cart-table-header">
-            <span>Product</span>
-            <span>Price</span>
-            <span>Quantity</span>
-            <span>Action</span>
-            <span>Subtotal</span>
-        </div>
-
-        <?php foreach($cart as $id => $qty):
-
-            $res = $rdb->retrieve("/products/$id");
-            $product = json_decode($res, true);
-
-            if(!$product) continue;
-
-            $price = floatval($product['price']);
-            $subtotal = $price * $qty;
-            $total += $subtotal;
-        ?>
-
-        <!-- CART ROW -->
-        <div class="cart-row">
-
-            <!-- PRODUCT -->
-            <div class="cart-product">
-
-                <img
-                    src="../admin/<?php echo htmlspecialchars($product['image']); ?>"
-                    class="cart-product-img"
-                    alt="Product Image"
-                >
-
-                <span>
-                    <?php echo htmlspecialchars($product['name']); ?>
-                </span>
-
-            </div>
-
-            <!-- PRICE -->
-            <div
-                class="cart-price"
-                data-price="<?php echo $price; ?>"
-            >
-                ₱<?php echo number_format($price,2); ?>
-            </div>
-
-            <!-- QUANTITY -->
-            <div class="cart-qty">
-
-                <form
-                    method="POST"
-                    action="process.php"
-                    class="cart-qty-form"
-                >
-
-                    <input
-                        type="hidden"
-                        name="action"
-                        value="update_cart"
-                    >
-
-                    <input
-                        type="hidden"
-                        name="product_id"
-                        value="<?php echo $id; ?>"
-                    >
-
-                    <button
-                        type="button"
-                        class="cart-qty-btn minus-btn"
-                    >
-                        -
-                    </button>
-
-                    <input
-                        type="number"
-                        name="quantity"
-                        value="<?php echo $qty; ?>"
-                        min="1"
-                        class="cart-qty-input"
-                    >
-
-                    <button
-                        type="button"
-                        class="cart-qty-btn plus-btn"
-                    >
-                        +
-                    </button>
-
-                </form>
-
-            </div>
-
-            <!-- DELETE -->
-            <div class="cart-remove">
-
-                <a
-                href="process.php?action=remove_cart&id=<?php echo $id; ?>"
-                onclick="return removeCartItem(this)">Delete</a>
-
-            </div>
-
-            <!-- SUBTOTAL -->
-            <div class="cart-subtotal">
-                ₱<?php echo number_format($subtotal,2); ?>
-            </div>
-
-        </div>
-
-        <?php endforeach; ?>
-
-        <!-- SUMMARY -->
-        <div class="cart-summary">
-
-    <div class="cart-total">
-
-        <h3 class="cart-total-title">
-            TOTAL
-        </h3>
-
-        <h3 id="cartTotal" class="cart-total-price">
-            ₱<?php echo number_format($total,2); ?>
-        </h3>
-
-    </div>
-
-    <div class="cart-summary-actions">
-
-        <a href="checkout.php" class="cart-checkout-btn">
-            Proceed to Checkout
-        </a>
-
-        <a href="products.php" class="cart-continue-link">
-            Continue Shopping
-        </a>
-
-    </div>
-
+<div class="page-head">
+  <span class="eyebrow">Checkout · Step 1 of 2</span>
+  <h1>Your cart</h1>
+  <p>Review your selection before heading to checkout.</p>
 </div>
 
-    <?php endif; ?>
+<?php if (!$cart): ?>
+  <div class="empty">
+    <div class="empty__icon" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+    </div>
+    <h3>Your cart is empty</h3>
+    <p>Browse the menu and add a few plates to get started.</p>
+    <a class="btn btn--gold mt-2" href="/user/products.php">Browse the menu</a>
+  </div>
+<?php else: ?>
+  <div class="card card--pad">
+    <?php foreach ($cart as $id => $item):
+      $unit     = (float) ($item['price'] ?? 0);
+      $qty      = (int)   ($item['qty']   ?? 1);
+      $subtotal = $unit * $qty;
+      $stock    = max(1, (int) ($item['stock'] ?? 1));
+      $img      = upload_web('admin/item', $item['image'] ?? '');
+    ?>
+      <div class="cart-item">
+        <img class="cart-item__media" src="<?= e($img) ?>" alt="" loading="lazy">
 
-</div>
+        <div>
+          <div class="cart-item__name"><?= e($item['name'] ?? 'Item') ?></div>
+          <div class="cart-item__price"><?= money($unit) ?> each</div>
+          <form method="post" class="qty mt-2" aria-label="Quantity for <?= e($item['name'] ?? 'item') ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action"  value="update">
+            <input type="hidden" name="item_id" value="<?= e($id) ?>">
+            <button type="submit" name="delta" value="-1" aria-label="Decrease quantity">&minus;</button>
+            <input type="number" name="qty" value="<?= $qty ?>" min="1" max="<?= $stock ?>" inputmode="numeric" aria-label="Quantity">
+            <button type="submit" name="delta" value="1" aria-label="Increase quantity">+</button>
+          </form>
+        </div>
 
-<script>
+        <div class="t-right">
+          <div class="product__price"><?= money($subtotal) ?></div>
+          <form method="post" class="mt-2">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action"  value="remove">
+            <input type="hidden" name="item_id" value="<?= e($id) ?>">
+            <button class="btn btn--ghost btn--sm" type="submit" data-confirm="Remove this item from your cart?">Remove</button>
+          </form>
+        </div>
+      </div>
+    <?php endforeach; ?>
 
-function updateTotals() {
+    <hr class="divider">
 
-    let grandTotal = 0;
+    <div class="row row--between">
+      <div>
+        <div class="muted" style="font-size:13px;letter-spacing:.06em;text-transform:uppercase">Order total</div>
+        <div style="font-family:var(--serif);font-size:1.7rem;font-weight:700;line-height:1.1"><?= money(cart_total()) ?></div>
+      </div>
+      <div class="row">
+        <a class="btn btn--ghost" href="/user/products.php">Keep shopping</a>
+        <a class="btn btn--gold btn--lg" href="/user/checkout.php">Proceed to checkout</a>
+      </div>
+    </div>
+  </div>
+<?php endif; ?>
 
-    document.querySelectorAll('.cart-row').forEach(row => {
-
-        const price = parseFloat(
-            row.querySelector('.cart-price').dataset.price
-        );
-
-        const qty = parseInt(
-            row.querySelector('.cart-qty-input').value
-        ) || 1;
-
-        const subtotal = price * qty;
-
-        row.querySelector('.cart-subtotal').innerText =
-            '₱' + subtotal.toFixed(2);
-
-        grandTotal += subtotal;
-    });
-
-    const totalElement = document.getElementById('cartTotal');
-
-    if(totalElement){
-        totalElement.innerText =
-            '₱' + grandTotal.toFixed(2);
-    }
-}
-
-/* PLUS BUTTON */
-document.querySelectorAll('.plus-btn').forEach(btn => {
-
-    btn.addEventListener('click', function(){
-
-        const input = this.parentElement.querySelector('.cart-qty-input');
-
-        input.stepUp();
-
-        updateTotals();
-    });
-
-});
-
-/* MINUS BUTTON */
-document.querySelectorAll('.minus-btn').forEach(btn => {
-
-    btn.addEventListener('click', function(){
-
-        const input = this.parentElement.querySelector('.cart-qty-input');
-
-        if(parseInt(input.value) > 1){
-            input.stepDown();
-        }
-
-        updateTotals();
-    });
-
-});
-
-/* MANUAL INPUT */
-document.querySelectorAll('.cart-qty-input').forEach(input => {
-
-    input.addEventListener('input', function(){
-
-        if(this.value < 1){
-            this.value = 1;
-        }
-
-        updateTotals();
-    });
-
-});
-
-</script>
-
-<div id="cartToast" class="cart-toast">
-    Item removed from cart
-</div>
-
-<script>
-function removeCartItem(link){
-
-    const row = link.closest('.cart-row');
-    const toast = document.getElementById('cartToast');
-
-    if(row){
-        row.style.opacity = "0";
-
-        setTimeout(() => {
-            row.remove();
-        }, 250);
-    }
-
-    toast.innerText = "Item removed from cart";
-    toast.classList.add('show');
-
-    setTimeout(() => {
-        window.location.href = link.href;
-    }, 800);
-
-    return false;
-}
-</script>
-
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
