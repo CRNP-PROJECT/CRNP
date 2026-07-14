@@ -22,11 +22,15 @@ class firebaseRDB{
          curl_setopt($ch, CURLOPT_POSTFIELDS, $par);
       }
       curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
       curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
       curl_setopt($ch, CURLOPT_TIMEOUT, 120);
       curl_setopt($ch, CURLOPT_HEADER, 0);
       $html = curl_exec($ch);
+      if ($html === false) {
+         error_log("Firebase curl error: " . curl_error($ch));
+         return '{}';
+      }
       return $html;
    }
 

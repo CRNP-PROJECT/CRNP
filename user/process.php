@@ -531,6 +531,15 @@ class Process
 
                 $targetFile = $uploadDir . $fileName;
 
+                $fileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+                $allowed = ['jpg','jpeg','png','webp'];
+                if (!in_array($fileType, $allowed)) {
+                    die("Invalid file type.");
+                }
+                if ($_FILES["gcash_receipt"]["size"] > 5 * 1024 * 1024) {
+                    die("File too large (max 5MB).");
+                }
+
                 if (
                     move_uploaded_file(
                         $_FILES["gcash_receipt"]["tmp_name"],
@@ -715,7 +724,9 @@ class Process
         ];
 
         if (!empty($password)) {
-
+            if (strlen($password) < 8) {
+                die("Password must be at least 8 characters.");
+            }
             $update_data['password'] =
                 password_hash(
                     $password,

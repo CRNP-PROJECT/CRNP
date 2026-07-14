@@ -28,7 +28,10 @@ if (isset($_GET['resend']) && isset($_SESSION['otp_email'])) {
 
     // Validate
     if ($name === '' || $email === '' || $password === '') {
-        die('All fields are required.');
+        die("All fields are required.");
+    }
+    if (strlen($password) < 8) {
+        die("Password must be at least 8 characters.");
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {

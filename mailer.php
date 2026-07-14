@@ -12,7 +12,6 @@ function sendNotification($toEmail, $subject, $message) {
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
 
-        // 🔴 CHANGE THIS
         $mail->Username = 'atengcornel@gmail.com';
         $mail->Password = 'fmyz yjeu rgkn pgle';
 

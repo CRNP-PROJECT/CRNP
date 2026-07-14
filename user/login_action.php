@@ -40,6 +40,7 @@ try {
     // Verify password
     if(password_verify($password, $data[$id]['password'])){
         // Login success: set session
+        session_regenerate_id(true);
         $_SESSION['user_id'] = $id;
         $_SESSION['email'] = $email;
 

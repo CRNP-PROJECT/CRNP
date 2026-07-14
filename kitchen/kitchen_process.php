@@ -54,7 +54,7 @@ class KitchenProcess
                 strtolower($k['email'] ?? '') === strtolower($email) &&
                 password_verify($password, $k['password'] ?? '')
             ) {
-
+                session_regenerate_id(true);
                 $_SESSION['kitchen_email'] = $email;
                 $_SESSION['kitchen_name'] = $k['full_name'] ?? '';
                 $_SESSION['role'] = "kitchen";

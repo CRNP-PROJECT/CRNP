@@ -17,6 +17,11 @@ class CashierProcess
 
     public function handle()
     {
+        // Guard all actions except login
+        if (!isset($_SESSION['cashier_email']) && $this->action !== 'login') {
+            header("Location: cashier_login.php");
+            exit;
+        }
         switch ($this->action) {
 
             case 'cancel_order':
@@ -119,6 +124,7 @@ class CashierProcess
                 password_verify($password, $c['password'] ?? '')
             ) {
 
+                session_regenerate_id(true);
                 $_SESSION['cashier_email'] = $email;
                 $_SESSION['cashier_name'] = $c['full_name'];
 
