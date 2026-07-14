@@ -1,42 +1,42 @@
 <?php
+session_start();
 include("../config.php");
 include("../firebaseRDB.php");
 
-// Get POST data
-$name = $_POST['name'];
-$email = $_POST['email'];
-$password = $_POST['password'];
+$otp = trim($_POST['otp'] ?? '');
 
-// Basic validation
-if($name == ""){
-    echo "Name is required";
+// Must have OTP and pending signup in session
+if ($otp === '' || !isset($_SESSION['otp'])) {
+    header("Location: sign_up.php");
     exit;
 }
 
-if($email == ""){
-    echo "Email is required";
+// Verify OTP
+if ($otp != $_SESSION['otp']) {
+    header("Location: verify_otp.php?error=invalid");
     exit;
 }
 
-if($password == ""){
-    echo "Password is required";
+// Check expiry
+if (time() > $_SESSION['otp_expires']) {
+    // Clear stale OTP
+    unset($_SESSION['otp'], $_SESSION['otp_expires'],
+          $_SESSION['otp_name'], $_SESSION['otp_email'],
+          $_SESSION['otp_password']);
+    header("Location: verify_otp.php?error=expired");
     exit;
 }
 
-// Hash password for security
+// Read signup data from session
+$name = $_SESSION['otp_name'];
+$email = $_SESSION['otp_email'];
+$password = $_SESSION['otp_password'];
+
+// Hash password
 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
 try {
     $rdb = new firebaseRDB($databaseURL);
-
-    // Check if email already exists
-    $retrieve = $rdb->retrieve("/user", "email", "EQUAL", $email);
-    $data = json_decode($retrieve, true);
-
-    if(is_array($data) && count($data) > 0){
-        echo "Email already registered";
-        exit;
-    }
 
     // Insert user into Firebase
     $insert = $rdb->insert("/user", [
@@ -47,15 +47,18 @@ try {
 
     $result = json_decode($insert, true);
 
-    if($result != null){
-        // ✅ Show confirmation page with automatic redirect
+    // Clear OTP session data regardless of result
+    unset($_SESSION['otp'], $_SESSION['otp_expires'],
+          $_SESSION['otp_name'], $_SESSION['otp_email'],
+          $_SESSION['otp_password']);
+
+    if ($result != null) {
         ?>
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <title>Signup Successful</title>
-            <!-- Meta refresh will redirect after 3 seconds -->
             <meta http-equiv="refresh" content="3;url=login.php">
             <style>
                 body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; }
@@ -76,4 +79,3 @@ try {
 } catch(Exception $e){
     echo "Error: " . $e->getMessage();
 }
-?>

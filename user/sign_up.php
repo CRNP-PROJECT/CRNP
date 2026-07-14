@@ -48,7 +48,7 @@
                         Join us today
                     </p>
 
-                    <form method="POST" action="signup_action.php">
+                    <form method="POST" action="send_otp.php">
 
                         <div class="signup-group">
                             <label class="signup-label">

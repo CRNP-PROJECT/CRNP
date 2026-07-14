@@ -13,13 +13,13 @@ function sendNotification($toEmail, $subject, $message) {
         $mail->SMTPAuth = true;
 
         // 🔴 CHANGE THIS
-        $mail->Username = 'YOUR_EMAIL@gmail.com';
-        $mail->Password = 'YOUR_APP_PASSWORD';
+        $mail->Username = 'xian.mainz@gmail.com';
+        $mail->Password = 'etvd wfid pjod zrmq';
 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 
-        $mail->setFrom('YOUR_EMAIL@gmail.com', 'CRNP System');
+        $mail->setFrom('xian.mainz@gmail.com', 'CRNP System');
         $mail->addAddress($toEmail);
 
         $mail->isHTML(true);
