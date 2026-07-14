@@ -43,6 +43,7 @@ try {
         session_regenerate_id(true);
         $_SESSION['user_id'] = $id;
         $_SESSION['email'] = $email;
+        $_SESSION['username'] = $data[$id]['name'] ?? '';
 
         // Pure PHP redirect to index.php
         header("Location: index.php"); // Adjust folder path

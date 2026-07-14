@@ -82,8 +82,12 @@ try {
 
     // SESSION LOGIN
     $_SESSION['user_id'] = $id;
-$_SESSION['username'] = $name;
-$_SESSION['email'] = $email;
+
+    // Use stored profile name if available (user may have edited it)
+    $stored = json_decode($rdb->retrieve("/user/$id"), true);
+    $_SESSION['username'] = is_array($stored) && !empty($stored['name'])
+        ? $stored['name'] : $name;
+    $_SESSION['email'] = $email;
 $_SESSION['provider'] = "google";
 
 session_regenerate_id(true);
