@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $staff = filter_by(rows($db->retrieve('/kitchen')), 'email', $email);
     $k     = $staff ? reset($staff) : null;
 
-    if ($k && !empty($k['password']) && password_verify($password, $k['password'])) {
+    if ($k && !empty($k['password_hash']) && password_verify($password, $k['password_hash'])) {
         session_regenerate_id(true);
         $_SESSION['kitchen_email'] = $k['email'];
         $_SESSION['kitchen_name']  = $k['full_name'] ?? $k['name'] ?? 'Kitchen';

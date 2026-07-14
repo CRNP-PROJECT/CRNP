@@ -39,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (!$cashier || empty($cashier['password'])
-        || !password_verify($password, (string)$cashier['password'])) {
+    if (!$cashier || empty($cashier['password_hash'])
+        || !password_verify($password, (string)$cashier['password_hash'])) {
         flash('Invalid credentials. Please try again.', 'danger');
         redirect('/cashier/login.php');
     }
