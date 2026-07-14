@@ -28,7 +28,6 @@ class firebaseRDB{
       curl_setopt($ch, CURLOPT_HEADER, 0);
       $html = curl_exec($ch);
       return $html;
-      curl_close($ch);
    }
 
 

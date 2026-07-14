@@ -101,7 +101,6 @@ $next = date("Y-m", strtotime("$year-$month-01 +1 month"));
 <meta charset="utf-8">
 <title>Booking Returns</title>
 
-<link rel="stylesheet" href="../styles.css">
 <link rel="stylesheet" href="../style.css">
 
 
