@@ -47,6 +47,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+/* Idle session timeout — 24h since last activity destroys the session. */
+$inactive = 86400;
+if (!empty($_SESSION) && isset($_SESSION['_last_activity']) && time() - (int)$_SESSION['_last_activity'] > $inactive) {
+    $_SESSION = [];
+}
+$_SESSION['_last_activity'] = time();
+
 date_default_timezone_set('Asia/Manila');
 
 // ---------- Firebase Realtime Database ----------
