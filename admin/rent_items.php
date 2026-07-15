@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         try {
-            $filename = save_upload('image', UPLOAD_ROOT . '/admin/item');
+            $filename = save_upload('image', UPLOAD_ROOT . '/admin/rent-item');
             if ($filename !== null) {
                 $data['image'] = $filename;
             }
@@ -137,7 +137,7 @@ require_once __DIR__ . '/../includes/header.php';
         <?php else: foreach ($rentItems as $rid => $r):
             $qty = (int) ($r['quantity'] ?? 0);
             $qtyClass = $qty === 0 ? 'qty-out' : ($qty <= 2 ? 'qty-low' : '');
-            $img = upload_web('admin/item', $r['image'] ?? '');
+            $img = upload_web('admin/rent-item', $r['image'] ?? '');
         ?>
           <tr>
             <td>
@@ -209,7 +209,7 @@ require_once __DIR__ . '/../includes/header.php';
           <label for="image">Image</label>
           <div class="img-row">
             <img id="image-preview" class="img-preview"
-                 src="<?= $formImage ? e(upload_web('admin/item', $formImage)) : e('/assets/img/placeholder.svg') ?>"
+                 src="<?= $formImage ? e(upload_web('admin/rent-item', $formImage)) : e('/assets/img/placeholder.svg') ?>"
                  alt="Preview">
             <div>
               <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp">

@@ -97,6 +97,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'verified_by'      => $cashierName,
                 ]);
                 flash('Order #' . $short . ' marked as paid.', 'ok');
+                $email = $order['user_email'] ?? '';
+                if ($email !== '' && $email !== 'walk-in') {
+                    $order['id'] = $orderId;
+                    $order['full_name'] = $order['full_name'] ?? $order['customer_name'] ?? '';
+                    sendOrderReceipt($email, $order);
+                }
             } elseif ($action === 'mark_unpaid' && ($order['payment_status'] ?? '') === 'paid') {
                 $db->update('/orders', $orderId, [
                     'payment_verified' => false,

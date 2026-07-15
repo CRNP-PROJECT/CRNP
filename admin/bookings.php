@@ -266,7 +266,7 @@ require_once __DIR__ . '/../includes/header.php';
               <?php foreach ($rentItems as $rid => $r):
                 $onHand = (int) ($r['quantity'] ?? 0);
                 $lowClass = $onHand <= 2 ? 'low' : '';
-                $img = upload_web('admin/item', $r['image'] ?? '');
+                $img = upload_web('admin/rent-item', $r['image'] ?? '');
               ?>
                 <div class="item-row">
                   <img src="<?= e($img) ?>" alt="">

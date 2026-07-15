@@ -12,6 +12,11 @@ require_cashier();
 $db          = getDB();
 $cashierName = $_SESSION['cashier_name'] ?? 'Cashier';
 $products    = rows($db->retrieve('/products'));
+$cats = [];
+foreach ($products as $p) {
+    if (!empty($p['category'])) $cats[$p['category']] = true;
+}
+ksort($cats);
 
 /* ---------- POST: create walk-in order ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -165,6 +170,11 @@ foreach ($products as $pid => $p) {
   .pos-search .input { flex:1; }
 
   .pos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+  .pos-cats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .pos-cat { font-size:12px; font-weight:600; padding:3px 12px; border-radius:999px;
+    border:1px solid var(--line,#e6dfd1); background:var(--surface,#fff);
+    cursor:pointer; color:var(--muted); transition:.15s; }
+  .pos-cat.is-active { background:var(--ink,#211b14); color:#fff; border-color:var(--ink); }
   .pos-item {
     border:1px solid var(--line,#e6dfd1); border-radius:12px; overflow:hidden;
     background:var(--surface,#fff); cursor:pointer; transition:box-shadow .15s,border-color .15s;
@@ -252,6 +262,14 @@ foreach ($products as $pid => $p) {
       <div class="pos-search">
         <input class="input" type="search" id="posSearch" placeholder="Search products…" aria-label="Search products">
       </div>
+<?php if ($cats): ?>
+      <div class="pos-cats" id="posCats">
+        <button class="pos-cat is-active" data-cat="">All</button>
+        <?php foreach (array_keys($cats) as $c): ?>
+          <button class="pos-cat" data-cat="<?= e($c) ?>"><?= e($c) ?></button>
+        <?php endforeach; ?>
+      </div>
+<?php endif; ?>
       <div class="pos-grid" id="posGrid">
         <?php foreach ($products as $pid => $p):
             $stock   = (int)($p['stock'] ?? 0);
@@ -538,5 +556,16 @@ foreach ($products as $pid => $p) {
 
   render();
 })();
+  // Category filter
+  document.getElementById('posCats')?.addEventListener('click', function(e) {
+    var btn = e.target.closest('.pos-cat');
+    if (!btn) return;
+    this.querySelector('.is-active').classList.remove('is-active');
+    btn.classList.add('is-active');
+    var cat = btn.dataset.cat;
+    grid.querySelectorAll('.pos-item').forEach(function(el) {
+      el.style.display = !cat || el.dataset.cat === cat ? '' : 'none';
+    });
+  });
 </script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -178,6 +178,9 @@ function upload_web(string $category, ?string $filename): string {
     if (!$filename) {
         return '/assets/img/placeholder.svg';
     }
+    if ($category === 'admin/item') {
+        return '/assets/img/products/' . rawurlencode($filename);
+    }
     return UPLOAD_WEB . '/' . $category . '/' . rawurlencode($filename);
 }
 
