@@ -20,9 +20,10 @@ switch ($role) {
         break;
     case 'cashier':
         $navItems = [
-            '/cashier/'        => ['Orders', 'orders'],
-            '/cashier/bookings.php' => ['Bookings', 'bookings'],
-            '/cashier/history.php'  => ['History', 'history'],
+            '/cashier/'              => ['Orders', 'orders'],
+            '/cashier/order_now.php' => ['Order Now', 'ordernow'],
+            '/cashier/bookings.php'  => ['Bookings', 'bookings'],
+            '/cashier/history.php'   => ['History', 'history'],
         ];
         break;
     case 'kitchen':
