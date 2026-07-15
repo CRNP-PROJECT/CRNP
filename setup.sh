@@ -77,6 +77,22 @@ ask_secret() {
     echo "$reply"
 }
 
+ask_until() {
+    # ask_until "prompt" "default" "validation_cmd" "error_msg" -> echoes a valid answer
+    local prompt="$1" default="$2" cmd="$3" err="$4" reply=""
+    while true; do
+        reply=$(ask "$prompt" "$default")
+        [ -z "$reply" ] && { err "$err"; continue; }
+        if eval "$cmd"; then echo "$reply"; return 0; fi
+        err "$err"
+    done
+}
+
+# validation helpers used by ask_until
+check_url()  { curl -so /dev/null -w '%{http_code}' "$1/.json" --max-time 10 | grep -qE '200|401|403'; }
+check_mail() { [[ "$1" == *@* && "$1" == *.* ]]; }
+check_pass() { [ "${#1}" -eq 16 ] && [[ "$1" != *" "* ]]; }
+
 # ---- banner -----------------------------------------------------------------
 cat <<'BANNER'
   ╔═══════════════════════════════════════════════════════════╗
@@ -90,8 +106,8 @@ title "1/5  Checking prerequisites"
 
 # PHP
 if $IS_WINDOWS && ! command -v php &>/dev/null; then
-    for p in "$SCRIPT_DIR/../../php/php.exe" "/c/xampp/php/php.exe" "C:/xampp/php/php.exe"; do
-        if [ -x "$p" ]; then
+    for p in "$SCRIPT_DIR/../../php/php.exe" "/c/xampp/php/php.exe" "C:/xampp/php/php.exe" "C:\\xampp\\php\\php.exe"; do
+        if [ -f "$p" ]; then
             export PATH="$PATH:$(dirname "$p")"
             ok "Found PHP at $p"
             break
@@ -155,13 +171,9 @@ echo -e "${BOLD}Firebase Realtime Database${RESET}"
 echo -e "${DIM}  Find this in Firebase Console → your project → Realtime Database → Data tab.${RESET}"
 echo -e "${DIM}  Format: https://<project-id>-default-rtdb.firebaseio.com${RESET}"
 if [ -n "$FIREBASE_URL_EXISTING" ]; then
-    FIREBASE_URL=$(ask "Firebase URL:" "$FIREBASE_URL_EXISTING")
+    FIREBASE_URL=$(ask_until "Firebase URL:" "$FIREBASE_URL_EXISTING" 'check_url "$reply"' "Invalid or unreachable Firebase URL. Check the URL in Firebase Console → Realtime Database → Data tab.")
 else
-    FIREBASE_URL=$(ask "Firebase URL:")
-fi
-if [ -z "$FIREBASE_URL" ]; then
-    err "Firebase URL is required."
-    exit 1
+    FIREBASE_URL=$(ask_until "Firebase URL:" "" 'check_url "$reply"' "Invalid or unreachable Firebase URL. Check the URL in Firebase Console → Realtime Database → Data tab.")
 fi
 # strip trailing slash
 FIREBASE_URL="${FIREBASE_URL%/}"
@@ -174,9 +186,21 @@ echo -e "${DIM}  The password is 16 characters, no spaces.${RESET}"
 if [ -n "$SMTP_USER_EXISTING" ]; then
     SMTP_USER=$(ask "Gmail address:" "$SMTP_USER_EXISTING")
 else
-    SMTP_USER=$(ask "Gmail address:")
+    while true; do
+        SMTP_USER=$(ask "Gmail address:")
+        [ -z "$SMTP_USER" ] && break
+        check_mail "$SMTP_USER" && break
+        err "Enter a valid email (e.g. you@gmail.com)."
+    done
 fi
-SMTP_PASS=$(ask_secret "Gmail App Password (16 chars):")
+
+SMTP_PASS=""
+while true; do
+    SMTP_PASS=$(ask_secret "Gmail App Password (16 chars):")
+    [ -z "$SMTP_PASS" ] && break
+    check_pass "$SMTP_PASS" && break
+    err "App Password must be exactly 16 characters — no spaces, no extra chars."
+done
 if [ -z "$SMTP_USER" ] || [ -z "$SMTP_PASS" ]; then
     warn "SMTP credentials incomplete — OTP emails will not send until configured."
     warn "You can re-run this script later to add them."
