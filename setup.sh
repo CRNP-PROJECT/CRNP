@@ -16,6 +16,13 @@
 #
 # ---------------------------------------------------------------------------
 
+# Bail if someone runs this in PowerShell — only Git Bash (MINGW/MSYS) works.
+if [ -z "${BASH_VERSION:-}" ]; then
+    echo "This script requires Bash. Open Git Bash (not PowerShell/cmd) and run:"
+    echo "  cd $(dirname "$0") && bash setup.sh"
+    exit 1
+fi
+
 set -euo pipefail
 
 # ---- pretty output ----------------------------------------------------------
@@ -82,6 +89,15 @@ BANNER
 title "1/5  Checking prerequisites"
 
 # PHP
+if $IS_WINDOWS && ! command -v php &>/dev/null; then
+    for p in "$SCRIPT_DIR/../../php/php.exe" "/c/xampp/php/php.exe" "C:/xampp/php/php.exe"; do
+        if [ -x "$p" ]; then
+            export PATH="$PATH:$(dirname "$p")"
+            ok "Found PHP at $p"
+            break
+        fi
+    done
+fi
 if command -v php &>/dev/null; then
     PHP_VERSION=$(php -r 'echo PHP_VERSION;')
     PHP_MAJOR=$(php -r 'echo PHP_MAJOR_VERSION;')
