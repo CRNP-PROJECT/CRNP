@@ -95,10 +95,6 @@ class firebaseRDB {
         return true;
     }
 
-    public function lastError(): string {
-        return $this->lastError;
-    }
-
     private function _exec(string $url, string $method, ?string $body = null): ?string {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

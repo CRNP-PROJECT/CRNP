@@ -215,11 +215,6 @@ function decrement_product_stock(firebaseRDB $db, string $productId, int $qty): 
     $new = max(0, (int)$row['stock'] - $qty);
     $db->update('/products', $productId, ['stock' => $new]);
 }
-function restore_product_stock(firebaseRDB $db, string $productId, int $qty): void {
-    $row = $db->retrieve('/products/' . $productId);
-    $cur = (is_array($row) && isset($row['stock'])) ? (int)$row['stock'] : 0;
-    $db->update('/products', $productId, ['stock' => $cur + $qty]);
-}
 function decrement_rent_stock(firebaseRDB $db, string $itemId, int $qty): void {
     $row = $db->retrieve('/rent_items/' . $itemId);
     if (!is_array($row) || !isset($row['quantity'])) {
@@ -276,10 +271,6 @@ function post(string $key, $default = '') {
  * Simple per-request cache to avoid re-fetching the same Firebase nodes on a
  * single page load (e.g. an admin dashboard that reads /orders, /bookings,
  * /products, /rent_items). Lives in a global for the duration of the request. */
-function cache_get(string $key) {
-    global $__cache;
-    return $__cache[$key] ?? null;
-}
 function cache_set(string $key, $data, int $ttl = 30): void {
     global $__cache;
     $__cache[$key] = ['data' => $data, 'expires' => time() + $ttl];
