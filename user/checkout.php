@@ -68,15 +68,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/user/products.php');
     }
 
+    /* Validate stock against live products. */
+    $liveProducts = rows($db->retrieve('/products'));
+    foreach ($cart as $pid => $item) {
+        $qty   = (int)($item['qty'] ?? 1);
+        $stock = (int)(($liveProducts[$pid] ?? [])['stock'] ?? 0);
+        if (!isset($liveProducts[$pid])) {
+            $errors[] = 'A product in your cart is no longer available.';
+        } elseif ($qty > $stock) {
+            $errors[] = 'Only ' . $stock . ' × "' . ($liveProducts[$pid]['name'] ?? 'Item') . '" left (requested ' . $qty . ').';
+        }
+    }
+    if ($errors) {
+        foreach ($errors as $err) flash($err, 'danger');
+        redirect('/user/checkout.php');
+    }
+
     /* Build items map { productId => {name, qty, price, subtotal} }. */
     $items = [];
     $total = 0.0;
     foreach ($cart as $pid => $item) {
         $qty   = (int)   ($item['qty']   ?? 1);
-        $price = (float) ($item['price'] ?? 0);
+        $lp    = $liveProducts[$pid] ?? [];
+        $price = (float) ($lp['price'] ?? $item['price'] ?? 0);
         $sub   = $price * $qty;
         $items[$pid] = [
-            'name'     => $item['name'] ?? 'Item',
+            'name'     => $lp['name'] ?? $item['name'] ?? 'Item',
             'qty'      => $qty,
             'price'    => $price,
             'subtotal' => $sub,
