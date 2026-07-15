@@ -159,7 +159,7 @@ require_once __DIR__ . '/../includes/header.php';
             <td class="num"><?= e(money((float) ($p['price'] ?? 0))) ?></td>
             <td class="num <?= $stockClass ?>"><?= $stock ?></td>
             <td>
-              <div class="row">
+              <div class="row" style="flex-wrap:nowrap">
                 <a class="btn btn--ghost btn--sm" href="/admin/products.php?edit=<?= urlencode((string) $pid) ?>">Edit</a>
                 <form method="post" action="/admin/products.php" style="display:inline">
                   <?= csrf_field() ?>
