@@ -105,7 +105,7 @@ require_once __DIR__ . '/../includes/header.php';
 ?>
 <style>
   .thumb--sm { width:48px; height:48px; border-radius:9px; object-fit:cover; border:1px solid var(--line); background:var(--bg-2); }
-  .img-preview { width:120px; height:120px; object-fit:cover; border-radius:10px; border:1px solid var(--line); background:var(--bg-2); }
+  .img-preview { width:120px; height:120px; object-fit:contain; border-radius:10px; border:1px solid var(--line); background:var(--bg-2); }
   .img-row { display:flex; align-items:center; gap:14px; }
   .layout-2 { display:grid; grid-template-columns:1.6fr 1fr; gap:24px; align-items:start; }
   @media (max-width:980px) { .layout-2 { grid-template-columns:1fr; } }
