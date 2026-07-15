@@ -89,15 +89,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'restored_at' => now(),
                 ]);
                 flash('Order #' . $short . ' restored to pending.', 'ok');
-            } elseif ($action === 'mark_paid' && ($order['payment_method'] ?? '') === 'gcash') {
+            } elseif ($action === 'mark_paid' && ($order['payment_status'] ?? '') !== 'paid') {
                 $db->update('/orders', $orderId, [
                     'payment_verified' => true,
                     'payment_status'   => 'paid',
                     'verified_at'      => now(),
                     'verified_by'      => $cashierName,
                 ]);
-                flash('GCash payment for order #' . $short . ' marked as paid.', 'ok');
-            } elseif ($action === 'mark_unpaid' && ($order['payment_method'] ?? '') === 'gcash') {
+                flash('Order #' . $short . ' marked as paid.', 'ok');
+            } elseif ($action === 'mark_unpaid' && ($order['payment_status'] ?? '') === 'paid') {
                 $db->update('/orders', $orderId, [
                     'payment_verified' => false,
                     'payment_status'   => 'unpaid',
@@ -122,7 +122,7 @@ $allOrders = rows($db->retrieve('/orders'));
 
 // Stats (always over the full set)
 $pendingCount = 0;
-$unpaidGcash  = 0;
+$unpaidCount  = 0;
 $todaySales   = 0.0;
 $today        = date('Y-m-d');
 foreach ($allOrders as $o) {
@@ -133,10 +133,9 @@ foreach ($allOrders as $o) {
     if ($st === 'pending') {
         $pendingCount++;
     }
-    if (($o['payment_method'] ?? '') === 'gcash'
-        && ($o['payment_status'] ?? '') !== 'paid'
+    if (($o['payment_status'] ?? '') !== 'paid'
         && $st !== 'cashier_cancelled' && $st !== 'cancelled') {
-        $unpaidGcash++;
+        $unpaidCount++;
     }
     $date = substr((string)($o['created_at'] ?? $o['placed_at'] ?? ''), 0, 10);
     if ($date === $today
@@ -231,9 +230,9 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
     <div class="stat__delta">Awaiting acceptance</div>
   </div>
   <div class="stat">
-    <div class="stat__label">Unpaid GCash</div>
-    <div class="stat__value"><?= (int)$unpaidGcash ?></div>
-    <div class="stat__delta">Needs payment verification</div>
+    <div class="stat__label">Unpaid orders</div>
+    <div class="stat__value"><?= (int)$unpaidCount ?></div>
+    <div class="stat__delta">Awaiting payment confirmation</div>
   </div>
   <div class="stat">
     <div class="stat__label">Today&rsquo;s sales</div>
@@ -353,7 +352,7 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
                     </form>
                   <?php endif; ?>
 
-                  <?php if ($isGcash && $st !== 'cashier_cancelled' && $st !== 'cancelled'): ?>
+                  <?php if ($st !== 'cashier_cancelled' && $st !== 'cancelled' && $st !== 'done'): ?>
                     <?php if (!$isPaid): ?>
                       <form method="post" action="<?= e($backAction) ?>">
                         <?= csrf_field() ?>
@@ -363,7 +362,7 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
                         <button class="btn btn--gold btn--sm" type="submit">Mark paid</button>
                       </form>
                     <?php else: ?>
-                      <form method="post" action="<?= e($backAction) ?>" data-confirm="Revert this GCash payment to unpaid?">
+                      <form method="post" action="<?= e($backAction) ?>" data-confirm="Revert this payment to unpaid?">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="mark_unpaid">
                         <input type="hidden" name="order_id" value="<?= e($id) ?>">
