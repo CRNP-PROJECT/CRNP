@@ -41,6 +41,23 @@ uasort($inRange, function ($a, $b) {
     return $ta <=> $tb; // ascending by date
 });
 
+/* ---------- Filter bookings in range ---------- */
+$allBookings = rows($db->retrieve('/bookings'));
+$bookingsInRange = [];
+foreach ($allBookings as $bid => $b) {
+    if (!is_array($b)) continue;
+    $created = (string) ($b['created_at'] ?? '');
+    $day = substr($created, 0, 10);
+    if ($day >= $from && $day <= $to) {
+        $bookingsInRange[$bid] = $b;
+    }
+}
+uasort($bookingsInRange, function ($a, $b) {
+    $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
+    $tb = strtotime((string) ($b['created_at'] ?? '')) ?: 0;
+    return $ta <=> $tb;
+});
+
 /* ---------- Breakdown ---------- */
 $orderCount    = count($inRange);
 $paidCount     = 0;
@@ -75,6 +92,45 @@ foreach ($inRange as $o) {
 }
 $maxDay = max($dayTotals) ?: 1.0;
 
+/* ---------- Per-day order vs booking revenue ---------- */
+$dayOrderRevenue   = [];
+$dayBookingRevenue = [];
+$dayOrderCount     = [];
+$dayBookingCount   = [];
+$cursor = $fromTs;
+while ($cursor <= $toTs) {
+    $key = date('Y-m-d', $cursor);
+    $dayOrderRevenue[$key]   = 0.0;
+    $dayBookingRevenue[$key] = 0.0;
+    $dayOrderCount[$key]     = 0;
+    $dayBookingCount[$key]   = 0;
+    $cursor = strtotime('+1 day', $cursor);
+}
+foreach ($inRange as $o) {
+    $day = substr((string) ($o['created_at'] ?? ''), 0, 10);
+    if (isset($dayOrderCount[$day])) {
+        $dayOrderCount[$day]++;
+    }
+    if ((string) ($o['payment_status'] ?? '') === 'paid' && isset($dayOrderRevenue[$day])) {
+        $dayOrderRevenue[$day] += (float) ($o['total'] ?? 0);
+    }
+}
+foreach ($bookingsInRange as $b) {
+    $day = substr((string) ($b['created_at'] ?? ''), 0, 10);
+    if (isset($dayBookingCount[$day])) {
+        $dayBookingCount[$day]++;
+    }
+    if (isset($dayBookingRevenue[$day])) {
+        $dayBookingRevenue[$day] += (float) ($b['total'] ?? 0);
+    }
+}
+$maxOrderRev   = max($dayOrderRevenue) ?: 1.0;
+$maxBookingRev = max($dayBookingRevenue) ?: 1.0;
+$maxRev        = max($maxOrderRev, $maxBookingRev);
+$maxOrderCnt   = max($dayOrderCount) ?: 1;
+$maxBookingCnt = max($dayBookingCount) ?: 1;
+$maxCnt        = max($maxOrderCnt, $maxBookingCnt);
+
 /* ---------- Chart geometry ---------- */
 $dayCount = count($dayTotals);
 $chartH   = 200;
@@ -98,6 +154,11 @@ require_once __DIR__ . '/../includes/header.php';
   .chart-svg .bar:hover { opacity:.82; }
   .totals-row td { background:var(--surface-2); font-weight:700; color:var(--ink); border-top:2px solid var(--line); }
   .scroll-x { overflow-x:auto; }
+  .grid--charts { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  @media (max-width:980px) { .grid--charts { grid-template-columns:1fr; } }
+  .chart-legend { display:flex; gap:18px; margin-top:12px; flex-wrap:wrap; }
+  .chart-legend__item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+  .chart-legend__dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
 </style>
 
 <div class="page-head">
@@ -217,6 +278,164 @@ require_once __DIR__ . '/../includes/header.php';
   </div>
 </section>
 
+<!-- Order vs Booking comparison charts -->
+<section class="section">
+  <div class="grid--charts">
+    <!-- Line chart: Revenue comparison -->
+    <div class="card">
+      <div class="card__head">
+        <div>
+          <h2>Revenue comparison</h2>
+          <small class="micro">Order sales vs booking revenue per day</small>
+        </div>
+      </div>
+      <div class="card__body">
+        <?php
+          $lineW = max(400, $dayCount * 60 + 60);
+          $lineH = 180;
+          $linePadL = 50;
+          $linePadB = 28;
+          $plotW = $lineW - $linePadL - 10;
+          $plotH = $lineH - $linePadB - 10;
+        ?>
+        <div class="scroll-x">
+          <svg class="chart-svg" viewBox="0 0 <?= $lineW ?> <?= $lineH + $linePadB ?>"
+               role="img" aria-label="Line chart comparing order and booking revenue">
+            <!-- grid lines -->
+            <?php for ($gi = 0; $gi <= 4; $gi++):
+                $gy = 10 + $plotH - ($gi / 4) * $plotH;
+                $gv = ($maxRev / 4) * $gi;
+            ?>
+              <line x1="<?= $linePadL ?>" y1="<?= $gy ?>" x2="<?= $lineW - 10 ?>" y2="<?= $gy ?>"
+                    stroke="#e6dfd1" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
+              <text x="<?= $linePadL - 6 ?>" y="<?= $gy + 4 ?>" text-anchor="end"
+                    font-family="Inter,sans-serif" font-size="9" fill="#8a7f70">₱<?= number_format($gv, 0) ?></text>
+            <?php endfor; ?>
+
+            <?php
+              $days = array_keys($dayOrderRevenue);
+              $coords = function(array $data, float $max) use ($days, $linePadL, $plotW, $plotH) {
+                  $pts = [];
+                  $n = count($days);
+                  foreach ($days as $i => $d) {
+                      $x = $linePadL + ($n > 1 ? ($i / ($n - 1)) * $plotW : $plotW / 2);
+                      $y = 10 + $plotH - ($max > 0 ? ($data[$d] / $max) * $plotH : 0);
+                      $pts[] = [$x, $y, $data[$d], $d];
+                  }
+                  return $pts;
+              };
+              $orderPts   = $coords($dayOrderRevenue, $maxRev);
+              $bookingPts = $coords($dayBookingRevenue, $maxRev);
+            ?>
+
+            <!-- Order revenue line (gold) -->
+            <polyline points="<?= implode(' ', array_map(fn($p) => $p[0] . ',' . $p[1], $orderPts)) ?>"
+                      fill="none" stroke="#d8a94e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <?php foreach ($orderPts as $p): ?>
+              <circle cx="<?= $p[0] ?>" cy="<?= $p[1] ?>" r="3.5" fill="#d8a94e">
+                <title><?= e(date('M j', strtotime($p[3])) . ' — Orders: ' . money($p[2])) ?></title>
+              </circle>
+            <?php endforeach; ?>
+
+            <!-- Booking revenue line (green) -->
+            <polyline points="<?= implode(' ', array_map(fn($p) => $p[0] . ',' . $p[1], $bookingPts)) ?>"
+                      fill="none" stroke="#2d6a4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <?php foreach ($bookingPts as $p): ?>
+              <circle cx="<?= $p[0] ?>" cy="<?= $p[1] ?>" r="3.5" fill="#2d6a4f">
+                <title><?= e(date('M j', strtotime($p[3])) . ' — Bookings: ' . money($p[2])) ?></title>
+              </circle>
+            <?php endforeach; ?>
+
+            <!-- X-axis labels -->
+            <?php $n = count($days); foreach ($days as $i => $d):
+                $x = $linePadL + ($n > 1 ? ($i / ($n - 1)) * $plotW : $plotW / 2);
+                $showLabel = ($n <= 14) || ($i % max(1, intval($n / 12)) === 0);
+            ?>
+              <?php if ($showLabel): ?>
+                <text x="<?= $x ?>" y="<?= $lineH + 16 ?>" text-anchor="middle"
+                      font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= e($dayLabels[$d]) ?></text>
+              <?php endif; ?>
+            <?php endforeach; ?>
+          </svg>
+        </div>
+        <div class="chart-legend">
+          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#d8a94e"></span> Order revenue</span>
+          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#2d6a4f"></span> Booking revenue</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column chart: Count comparison -->
+    <div class="card">
+      <div class="card__head">
+        <div>
+          <h2>Order vs Booking count</h2>
+          <small class="micro">Number of orders and bookings per day</small>
+        </div>
+      </div>
+      <div class="card__body">
+        <?php
+          $colW = max(400, $dayCount * 60 + 60);
+          $colH = 180;
+          $colPadL = 40;
+          $colPadB = 28;
+          $colPlotW = $colW - $colPadL - 10;
+          $colPlotH = $colH - $colPadB - 10;
+          $groupW = max(20, min(50, $colPlotW / max(1, $dayCount) * 0.7));
+          $barPairW = $groupW * 2 + 4;
+        ?>
+        <div class="scroll-x">
+          <svg class="chart-svg" viewBox="0 0 <?= $colW ?> <?= $colH + $colPadB ?>"
+               role="img" aria-label="Column chart comparing order and booking counts">
+            <?php for ($gi = 0; $gi <= 4; $gi++):
+                $gy = 10 + $colPlotH - ($gi / 4) * $colPlotH;
+                $gv = ($maxCnt / 4) * $gi;
+            ?>
+              <line x1="<?= $colPadL ?>" y1="<?= $gy ?>" x2="<?= $colW - 10 ?>" y2="<?= $gy ?>"
+                    stroke="#e6dfd1" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
+              <text x="<?= $colPadL - 6 ?>" y="<?= $gy + 4 ?>" text-anchor="end"
+                    font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= (int)$gv ?></text>
+            <?php endfor; ?>
+
+            <?php $days = array_keys($dayOrderCount); $n = count($days);
+                  $totalGroupSpace = $colPlotW / max(1, $n);
+                  $actualGroupW = min($barPairW + 8, $totalGroupSpace * 0.85);
+            ?>
+            <?php foreach ($days as $i => $d):
+                $centerX = $colPadL + $totalGroupSpace * $i + $totalGroupSpace / 2;
+                $ox = $centerX - $actualGroupW / 2;
+                $bx = $ox;
+                $halfW = $actualGroupW / 2 - 2;
+                $oh = $maxCnt > 0 ? ($dayOrderCount[$d] / $maxCnt) * $colPlotH : 0;
+                $bh = $maxCnt > 0 ? ($dayBookingCount[$d] / $maxCnt) * $colPlotH : 0;
+                $showLabel = ($n <= 14) || ($i % max(1, intval($n / 12)) === 0);
+            ?>
+              <!-- Order bar (gold) -->
+              <rect x="<?= $bx ?>" y="<?= 10 + $colPlotH - max(2, $oh) ?>" width="<?= $halfW ?>" height="<?= max(2, $oh) ?>"
+                    fill="#d8a94e" rx="3" opacity=".9">
+                <title><?= e(date('M j', strtotime($d)) . ' — Orders: ' . $dayOrderCount[$d]) ?></title>
+              </rect>
+              <!-- Booking bar (green) -->
+              <rect x="<?= $bx + $halfW + 4 ?>" y="<?= 10 + $colPlotH - max(2, $bh) ?>" width="<?= $halfW ?>" height="<?= max(2, $bh) ?>"
+                    fill="#2d6a4f" rx="3" opacity=".9">
+                <title><?= e(date('M j', strtotime($d)) . ' — Bookings: ' . $dayBookingCount[$d]) ?></title>
+              </rect>
+              <?php if ($showLabel): ?>
+                <text x="<?= $centerX ?>" y="<?= $colH + 16 ?>" text-anchor="middle"
+                      font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= e($dayLabels[$d]) ?></text>
+              <?php endif; ?>
+            <?php endforeach; ?>
+          </svg>
+        </div>
+        <div class="chart-legend">
+          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#d8a94e"></span> Orders</span>
+          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#2d6a4f"></span> Bookings</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Orders table -->
 <section class="section">
   <div class="card">
@@ -255,6 +474,54 @@ require_once __DIR__ . '/../includes/header.php';
             <td colspan="3">Total paid sales</td>
             <td class="num"><?= e(money($totalSales)) ?></td>
             <td colspan="2"><?= $paidCount ?> paid of <?= $orderCount ?> order(s)</td>
+          </tr>
+        <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Bookings in range -->
+<section class="section">
+  <div class="card">
+    <div class="card__head">
+      <div><h2>Bookings in range</h2><small><?= count($bookingsInRange) ?> booking(s)</small></div>
+    </div>
+    <div class="table-wrap" style="border:0;border-radius:0;">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Date</th><th>Booking ID</th><th>Customer</th>
+            <th class="num">Total</th><th>Payment</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+        <?php if (!$bookingsInRange): ?>
+          <tr><td colspan="6" class="muted t-center">No bookings in this date range.</td></tr>
+        <?php else: $bookingTotalSales = 0.0; foreach ($bookingsInRange as $bid => $b):
+            [$bl, $bc] = booking_status_label((string) ($b['status'] ?? ''));
+            [$pl, $pc] = payment_status_label((string) ($b['payment_status'] ?? ''));
+            $created = (string) ($b['created_at'] ?? '');
+            $bTotal = (float) ($b['total'] ?? 0);
+            if ((string) ($b['payment_status'] ?? '') === 'paid') $bookingTotalSales += $bTotal;
+        ?>
+          <tr>
+            <td class="micro"><?= $created ? e(date('M j, Y g:i A', strtotime($created))) : '—' ?></td>
+            <td><code style="font-size:12px;color:var(--ink-soft);"><?= e(substr((string) $bid, 0, 10)) ?>…</code></td>
+            <td>
+              <strong><?= e($b['user_name'] ?? 'Guest') ?></strong><br>
+              <small class="micro"><?= e($b['user_email'] ?? '—') ?></small>
+            </td>
+            <td class="num"><?= e(money($bTotal)) ?></td>
+            <td><span class="badge <?= e($pc) ?>"><?= e($pl) ?></span></td>
+            <td><span class="badge <?= e($bc) ?>"><?= e($bl) ?></span></td>
+          </tr>
+        <?php endforeach; ?>
+          <tr class="totals-row">
+            <td colspan="3">Total booking revenue</td>
+            <td class="num"><?= e(money($bookingTotalSales)) ?></td>
+            <td colspan="2"><?= count($bookingsInRange) ?> booking(s)</td>
           </tr>
         <?php endif; ?>
         </tbody>
