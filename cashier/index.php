@@ -343,7 +343,7 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
                       <input type="hidden" name="action" value="cancel">
                       <input type="hidden" name="order_id" value="<?= e($id) ?>">
                       <input type="hidden" name="back_query" value="<?= e($backQuery) ?>">
-                      <input class="input" type="text" name="cancel_note" placeholder="Reason (optional)" style="margin-bottom:6px;min-width:160px;padding:7px 10px;font-size:12px">
+                      <input type="hidden" name="cancel_note" id="cancelNote" value="">
                       <button class="btn btn--danger btn--sm" type="submit">Cancel</button>
                     </form>
                   <?php endif; ?>
@@ -594,5 +594,17 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
       if (e.key === 'Escape' && !modal.hasAttribute('hidden')) { close(); }
     });
   })();
+  /* Cancel reason prompt — hides inline input, shows prompt() on submit */
+  document.querySelectorAll('form input#cancelNote').forEach(function(inp) {
+    var form = inp.closest('form');
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var reason = prompt('Reason for cancellation (optional):');
+      if (reason === null) return;
+      inp.value = reason || '';
+      HTMLFormElement.prototype.submit.call(form);
+    });
+  });
 </script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
