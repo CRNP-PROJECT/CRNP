@@ -17,7 +17,9 @@ $products    = rows($db->retrieve('/products'));
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     $fullName      = trim((string)post('full_name', ''));
-    $contact       = trim((string)post('contact', ''));
+    $tableNumber   = trim((string)post('table_number', ''));
+    $numCustomers  = max(1, (int)post('num_customers', 1));
+    $cashTendered  = (float)post('cash_tendered', 0);
     $paymentMethod = (string)post('payment_method', 'counter');
     if (!in_array($paymentMethod, ['gcash', 'counter'], true)) {
         $paymentMethod = 'counter';
@@ -30,6 +32,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = [];
     if ($fullName === '') {
         $errors[] = 'Customer name is required.';
+    }
+    if ($tableNumber === '') {
+        $errors[] = 'Table number is required.';
+    }
+    if ($numCustomers < 1) {
+        $errors[] = 'Number of customers must be at least 1.';
+    }
+    if ($paymentMethod === 'counter' && $cashTendered <= 0) {
+        $errors[] = 'Please enter the cash amount tendered.';
     }
 
     // Re-fetch products fresh to validate live stock.
@@ -82,26 +93,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         // Fall through to re-render form with preserved inputs.
     } else {
-        $paymentStatus = $paymentMethod === 'gcash'
-            ? ($receiptFile ? 'pending_verification' : 'unpaid')
-            : 'unpaid';
+        $change = $paymentMethod === 'counter' ? max(0, $cashTendered - $total) : 0;
+        $acceptedAt = now();
 
         $order = [
             'customer_name'    => $fullName,
             'user_name'        => $fullName,
             'user_email'       => 'walk-in',
             'user_id'          => '',
-            'contact'          => $contact,
+            'table_number'     => $tableNumber,
+            'num_customers'    => $numCustomers,
             'items'            => $items,
             'total'            => $total,
+            'cash_tendered'    => $cashTendered,
+            'change'           => $change,
             'payment_method'   => $paymentMethod,
-            'payment_status'   => $paymentStatus,
-            'payment_verified' => false,
+            'payment_status'   => 'paid',
+            'payment_verified' => true,
+            'verified_at'      => $acceptedAt,
+            'verified_by'      => $cashierName,
             'receipt'          => $receiptFile,
             'gcash_receipt'    => $receiptFile,
-            'status'           => 'pending',
-            'created_at'       => now(),
-            'placed_at'        => now(),
+            'status'           => 'accepted',
+            'accepted_at'      => $acceptedAt,
+            'accepted_by'      => $cashierName,
+            'created_at'       => $acceptedAt,
+            'placed_at'        => $acceptedAt,
             'created_by'       => $cashierName,
             'source'           => 'walk-in',
         ];
@@ -113,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($items as $productId => $info) {
                 decrement_product_stock($db, (string)$productId, (int)$info['qty']);
             }
-            flash('Walk-in order #' . substr($newId, 0, 6) . ' created for ' . $fullName . '.', 'ok');
+            flash('Walk-in order #' . substr($newId, 0, 6) . ' created for ' . $fullName . ' (Table ' . $tableNumber . ', ' . $numCustomers . ' pax).', 'ok');
             redirect('/cashier/');
         }
     }
@@ -210,7 +227,7 @@ foreach ($products as $pid => $p) {
     <div>
       <span class="eyebrow">Cashier Console</span>
       <h1>Order Now</h1>
-      <p>Create a walk-in food order. Tap products to add, then fill in customer details and submit.</p>
+      <p>Create a walk-in food order. Tap products to add, fill in customer and table details, then submit.</p>
     </div>
     <a class="btn btn--outline btn--sm" href="/cashier/">&larr; Back to orders</a>
   </div>
@@ -297,10 +314,17 @@ foreach ($products as $pid => $p) {
             <input class="input" type="text" id="full_name" name="full_name" required
                    value="<?= e(post('full_name')) ?>" placeholder="Walk-in customer">
           </div>
-          <div class="field">
-            <label for="contact">Contact number</label>
-            <input class="input" type="tel" id="contact" name="contact"
-                   value="<?= e(post('contact')) ?>" placeholder="0917 123 4567">
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label for="table_number">Table no. *</label>
+              <input class="input" type="text" id="table_number" name="table_number" required
+                     value="<?= e(post('table_number')) ?>" placeholder="e.g. 1, 2A">
+            </div>
+            <div class="field">
+              <label for="num_customers">No. of customers *</label>
+              <input class="input" type="number" id="num_customers" name="num_customers" min="1" max="50" required
+                     value="<?= e(post('num_customers', '1')) ?>">
+            </div>
           </div>
           <div class="field">
             <label for="payment_method">Payment method</label>
@@ -308,6 +332,15 @@ foreach ($products as $pid => $p) {
               <option value="counter" <?= post('payment_method') === 'counter' ? 'selected' : '' ?>>Pay at counter</option>
               <option value="gcash" <?= post('payment_method') === 'gcash' ? 'selected' : '' ?>>GCash</option>
             </select>
+          </div>
+          <div class="field" id="cash-field">
+            <label for="cash_tendered">Cash tendered</label>
+            <input class="input" type="number" id="cash_tendered" name="cash_tendered" min="0" step="0.01"
+                   value="<?= e(post('cash_tendered', '')) ?>" placeholder="0.00">
+          </div>
+          <div class="field" id="change-display" style="display:none">
+            <label>Change</label>
+            <div style="font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--ok,#16a34a)" id="changeValue">₱0.00</div>
           </div>
           <div class="field" id="receipt-field" style="display:none">
             <label for="receipt">GCash receipt</label>
@@ -340,8 +373,37 @@ foreach ($products as $pid => $p) {
   var searchEl = document.getElementById('posSearch');
   var pmSelect = document.getElementById('payment_method');
   var recField = document.getElementById('receipt-field');
+  var cashField = document.getElementById('cash-field');
+  var cashInput = document.getElementById('cash_tendered');
+  var changeDisp = document.getElementById('change-display');
+  var changeVal  = document.getElementById('changeValue');
 
   if (!form || !grid) return;
+
+  /* ---- cash/change calculation ---- */
+  function calcChange() {
+    if (!cashInput || !changeDisp || !changeVal) return;
+    if (pmSelect && pmSelect.value === 'gcash') {
+      cashField.style.display = 'none';
+      changeDisp.style.display = 'none';
+      return;
+    }
+    cashField.style.display = '';
+    var tendered = parseFloat(cashInput.value) || 0;
+    var total = 0;
+    var keys = Object.keys(cart);
+    for (var i = 0; i < keys.length; i++) {
+      var it = cart[keys[i]];
+      total += it.price * it.qty;
+    }
+    if (tendered > 0 && tendered >= total) {
+      var ch = tendered - total;
+      changeVal.textContent = fmtMoney(ch);
+      changeDisp.style.display = '';
+    } else {
+      changeDisp.style.display = 'none';
+    }
+  }
 
   /* ---- add to cart ---- */
   function addToCart(pid) {
@@ -406,6 +468,7 @@ foreach ($products as $pid => $p) {
     totalEl.textContent = fmtMoney(total);
     countEl.textContent = count + ' item' + (count === 1 ? '' : 's');
     submitBtn.disabled = keys.length === 0;
+    calcChange();
   }
 
   /* ---- format peso ---- */
@@ -442,10 +505,14 @@ foreach ($products as $pid => $p) {
   }
 
   /* ---- payment method toggle ---- */
-  if (pmSelect && recField) {
+  if (pmSelect) {
     pmSelect.addEventListener('change', function () {
       recField.style.display = pmSelect.value === 'gcash' ? '' : 'none';
+      calcChange();
     });
+  }
+  if (cashInput) {
+    cashInput.addEventListener('input', calcChange);
   }
 
   /* ---- form submit: serialize cart into qty inputs ---- */
