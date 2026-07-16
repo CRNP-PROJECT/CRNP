@@ -56,6 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ---------- GET: list + search ---------- */
 $q         = trim($_GET['q'] ?? '');
 $products  = Product::raw();
+$cats = [];
+foreach ($products as $p) {
+    if (!empty($p['category'])) $cats[$p['category']] = true;
+}
+ksort($cats);
 if ($q !== '') {
     $products = filter_like($products, 'name', $q);
 }
@@ -65,6 +70,13 @@ require_once __DIR__ . '/../includes/header.php';
 
 <style>
   .hero { background-image: linear-gradient(160deg, rgba(42,33,24,.82), rgba(24,18,16,.92)), url('/assets/img/shop-bg.png'); background-size: cover; background-position: center; }
+</style>
+<style>
+  .prod-cats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .prod-cat { font-size:12px; font-weight:600; padding:3px 12px; border-radius:999px;
+    border:1px solid var(--line,#e6dfd1); background:var(--surface,#fff);
+    cursor:pointer; color:var(--muted); transition:.15s; }
+  .prod-cat.is-active { background:var(--ink,#211b14); color:#fff; border-color:var(--ink); }
 </style>
 
 <div class="hero">
@@ -109,6 +121,14 @@ require_once __DIR__ . '/../includes/header.php';
       <?php endif; ?>
     </div>
   <?php else: ?>
+<?php if ($cats): ?>
+    <div class="prod-cats" id="prodCats">
+      <button class="prod-cat is-active" data-cat="">All</button>
+      <?php foreach (array_keys($cats) as $c): ?>
+        <button class="prod-cat" data-cat="<?= e($c) ?>"><?= e($c) ?></button>
+      <?php endforeach; ?>
+    </div>
+<?php endif; ?>
     <div class="grid grid--products">
       <?php foreach ($products as $id => $p):
         $stock   = (int) ($p['stock'] ?? 0);
@@ -163,5 +183,19 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
   <?php endif; ?>
 </section>
+
+<script>
+document.getElementById('prodCats')?.addEventListener('click', function(e) {
+  var btn = e.target.closest('.prod-cat');
+  if (!btn) return;
+  this.querySelector('.is-active').classList.remove('is-active');
+  btn.classList.add('is-active');
+  var cat = btn.dataset.cat;
+  document.querySelectorAll('.grid--products .product').forEach(function(el) {
+    var pc = el.querySelector('.product__cat');
+    el.style.display = !cat || (pc && pc.textContent.trim() === cat) ? '' : 'none';
+  });
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

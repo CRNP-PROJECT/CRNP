@@ -58,10 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         try {
-            // Image upload — stored as base64 in Firebase
             $b64 = upload_to_base64('image', UPLOAD_ROOT . '/admin/item');
             if ($b64 !== null) {
                 $data['image'] = $b64;
+            }
+            // Client-side canvas crop (no GD dependency)
+            $cropped = post('cropped');
+            if ($cropped) {
+                $raw = base64_decode(explode(',', $cropped)[1] ?? $cropped);
+                $filename = bin2hex(random_bytes(16)) . '.jpg';
+                file_put_contents(__DIR__ . '/../assets/img/products/' . $filename, $raw);
+                $data['image'] = $filename;
             }
 
             if ($id !== '') {
@@ -114,6 +121,17 @@ require_once __DIR__ . '/../includes/header.php';
   @media (max-width:980px) { .layout-2 { grid-template-columns:1fr; } }
   .stock-low { color:var(--danger); font-weight:600; }
   .stock-out { color:var(--muted); }
+  .crop-modal { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; }
+  .crop-modal-bg { position:absolute; inset:0; background:rgba(0,0,0,.7); }
+  .crop-modal-box { position:relative; background:var(--bg); border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,.4); width:fit-content; height:fit-content; max-width:90vw; max-height:90vh; padding:20px; }
+  .crop-modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+  .crop-stage { position:relative; border-radius:10px; overflow:hidden; border:1px solid var(--line); background:var(--bg-2); display:inline-block; }
+  .crop-stage img { display:block; max-width:calc(90vw - 50px); max-height:calc(90vh - 100px); width:auto; height:auto; }
+  .crop-box { position:absolute; width:200px; height:200px; box-shadow:0 0 0 9999px rgba(0,0,0,.5); border:2px solid #fff; cursor:move; border-radius:4px; box-sizing:border-box; }
+  @media (max-width:540px) {
+    .crop-modal-box { padding:12px; }
+    .crop-stage img { max-width:calc(100vw - 40px); max-height:calc(100vh - 90px); }
+  }
 </style>
 
 <div class="page-head">
@@ -162,7 +180,7 @@ require_once __DIR__ . '/../includes/header.php';
             <td class="num"><?= e(money((float) ($p['price'] ?? 0))) ?></td>
             <td class="num <?= $stockClass ?>"><?= $stock ?></td>
             <td>
-              <div class="row">
+              <div class="row" style="flex-wrap:nowrap">
                 <a class="btn btn--ghost btn--sm" href="/admin/products.php?edit=<?= urlencode((string) $pid) ?>">Edit</a>
                 <form method="post" action="/admin/products.php" style="display:inline">
                   <?= csrf_field() ?>
@@ -244,21 +262,157 @@ require_once __DIR__ . '/../includes/header.php';
           <?php endif; ?>
         </div>
       </form>
+
+      <!-- Crop Modal -->
+      <div id="crop-modal" class="crop-modal" style="display:none">
+        <div class="crop-modal-bg"></div>
+        <div class="crop-modal-box">
+          <div class="crop-stage" id="crop-stage">
+            <img id="crop-img" src="" alt="Crop">
+            <div id="crop-box" class="crop-box"></div>
+          </div>
+          <div class="crop-modal-actions">
+            <button type="button" id="crop-apply" class="btn btn-primary">Apply</button>
+            <button type="button" id="crop-cancel" class="btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <!-- /Crop Modal -->
+
     </div>
   </div>
 </div>
 
 <script>
-  // Image preview before upload
-  (function () {
-    var input = document.getElementById('image');
-    var preview = document.getElementById('image-preview');
-    if (!input || !preview) return;
-    input.addEventListener('change', function () {
-      var f = this.files && this.files[0];
-      if (!f) return;
-      preview.src = URL.createObjectURL(f);
-    });
-  })();
+(function(){
+  var inp = document.getElementById('image'), prev = document.getElementById('image-preview');
+  var box = document.getElementById('crop-box'), stage = document.getElementById('crop-stage');
+  var img = document.getElementById('crop-img'), modal = document.getElementById('crop-modal');
+  if (!inp || !modal || !stage || !img || !box) return;
+
+  var dn = false, mode = null, dir = null, start = {}, croppedDataUrl = null;
+  var MIN = 30, EDGE = 10, BS = parseInt(getComputedStyle(stage).borderTopWidth) || 1;
+
+  // Edge detection for resize handles (8 directions)
+  function getDir(e) {
+    var r = box.getBoundingClientRect();
+    var x = e.clientX - r.left, y = e.clientY - r.top;
+    var l = x < EDGE, r2 = x > r.width - EDGE, t = y < EDGE, b = y > r.height - EDGE;
+    if (l && t) return 'nw'; if (r2 && t) return 'ne';
+    if (l && b) return 'sw'; if (r2 && b) return 'se';
+    if (t) return 'n'; if (b) return 's';
+    if (l) return 'w'; if (r2) return 'e';
+    return null;
+  }
+
+  // File selected → open crop modal
+  inp.addEventListener('change', function() {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    croppedDataUrl = null;
+    modal.style.display = '';
+    img.onload = function() {
+      var dw = img.offsetWidth, dh = img.offsetHeight;
+      var bs = Math.min(dw, dh, 200) | 0;
+      box.style.width = bs + 'px'; box.style.height = bs + 'px';
+      box.style.left = ((dw - bs) / 2) + 'px'; box.style.top = ((dh - bs) / 2) + 'px';
+    };
+    prev.src = img.src = URL.createObjectURL(f);
+  });
+
+  // Apply: crop on canvas, store result, close modal
+  document.getElementById('crop-apply').addEventListener('click', function() {
+    var dw = img.offsetWidth, dh = img.offsetHeight;
+    var sx = img.naturalWidth / dw, sy = img.naturalHeight / dh;
+    var l = parseInt(box.style.left) || 0, t = parseInt(box.style.top) || 0;
+    var bw = box.offsetWidth || 1, bh = box.offsetHeight || 1;
+    var cw = Math.round(bw * sx), ch = Math.round(bh * sy);
+    var c = document.createElement('canvas');
+    c.width = cw; c.height = ch;
+    c.getContext('2d').drawImage(img, l * sx, t * sy, cw, ch, 0, 0, cw, ch);
+    croppedDataUrl = c.toDataURL('image/jpeg', 0.85);
+    prev.src = croppedDataUrl;
+    modal.style.display = 'none';
+  });
+
+  // Cancel: close modal, clear file input
+  document.getElementById('crop-cancel').addEventListener('click', function() {
+    modal.style.display = 'none';
+    inp.value = '';
+    prev.removeAttribute('src');
+  });
+
+  // pointer handlers (mouse + touch)
+  function ptrDown(e) {
+    if (e.button) return;
+    var p = e.touches ? e.touches[0] : e;
+    dn = true; dir = getDir(p); mode = dir ? 'resize' : 'move';
+    var r = box.getBoundingClientRect(), pr = stage.getBoundingClientRect();
+    start = { mx: p.clientX, my: p.clientY, ox: r.left - pr.left, oy: r.top - pr.top, ow: r.width, oh: r.height };
+    e.preventDefault();
+  }
+  box.addEventListener('mousedown', ptrDown);
+  box.addEventListener('touchstart', ptrDown, { passive: false });
+
+  function ptrMove(e) {
+    var p = e.touches ? e.touches[0] : e;
+    if (!dn) {
+      var d = getDir(p);
+      if (d) {
+        var cs = { n:'ns', s:'ns', e:'ew', w:'ew', ne:'nesw', sw:'nesw', nw:'nwse', se:'nwse' };
+        box.style.cursor = cs[d] + '-resize';
+      } else { box.style.cursor = 'move'; }
+      return;
+    }
+    e.preventDefault();
+    var dx = p.clientX - start.mx, dy = p.clientY - start.my;
+    var x = start.ox, y = start.oy, w = start.ow, h = start.oh;
+    var dw = img.offsetWidth, dh = img.offsetHeight;
+    if (mode === 'move') {
+      x = start.ox + dx;
+      y = start.oy + dy;
+    } else {
+      if (dir.includes('e')) w = Math.max(MIN, Math.min(start.ow + dx, dw - start.ox));
+      if (dir.includes('s')) h = Math.max(MIN, Math.min(start.oh + dy, dh - start.oy));
+      if (dir.includes('w')) {
+        var nx = Math.max(0, Math.min(start.ox + dx, start.ox + start.ow - MIN));
+        w = start.ow + (start.ox - nx);
+        x = nx;
+      }
+      if (dir.includes('n')) {
+        var ny = Math.max(0, Math.min(start.oy + dy, start.oy + start.oh - MIN));
+        h = start.oh + (start.oy - ny);
+        y = ny;
+      }
+      // Enforce square
+      if (w !== start.ow) h = w; else if (h !== start.oh) w = h;
+      var s = Math.min(Math.max(w, h, MIN), Math.min(dw, dh));
+      w = h = s;
+    }
+    // Clamp box to image bounds
+    var ir = img.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+    var ix = ir.left - sr.left - BS, iy = ir.top - sr.top - BS;
+    var iw = img.offsetWidth, ih = img.offsetHeight;
+    x = Math.max(ix, Math.min(x, ix + iw - w));
+    y = Math.max(iy, Math.min(y, iy + ih - h));
+    box.style.left = x + 'px'; box.style.top = y + 'px';
+    box.style.width = w + 'px'; box.style.height = h + 'px';
+  }
+  document.addEventListener('mousemove', ptrMove);
+  document.addEventListener('touchmove', ptrMove, { passive: false });
+
+  function ptrEnd() { dn = false; mode = null; dir = null; }
+  document.addEventListener('mouseup', ptrEnd);
+  document.addEventListener('touchend', ptrEnd);
+
+  // On submit: embed cropped image if available
+  inp.closest('form').addEventListener('submit', function() {
+    if (croppedDataUrl) {
+      var h = document.createElement('input');
+      h.type = 'hidden'; h.name = 'cropped'; h.value = croppedDataUrl;
+      this.appendChild(h);
+    }
+  });
+})();
 </script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

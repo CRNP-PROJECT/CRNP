@@ -14,6 +14,12 @@ require_cashier();
 
 $cashierName = $_SESSION['cashier_name'] ?? 'Cashier';
 $products    = Product::raw();
+$cats = [];
+foreach ($products as $p) {
+    if (!empty($p['category'])) $cats[$p['category']] = true;
+}
+ksort($cats);
+uasort($products, fn($a,$b) => strcasecmp($a['category']??'', $b['category']??''));
 
 /* ---------- POST: create walk-in order ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -168,12 +174,18 @@ foreach ($products as $pid => $p) {
   .pos-search .input { flex:1; }
 
   .pos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+  .pos-cats { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .pos-cat { font-size:12px; font-weight:600; padding:3px 12px; border-radius:999px;
+    border:1px solid var(--line,#e6dfd1); background:var(--surface,#fff);
+    cursor:pointer; color:var(--muted); transition:.15s; }
+  .pos-cat:hover { background:var(--gold-100); border-color:var(--gold); color:var(--gold); }
+  .pos-cat.is-active { background:var(--gold); color:#fff; border-color:var(--gold); }
   .pos-item {
     border:1px solid var(--line,#e6dfd1); border-radius:12px; overflow:hidden;
     background:var(--surface,#fff); cursor:pointer; transition:box-shadow .15s,border-color .15s;
-    position:relative;
+    position:relative; box-shadow:var(--shadow-sm);
   }
-  .pos-item:hover { box-shadow:0 4px 16px rgba(0,0,0,.1); }
+  .pos-item:hover { border-color:var(--gold); box-shadow:var(--shadow); }
   .pos-item.is-soldout { opacity:.5; cursor:not-allowed; }
   .pos-item__img { width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:var(--muted,#f5f0e8); }
   .pos-item__body { padding:10px 12px; }
@@ -185,7 +197,7 @@ foreach ($products as $pid => $p) {
   .pos-item__stock.low { color:var(--warn,#d4850a); }
   .pos-item__cat { position:absolute; top:8px; left:8px; font-size:10px; font-weight:600;
     text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:999px;
-    background:rgba(255,255,255,.88); color:var(--ink,#211b14); backdrop-filter:blur(4px); }
+    background:var(--gold-100); color:var(--gold-600); }
 
   /* Order panel */
   .order-panel { border:1px solid var(--line,#e6dfd1); border-radius:14px; background:var(--surface,#fff); overflow:hidden; }
@@ -255,6 +267,14 @@ foreach ($products as $pid => $p) {
       <div class="pos-search">
         <input class="input" type="search" id="posSearch" placeholder="Search products…" aria-label="Search products">
       </div>
+<?php if ($cats): ?>
+      <div class="pos-cats" id="posCats">
+        <button type="button" class="pos-cat is-active" data-cat="">All</button>
+        <?php foreach (array_keys($cats) as $c): ?>
+          <button type="button" class="pos-cat" data-cat="<?= e($c) ?>"><?= e($c) ?></button>
+        <?php endforeach; ?>
+      </div>
+<?php endif; ?>
       <div class="pos-grid" id="posGrid">
         <?php foreach ($products as $pid => $p):
             $stock   = (int)($p['stock'] ?? 0);
@@ -540,6 +560,18 @@ foreach ($products as $pid => $p) {
   window.posRemove = removeItem;
 
   render();
+
+  /* Category filter */
+  document.getElementById('posCats')?.addEventListener('click', function(e) {
+    var btn = e.target.closest('.pos-cat');
+    if (!btn) return;
+    this.querySelector('.is-active').classList.remove('is-active');
+    btn.classList.add('is-active');
+    var cat = btn.dataset.cat;
+    grid.querySelectorAll('.pos-item').forEach(function(el) {
+      el.style.display = !cat || el.dataset.cat === cat ? '' : 'none';
+    });
+  });
 })();
 </script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
