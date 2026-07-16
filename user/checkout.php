@@ -19,14 +19,12 @@ $layout    = 'narrow';
  * or when individual fields are missing. */
 $profileName    = user_name();
 $profileContact = '';
-$profileAddress = '';
 $userId = $_SESSION['user_id'] ?? '';
 if ($userId !== '') {
     $rec = $db->retrieve('/user/' . $userId);
     if (is_array($rec)) {
         if (!empty($rec['name']))    $profileName    = (string) $rec['name'];
         if (!empty($rec['contact'])) $profileContact = (string) $rec['contact'];
-        if (!empty($rec['address'])) $profileAddress = (string) $rec['address'];
     }
 }
 
@@ -35,6 +33,9 @@ $pickupSlots = [];
 for ($m = 11 * 60; $m <= 21 * 60 + 30; $m += 30) {
     $pickupSlots[] = sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
 }
+
+/* Reservation date = today only. */
+$reservationDate = date('Y-m-d');
 
 /* Guard: empty cart can't be checked out. */
 $cart = get_cart();
@@ -48,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     $full_name = trim(post('full_name'));
     $contact   = trim(post('contact'));
-    $address   = trim(post('address'));
     $pickup    = trim(post('pickup_time', ''));
     $method    = post('payment_method', 'counter');
     if (!in_array($method, ['gcash', 'counter'], true)) {
@@ -58,7 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = [];
     if ($full_name === '') $errors[] = 'Please enter your full name.';
     if ($contact   === '') $errors[] = 'Please enter a contact number.';
-    if ($address   === '') $errors[] = 'Please enter a delivery address.';
     if ($pickup === '' || !in_array($pickup, $pickupSlots, true)) {
         $errors[] = 'Please choose a pickup time.';
     }
@@ -130,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'total'            => $total,
             'full_name'        => $full_name,
             'contact'          => $contact,
-            'address'          => $address,
+            'reservation_date' => $reservationDate,
             'pickup_time'      => $pickup,
             'payment_method'   => $method,
             'payment_status'   => $payment_status,
@@ -168,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('Order placed, but confirmation email could not be sent.', 'warn');
             }
 
-            flash('Order placed! We will be in touch shortly.', 'ok');
+            flash('Reservation placed! We will be in touch shortly.', 'ok');
             redirect('/user/your_orders.php');
         } catch (Throwable $ex) {
             flash('Could not place your order: ' . $ex->getMessage(), 'danger');
@@ -190,10 +189,10 @@ if (!$cart) {
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="page-head">
+  <div class="page-head">
   <span class="eyebrow">Checkout · Step 2 of 2</span>
-  <h1>Confirm your order</h1>
-  <p>Almost there. Tell us where to send it and how you'd like to pay.</p>
+  <h1>Confirm your reservation</h1>
+  <p>Almost there. Fill in your details and preferred pickup time for today.</p>
 </div>
 
 <form method="post" enctype="multipart/form-data" class="form-grid" novalidate>
@@ -234,7 +233,7 @@ require_once __DIR__ . '/../includes/header.php';
   </div>
 
   <div class="card card--pad">
-    <div class="card__head" style="padding:0 0 14px;border-bottom:1px solid var(--line-2);margin-bottom:18px"><h2>Delivery &amp; payment</h2></div>
+    <div class="card__head" style="padding:0 0 14px;border-bottom:1px solid var(--line-2);margin-bottom:18px"><h2>Reservation &amp; payment</h2></div>
 
     <div class="form-grid">
       <div class="form-grid--2">
@@ -249,8 +248,9 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
 
       <div class="field">
-        <label for="address">Delivery address</label>
-        <textarea class="textarea" id="address" name="address" required autocomplete="street-address" placeholder="House no., street, barangay, city"><?= e(post('address', $profileAddress)) ?></textarea>
+        <label>Reservation date</label>
+        <input class="input" type="text" value="<?= e(date('l, F j, Y')) ?>" readonly style="background:var(--bg-2);cursor:default">
+        <span class="hint">All reservations are for today only.</span>
       </div>
 
       <div class="field">
@@ -283,7 +283,7 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 
     <div class="form-actions" style="margin-top:20px">
-      <button class="btn btn--gold btn--lg" type="submit">Place order</button>
+      <button class="btn btn--gold btn--lg" type="submit">Place reservation</button>
       <a class="btn btn--ghost" href="/user/cart.php">Back to cart</a>
     </div>
   </div>
