@@ -4,14 +4,14 @@
  */
 require_once __DIR__ . '/../init.php';
 require_admin();
+use App\Models\Product;
 
-$db       = getDB();
 $editId   = isset($_GET['edit']) ? (string) $_GET['edit'] : '';
 $editing  = null;
 
 if ($editId !== '') {
-    $editing = $db->retrieve('/products/' . $editId);
-    if (!is_array($editing)) {
+    $editing = Product::find($editId);
+    if (!$editing) {
         flash('Product not found.', 'warn');
         redirect('/admin/products.php');
     }
@@ -25,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete') {
         $id = (string) post('id', '');
         try {
-            $db->delete('/products', $id);
+            $product = Product::find($id);
+            if ($product) $product->delete();
             flash('Product deleted.', 'ok');
         } catch (Throwable $ex) {
             flash('Could not delete product: ' . $ex->getMessage(), 'danger');
@@ -57,19 +58,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         try {
-            // Image upload (optional)
-            $filename = save_upload('image', UPLOAD_ROOT . '/admin/item');
-            if ($filename !== null) {
-                $data['image'] = $filename;
+            // Image upload — stored as base64 in Firebase
+            $b64 = upload_to_base64('image', UPLOAD_ROOT . '/admin/item');
+            if ($b64 !== null) {
+                $data['image'] = $b64;
             }
 
             if ($id !== '') {
-                $db->update('/products', $id, $data);
+                $product = Product::find($id);
+                if ($product) $product->update($data);
                 flash('Product updated.', 'ok');
             } else {
                 $data['image']      = $data['image']      ?? '';
                 $data['created_at'] = now();
-                $db->insert('/products', $data);
+                $p = new Product($data);
+                $p->save();
                 flash('Product created.', 'ok');
             }
         } catch (Throwable $ex) {
@@ -82,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ---------- List data ---------- */
-$products = rows($db->retrieve('/products'));
+$products = Product::raw();
 // Sort newest first
 uasort($products, function ($a, $b) {
     $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
@@ -91,12 +94,12 @@ uasort($products, function ($a, $b) {
 });
 
 // Form defaults
-$formName        = $editing['name']        ?? post('name', '');
-$formCategory    = $editing['category']    ?? post('category', '');
-$formDescription = $editing['description'] ?? post('description', '');
-$formPrice       = $editing['price']       ?? post('price', '');
-$formStock       = $editing['stock']       ?? post('stock', '');
-$formImage       = $editing['image']       ?? '';
+$formName        = $editing?->get('name')        ?? post('name', '');
+$formCategory    = $editing?->get('category')    ?? post('category', '');
+$formDescription = $editing?->get('description') ?? post('description', '');
+$formPrice       = $editing?->get('price')       ?? post('price', '');
+$formStock       = $editing?->get('stock')       ?? post('stock', '');
+$formImage       = $editing?->get('image')       ?? '';
 
 $pageTitle = 'Products';
 $activeNav = 'products';
@@ -143,7 +146,7 @@ require_once __DIR__ . '/../includes/header.php';
         <?php else: foreach ($products as $pid => $p):
             $stock = (int) ($p['stock'] ?? 0);
             $stockClass = $stock === 0 ? 'stock-out' : ($stock <= 5 ? 'stock-low' : '');
-            $img = upload_web('admin/item', $p['image'] ?? '');
+            $img = image_display_src($p['image'] ?? '');
         ?>
           <tr>
             <td>
@@ -225,7 +228,7 @@ require_once __DIR__ . '/../includes/header.php';
           <label for="image">Image</label>
           <div class="img-row">
             <img id="image-preview" class="img-preview"
-                 src="<?= $formImage ? e(upload_web('admin/item', $formImage)) : e('/assets/img/placeholder.svg') ?>"
+                 src="<?= $formImage ? e(image_display_src($formImage)) : e('/assets/img/placeholder.svg') ?>"
                  alt="Preview">
             <div>
               <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp">

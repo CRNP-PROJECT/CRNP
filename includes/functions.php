@@ -181,6 +181,71 @@ function upload_web(string $category, ?string $filename): string {
     return UPLOAD_WEB . '/' . $category . '/' . rawurlencode($filename);
 }
 
+/* ---------- base64 image storage (Firebase) + local save ---------- */
+/**
+ * Save uploaded image locally to UPLOAD_ROOT/admin/item/ AND return a
+ * "b64:<base64data>" string for Firebase storage.
+ * @throws Exception on validation / IO failure.
+ */
+function upload_to_base64(string $field, string $localDir = '', int $maxMB = 5): ?string {
+    if (!isset($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+    if ($_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+        throw new Exception('Upload error (code ' . $_FILES[$field]['error'] . ').');
+    }
+    if ($_FILES[$field]['size'] > $maxMB * 1024 * 1024) {
+        throw new Exception("File exceeds {$maxMB}MB limit.");
+    }
+    $tmp = $_FILES[$field]['tmp_name'];
+
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime  = finfo_file($finfo, $tmp);
+    finfo_close($finfo);
+
+    $mimeToExt = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    if (!isset($mimeToExt[$mime])) {
+        throw new Exception('Invalid file type. Only JPG, PNG, and WebP are allowed.');
+    }
+    $imgInfo = @getimagesize($tmp);
+    if ($imgInfo === false) {
+        throw new Exception('File is not a valid image.');
+    }
+
+    $bytes = file_get_contents($tmp);
+    if ($bytes === false) {
+        throw new Exception('Failed to read uploaded file.');
+    }
+
+    // Save locally if a directory is specified
+    if ($localDir !== '') {
+        $ext  = $mimeToExt[$mime];
+        $name = bin2hex(random_bytes(16)) . '.' . $ext;
+        if (!is_dir($localDir)) {
+            @mkdir($localDir, 0775, true);
+        }
+        if (!move_uploaded_file($tmp, rtrim($localDir, '/') . '/' . $name)) {
+            throw new Exception('Failed to save uploaded file locally.');
+        }
+    }
+
+    return 'b64:' . base64_encode($bytes);
+}
+
+/**
+ * Return an <img>-ready src attribute from a stored image value.
+ * Handles both legacy filenames and new "b64:..." base64 strings.
+ */
+function image_display_src(?string $image, string $legacyDir = 'admin/item'): string {
+    if (!$image || $image === '') {
+        return '/assets/img/placeholder.svg';
+    }
+    if (strncmp($image, 'b64:', 4) === 0) {
+        return 'data:image/jpeg;base64,' . substr($image, 4);
+    }
+    return upload_web($legacyDir, $image);
+}
+
 /* ---------- session cart ---------- */
 function get_cart(): array {
     return $_SESSION['cart'] ?? [];

@@ -6,13 +6,14 @@
 require_once __DIR__ . '/../init.php';
 require_cashier();
 
-$db = getDB();
+use App\Models\Order;
+use App\Models\Booking;
 
 $orderStatuses   = ['cashier_cancelled', 'cancelled', 'done'];
 $bookingStatuses = ['rejected', 'returned', 'cancelled'];
 
-$orders   = rows($db->retrieve('/orders'));
-$bookings = rows($db->retrieve('/bookings'));
+$orders   = Order::raw();
+$bookings = Booking::raw();
 
 // Filter
 $ordersHist = [];

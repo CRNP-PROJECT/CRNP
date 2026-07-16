@@ -8,7 +8,9 @@
 require_once __DIR__ . '/../init.php';
 require_cashier();
 
-$db          = getDB();
+use App\Models\Booking;
+use App\Models\RentItem;
+
 $cashierName = $_SESSION['cashier_name'] ?? 'Cashier';
 
 /* ---------- POST: actions ---------- */
@@ -23,14 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($bookingId !== '') {
-        $booking = $db->retrieve('/bookings/' . $bookingId);
-        if (is_array($booking)) {
-            $current = (string)($booking['status'] ?? '');
+        $booking = Booking::find($bookingId);
+        if ($booking) {
+            $current = (string)($booking->status ?? '');
             $short   = substr($bookingId, 0, 6);
-            $items   = is_array($booking['items'] ?? null) ? $booking['items'] : [];
+            $items   = is_array($booking->get('items') ?? null) ? $booking->get('items') : [];
 
             if ($action === 'approve' && $current === 'pending') {
-                $db->update('/bookings', $bookingId, [
+                $booking->update([
                     'status'       => 'accepted',
                     'approved_at'  => now(),
                     'approved_by'  => $cashierName,
@@ -39,9 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($action === 'reject' && $current === 'pending') {
                 // Restore rent stock by KEY (only on pending → rejected)
                 foreach ($items as $itemId => $info) {
-                    restore_rent_stock($db, (string)$itemId, (int)($info['qty'] ?? 0));
+                    RentItem::restoreStock((string)$itemId, (int)($info['qty'] ?? 0));
                 }
-                $db->update('/bookings', $bookingId, [
+                $booking->update([
                     'status'       => 'rejected',
                     'rejected_at'  => now(),
                     'rejected_by'  => $cashierName,
@@ -50,9 +52,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($action === 'return' && $current === 'accepted') {
                 // Restore rent stock by KEY (only on accepted → returned)
                 foreach ($items as $itemId => $info) {
-                    restore_rent_stock($db, (string)$itemId, (int)($info['qty'] ?? 0));
+                    RentItem::restoreStock((string)$itemId, (int)($info['qty'] ?? 0));
                 }
-                $db->update('/bookings', $bookingId, [
+                $booking->update([
                     'status'       => 'returned',
                     'returned_at'  => now(),
                     'returned_by'  => $cashierName,
@@ -73,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ---------- GET: list ---------- */
 $statusFilter = trim((string)($_GET['status'] ?? ''));
 
-$bookings = rows($db->retrieve('/bookings'));
+$bookings = Booking::raw();
 if ($statusFilter !== '') {
     $bookings = filter_by($bookings, 'status', $statusFilter);
 }

@@ -4,8 +4,8 @@
  */
 require_once __DIR__ . '/../init.php';
 require_admin();
-
-$db = getDB();
+use App\Models\Booking;
+use App\Models\RentItem;
 
 /* ---------- POST: create reservation ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Re-fetch items and validate stock
-    $rentItems = rows($db->retrieve('/rent_items'));
+    $rentItems = RentItem::raw();
     $items = [];
     $total = 0.0;
     $errors = [];
@@ -99,10 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     try {
-        $newId = $db->insert('/bookings', $booking);
+        (new Booking($booking))->save();
         // Decrement rent stock for each item
         foreach ($qtys as $itemId => $qty) {
-            decrement_rent_stock($db, $itemId, $qty);
+            RentItem::decrementStock($itemId, $qty);
         }
         flash('Reservation created for ' . $fullName . '.', 'ok');
     } catch (Throwable $ex) {
@@ -112,8 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ---------- List ---------- */
-$bookings  = rows($db->retrieve('/bookings'));
-$rentItems = rows($db->retrieve('/rent_items'));
+$bookings  = Booking::raw();
+$rentItems = RentItem::raw();
 
 uasort($bookings, function ($a, $b) {
     $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
@@ -266,7 +266,7 @@ require_once __DIR__ . '/../includes/header.php';
               <?php foreach ($rentItems as $rid => $r):
                 $onHand = (int) ($r['quantity'] ?? 0);
                 $lowClass = $onHand <= 2 ? 'low' : '';
-                $img = upload_web('admin/item', $r['image'] ?? '');
+                $img = image_display_src($r['image'] ?? '');
               ?>
                 <div class="item-row">
                   <img src="<?= e($img) ?>" alt="">

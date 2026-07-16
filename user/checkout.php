@@ -6,6 +6,8 @@
  */
 require_once __DIR__ . '/../init.php';
 require_user();
+use App\Models\Order;
+use App\Models\Product;
 
 $db = getDB();
 $activeNav = 'shop';
@@ -91,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Please upload your GCash receipt.';
         } else {
             try {
-                $receipt = save_upload('receipt', UPLOAD_ROOT . '/user/bookings');
+                $receipt = upload_to_base64('receipt', UPLOAD_ROOT . '/user/bookings');
                 if (!$receipt) {
                     $errors[] = 'Receipt upload failed. Please try again.';
                 }
@@ -122,13 +124,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         try {
-            $newId = $db->insert('/orders', $order);
+            $newId = (new Order($order))->save();
             if (!$newId) {
                 throw new RuntimeException('Firebase did not return an order id.');
             }
             /* Decrement stock only after a successful insert. */
             foreach ($items as $pid => $row) {
-                decrement_product_stock($db, $pid, (int) $row['qty']);
+                Product::decrementStock($pid, (int) $row['qty']);
             }
             set_cart([]);
 

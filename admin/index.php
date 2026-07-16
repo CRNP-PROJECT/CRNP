@@ -2,16 +2,19 @@
 /**
  * admin/index.php — Dashboard: KPI strip, 7-day sales chart, recent activity.
  */
+use App\Models\Order;
+use App\Models\Product;
+use App\Models\Booking;
+use App\Models\RentItem;
+
 require_once __DIR__ . '/../init.php';
 require_admin();
 
-$db        = getDB();
-/* P1: wrap Firebase reads in a per-request cache (30s TTL) so the dashboard
-   doesn't re-fetch the entire DB on every load / refresh within the window. */
-$orders    = cache_remember('admin_orders',    30, fn() => rows($db->retrieve('/orders')));
-$bookings  = cache_remember('admin_bookings',  30, fn() => rows($db->retrieve('/bookings')));
-$products  = cache_remember('admin_products',  30, fn() => rows($db->retrieve('/products')));
-$rentItems = cache_remember('admin_rent_items', 30, fn() => rows($db->retrieve('/rent_items')));
+/* P1: wrap Firebase reads in a per-request cache (30s TTL) */
+$orders    = cache_remember('admin_orders',    30, fn() => Order::raw());
+$bookings  = cache_remember('admin_bookings',  30, fn() => Booking::raw());
+$products  = cache_remember('admin_products',  30, fn() => Product::raw());
+$rentItems = cache_remember('admin_rent_items', 30, fn() => RentItem::raw());
 
 /* ---------- KPIs ---------- */
 $totalOrders   = count($orders);
@@ -57,47 +60,14 @@ foreach ($bookings as $b) {
 }
 
 /* ---------- Best-selling by category (pie chart data) ---------- */
-$categorySales = []; // category => total qty sold
-foreach ($orders as $o) {
-    if (!is_array($o)) continue;
-    if (in_array(($o['status'] ?? ''), ['cancelled', 'cashier_cancelled'], true)) continue;
-    foreach (($o['items'] ?? []) as $pid => $info) {
-        if (!is_array($info)) continue;
-        $qty = (int) ($info['qty'] ?? 0);
-        if ($qty <= 0) continue;
-        $cat = (string) ($products[$pid]['category'] ?? 'Uncategorized');
-        $categorySales[$cat] = ($categorySales[$cat] ?? 0) + $qty;
-    }
-}
-arsort($categorySales);
-$categorySales = array_slice($categorySales, 0, 8, true);
+$categorySales = Order::topCategories(8, $products);
 
 /* ---------- Bookings by status (column chart data) ---------- */
-$bookingStatuses = [];
-foreach ($bookings as $b) {
-    if (!is_array($b)) continue;
-    $st = (string) ($b['status'] ?? 'unknown');
-    [$label] = booking_status_label($st);
-    $bookingStatuses[$label] = ($bookingStatuses[$label] ?? 0) + 1;
-}
-arsort($bookingStatuses);
+$bookingStatuses = Booking::statusBreakdown();
 $maxBookingStatus = max($bookingStatuses) ?: 1;
 
 /* ---------- Best-selling rent items ---------- */
-$rentItemSales = [];
-foreach ($bookings as $b) {
-    if (!is_array($b)) continue;
-    if (in_array(($b['status'] ?? ''), ['cancelled', 'rejected'], true)) continue;
-    foreach (($b['items'] ?? []) as $rid => $info) {
-        if (!is_array($info)) continue;
-        $qty = (int) ($info['qty'] ?? 0);
-        if ($qty <= 0) continue;
-        $name = (string) ($rentItems[$rid]['name'] ?? $info['name'] ?? 'Item');
-        $rentItemSales[$name] = ($rentItemSales[$name] ?? 0) + $qty;
-    }
-}
-arsort($rentItemSales);
-$rentItemSales = array_slice($rentItemSales, 0, 10, true);
+$rentItemSales = Booking::topRentItems(10, $rentItems);
 $maxRentQty = max($rentItemSales) ?: 1;
 
 /* ---------- SVG pie chart helper ---------- */
@@ -131,23 +101,12 @@ function svgPie(array $data, int $size = 180): string {
 }
 
 /* ---------- 7-day sales chart ---------- */
-$dayTotals = [];
+$dayTotals = Order::last7DaysSales();
 $dayLabels = [];
 for ($i = 6; $i >= 0; $i--) {
-    $d  = strtotime("-$i days");
-    $key  = date('Y-m-d', $d);
-    $label = date('D', $d);
-    $dayTotals[$key] = 0.0;
-    $dayLabels[$key] = $label;
-}
-foreach ($orders as $o) {
-    if (!is_array($o)) continue;
-    if ((string) ($o['payment_status'] ?? '') !== 'paid') continue;
-    $created = (string) ($o['created_at'] ?? '');
-    $day = substr($created, 0, 10);
-    if (isset($dayTotals[$day])) {
-        $dayTotals[$day] += (float) ($o['total'] ?? 0);
-    }
+    $d = strtotime("-$i days");
+    $key = date('Y-m-d', $d);
+    $dayLabels[$key] = date('D', $d);
 }
 $maxDay = max($dayTotals) ?: 1.0;
 
@@ -160,19 +119,11 @@ $days     = array_keys($dayTotals);
 $chartW   = count($days) * ($barW + $gap) + $gap;
 
 /* ---------- Payment method breakdown (pie) ---------- */
-$paymentMethods = [];
-foreach ($orders as $o) {
-    if (!is_array($o)) continue;
-    if ((string) ($o['payment_status'] ?? '') !== 'paid') continue;
-    $pm = (string) ($o['payment_method'] ?? 'counter');
-    $label = $pm === 'gcash' ? 'GCash' : 'Counter';
-    $paymentMethods[$label] = ($paymentMethods[$label] ?? 0) + 1;
-}
-arsort($paymentMethods);
+$paymentMethods = Order::paymentMethodBreakdown();
 
 /* ---------- Order status distribution (pie) ---------- */
 $orderStatuses = [];
-foreach ($orders as $o) {
+foreach (Order::raw() as $o) {
     if (!is_array($o)) continue;
     $st = (string) ($o['status'] ?? 'unknown');
     [$label] = order_status_label($st);
@@ -181,51 +132,23 @@ foreach ($orders as $o) {
 arsort($orderStatuses);
 
 /* ---------- Peak hours bar chart ---------- */
-$peakHours = array_fill(0, 24, 0);
-foreach ($orders as $o) {
-    if (!is_array($o)) continue;
-    $created = (string) ($o['created_at'] ?? '');
-    if ($created !== '') {
-        $hour = (int) date('G', strtotime($created));
-        $peakHours[$hour]++;
-    }
-}
+$peakHours = Order::peakHours();
 $maxPeak = max($peakHours) ?: 1;
 
 /* ---------- Top 10 products (horizontal bar) ---------- */
+$productSalesRaw = Order::topProducts(10);
 $productSales = [];
-foreach ($orders as $o) {
-    if (!is_array($o)) continue;
-    if (in_array(($o['status'] ?? ''), ['cancelled', 'cashier_cancelled'], true)) continue;
-    foreach (($o['items'] ?? []) as $pid => $info) {
-        if (!is_array($info)) continue;
-        $qty = (int) ($info['qty'] ?? 0);
-        if ($qty <= 0) continue;
-        $name = (string) ($products[$pid]['name'] ?? $info['name'] ?? 'Item');
-        $productSales[$name] = ($productSales[$name] ?? 0) + $qty;
-    }
+foreach ($productSalesRaw as $pid => $qty) {
+    $name = (string) ($products[$pid]['name'] ?? 'Item');
+    $productSales[$name] = $qty;
 }
-arsort($productSales);
-$productSales = array_slice($productSales, 0, 10, true);
 $maxProdQty  = max($productSales) ?: 1;
 
 /* ---------- Recent orders (last 8 by created_at desc) ---------- */
-$recentOrders = $orders;
-usort($recentOrders, function ($a, $b) {
-    $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
-    $tb = strtotime((string) ($b['created_at'] ?? '')) ?: 0;
-    return $tb <=> $ta;
-});
-$recentOrders = array_slice($recentOrders, 0, 8, true);
+$recentOrders = Order::recent(8);
 
 /* ---------- Recent bookings (last 5) ---------- */
-$recentBookings = $bookings;
-usort($recentBookings, function ($a, $b) {
-    $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
-    $tb = strtotime((string) ($b['created_at'] ?? '')) ?: 0;
-    return $tb <=> $ta;
-});
-$recentBookings = array_slice($recentBookings, 0, 5, true);
+$recentBookings = Booking::recent(5);
 
 $pageTitle = 'Dashboard';
 $activeNav = 'dash';

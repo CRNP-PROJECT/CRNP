@@ -9,6 +9,8 @@
 require_once __DIR__ . '/../init.php';
 require_kitchen();
 
+use App\Models\Order;
+
 /* ---------- small display helpers (kept local to kitchen pages) ---------- */
 if (!function_exists('k_short_id')) {
     function k_short_id(string $id): string {
@@ -49,8 +51,6 @@ if (!function_exists('k_elapsed')) {
     }
 }
 
-$db = getDB();
-
 /* ---------- POST: status transition (skip the full list fetch) ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
@@ -70,13 +70,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/kitchen/');
     }
 
-    $order = $db->retrieve('/orders/' . $orderId);
-    if (!is_array($order) || !isset($order['status'])) {
+    $order = Order::find($orderId);
+    if (!$order || !isset($order->status)) {
         flash('Order not found.', 'danger');
         redirect('/kitchen/');
     }
 
-    $current = (string)$order['status'];
+    $current = (string)$order->status;
     $map     = $transitions[$action];
     if (!isset($map[$current])) {
         flash('Invalid status transition.', 'danger');
@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($newStatus === 'done')      $patch['done_at']      = now();
 
     try {
-        $db->update('/orders', $orderId, $patch);
+        $order->update($patch);
         flash('Order #' . k_short_id($orderId) . ' moved to ' . ucfirst($newStatus) . '.', 'ok');
     } catch (Throwable $ex) {
         flash('Could not update the order. Please try again.', 'danger');
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ---------- GET: list + filter ---------- */
-$allOrders = rows($db->retrieve('/orders'));
+$allOrders = Order::raw();
 $statusFilter = isset($_GET['status']) ? (string)$_GET['status'] : 'active';
 $validFilters = ['all', 'active', 'pending', 'accepted', 'preparing', 'ready', 'done'];
 if (!in_array($statusFilter, $validFilters, true)) {

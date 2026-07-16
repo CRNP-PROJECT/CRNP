@@ -4,14 +4,14 @@
  */
 require_once __DIR__ . '/../init.php';
 require_admin();
+use App\Models\RentItem;
 
-$db      = getDB();
 $editId  = isset($_GET['edit']) ? (string) $_GET['edit'] : '';
 $editing = null;
 
 if ($editId !== '') {
-    $editing = $db->retrieve('/rent_items/' . $editId);
-    if (!is_array($editing)) {
+    $editing = RentItem::find($editId);
+    if (!$editing) {
         flash('Rent item not found.', 'warn');
         redirect('/admin/rent_items.php');
     }
@@ -25,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete') {
         $id = (string) post('id', '');
         try {
-            $db->delete('/rent_items', $id);
+            $item = RentItem::find($id);
+            if ($item) $item->delete();
             flash('Rent item deleted.', 'ok');
         } catch (Throwable $ex) {
             flash('Could not delete rent item: ' . $ex->getMessage(), 'danger');
@@ -55,18 +56,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         try {
-            $filename = save_upload('image', UPLOAD_ROOT . '/admin/item');
-            if ($filename !== null) {
-                $data['image'] = $filename;
+            $b64 = upload_to_base64('image', UPLOAD_ROOT . '/admin/item');
+            if ($b64 !== null) {
+                $data['image'] = $b64;
             }
 
             if ($id !== '') {
-                $db->update('/rent_items', $id, $data);
+                $item = RentItem::find($id);
+                if ($item) $item->update($data);
                 flash('Rent item updated.', 'ok');
             } else {
                 $data['image']      = $data['image']      ?? '';
                 $data['created_at'] = now();
-                $db->insert('/rent_items', $data);
+                $r = new RentItem($data);
+                $r->save();
                 flash('Rent item created.', 'ok');
             }
         } catch (Throwable $ex) {
@@ -79,18 +82,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ---------- List ---------- */
-$rentItems = rows($db->retrieve('/rent_items'));
+$rentItems = RentItem::raw();
 uasort($rentItems, function ($a, $b) {
     $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
     $tb = strtotime((string) ($b['created_at'] ?? '')) ?: 0;
     return $tb <=> $ta;
 });
 
-$formName        = $editing['name']         ?? post('name', '');
-$formDisplayName = $editing['display_name'] ?? post('display_name', '');
-$formPrice       = $editing['price']        ?? post('price', '');
-$formQuantity    = $editing['quantity']     ?? post('quantity', '');
-$formImage       = $editing['image']        ?? '';
+$formName        = $editing?->get('name')         ?? post('name', '');
+$formDisplayName = $editing?->get('display_name') ?? post('display_name', '');
+$formPrice       = $editing?->get('price')        ?? post('price', '');
+$formQuantity    = $editing?->get('quantity')     ?? post('quantity', '');
+$formImage       = $editing?->get('image')        ?? '';
 
 $pageTitle = 'Rent Items';
 $activeNav = 'rent';
@@ -137,7 +140,7 @@ require_once __DIR__ . '/../includes/header.php';
         <?php else: foreach ($rentItems as $rid => $r):
             $qty = (int) ($r['quantity'] ?? 0);
             $qtyClass = $qty === 0 ? 'qty-out' : ($qty <= 2 ? 'qty-low' : '');
-            $img = upload_web('admin/item', $r['image'] ?? '');
+            $img = image_display_src($r['image'] ?? '');
         ?>
           <tr>
             <td>
@@ -209,7 +212,7 @@ require_once __DIR__ . '/../includes/header.php';
           <label for="image">Image</label>
           <div class="img-row">
             <img id="image-preview" class="img-preview"
-                 src="<?= $formImage ? e(upload_web('admin/item', $formImage)) : e('/assets/img/placeholder.svg') ?>"
+                 src="<?= $formImage ? e(image_display_src($formImage)) : e('/assets/img/placeholder.svg') ?>"
                  alt="Preview">
             <div>
               <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp">

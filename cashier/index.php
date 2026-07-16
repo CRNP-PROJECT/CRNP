@@ -11,6 +11,8 @@
  *  3. Receipt lightbox — inline modal replaces the new-tab <a> link.
  *  4. Bulk "Accept all pending" — one POST accepts every pending order.
  */
+use App\Models\Order;
+
 require_once __DIR__ . '/../init.php';
 require_cashier();
 
@@ -30,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /* --- Bulk: accept every pending order (no order_id required) --- */
     if ($action === 'accept_all_pending') {
-        $all = rows($db->retrieve('/orders'));
+        $all = Order::raw();
         $now = now();
         $n   = 0;
         foreach ($all as $oid => $o) {
@@ -56,13 +58,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /* --- Per-order actions --- */
     if ($orderId !== '') {
-        $order = $db->retrieve('/orders/' . $orderId);
-        if (is_array($order)) {
-            $current = (string)($order['status'] ?? '');
+        $order = Order::find($orderId);
+        if ($order) {
+            $current = (string)$order->status;
             $short   = substr($orderId, 0, 6);
 
             if ($action === 'accept' && $current === 'pending') {
-                $db->update('/orders', $orderId, [
+                $order->update([
                     'status'      => 'accepted',
                     'accepted_at' => now(),
                     'accepted_by' => $cashierName,
@@ -70,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('Order #' . $short . ' accepted.', 'ok');
             } elseif ($action === 'cancel') {
                 $note = trim((string)post('cancel_note', ''));
-                $db->update('/orders', $orderId, [
+                $order->update([
                     'status'        => 'cashier_cancelled',
                     'cancelled_by'  => $cashierName,
                     'cancel_note'   => $note,
@@ -78,27 +80,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 flash('Order #' . $short . ' cancelled.', 'warn');
             } elseif ($action === 'restore' && $current === 'cashier_cancelled') {
-                // Restore a cashier-cancelled order back to pending.
-                // NOTE: product stock is intentionally NOT touched — the
-                // cashier cancel flow never deducted stock (only bookings do
-                // that), so there is nothing to refund here. The status guard
-                // above prevents double-restore race conditions.
-                $db->update('/orders', $orderId, [
+                $order->update([
                     'status'      => 'pending',
                     'restored_by' => $cashierName,
                     'restored_at' => now(),
                 ]);
                 flash('Order #' . $short . ' restored to pending.', 'ok');
-            } elseif ($action === 'mark_paid' && ($order['payment_status'] ?? '') !== 'paid') {
-                $db->update('/orders', $orderId, [
+            } elseif ($action === 'mark_paid' && $order->get('payment_status') !== 'paid') {
+                $order->update([
                     'payment_verified' => true,
                     'payment_status'   => 'paid',
                     'verified_at'      => now(),
                     'verified_by'      => $cashierName,
                 ]);
                 flash('Order #' . $short . ' marked as paid.', 'ok');
-            } elseif ($action === 'mark_unpaid' && ($order['payment_status'] ?? '') === 'paid') {
-                $db->update('/orders', $orderId, [
+            } elseif ($action === 'mark_unpaid' && $order->get('payment_status') === 'paid') {
+                $order->update([
                     'payment_verified' => false,
                     'payment_status'   => 'unpaid',
                 ]);
@@ -118,32 +115,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ---------- GET: list + stats ---------- */
 $statusFilter = trim((string)($_GET['status'] ?? ''));
 
-$allOrders = rows($db->retrieve('/orders'));
+$allOrders = Order::raw();
 
-// Stats (always over the full set)
-$pendingCount = 0;
-$unpaidCount  = 0;
-$todaySales   = 0.0;
-$today        = date('Y-m-d');
-foreach ($allOrders as $o) {
-    if (!is_array($o)) {
-        continue;
-    }
-    $st = (string)($o['status'] ?? '');
-    if ($st === 'pending') {
-        $pendingCount++;
-    }
-    if (($o['payment_status'] ?? '') !== 'paid'
-        && $st !== 'cashier_cancelled' && $st !== 'cancelled') {
-        $unpaidCount++;
-    }
-    $date = substr((string)($o['created_at'] ?? $o['placed_at'] ?? ''), 0, 10);
-    if ($date === $today
-        && ($o['payment_status'] ?? '') === 'paid'
-        && $st !== 'cashier_cancelled' && $st !== 'cancelled') {
-        $todaySales += (float)($o['total'] ?? 0);
-    }
-}
+// Stats via model
+$pendingCount = Order::pendingCount();
+$unpaidCount  = Order::unpaidCount();
+$todaySales   = Order::todaySales();
 
 /* Lightweight polling endpoint consumed by the inline JS below.
    Returns just the current pending count as JSON so the page can poll
@@ -310,7 +287,7 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
                 <?php if ($isGcash): ?>
                   <div class="mt-2">
                     <?php if ($receipt !== ''): ?>
-                      <button class="btn btn--ghost btn--sm" type="button" data-receipt="<?= e(upload_web('user/bookings', $receipt)) ?>">View receipt</button>
+                      <button class="btn btn--ghost btn--sm" type="button" data-receipt="<?= e(image_display_src($receipt, 'user/bookings')) ?>">View receipt</button>
                     <?php else: ?>
                       <span class="muted" style="font-size:12px">No receipt uploaded</span>
                     <?php endif; ?>

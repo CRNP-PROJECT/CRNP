@@ -6,8 +6,9 @@
  */
 require_once __DIR__ . '/../init.php';
 require_user();
+use App\Models\Order;
+use App\Models\Booking;
 
-$db = getDB();
 $activeNav = 'orders';
 $pageTitle = 'My Orders';
 $layout    = 'wide';
@@ -31,8 +32,8 @@ function fmt_time(?string $t): string {
     return $ts ? date('M j, Y \a\t g:i A', $ts) : $t;
 }
 
-$orders   = filter_by(rows($db->retrieve('/orders')),   'user_email', user_email());
-$bookings = filter_by(rows($db->retrieve('/bookings')), 'user_email', user_email());
+$orders   = filter_by(Order::raw(),   'user_email', user_email());
+$bookings = filter_by(Booking::raw(), 'user_email', user_email());
 
 usort($orders,   function ($a, $b) { return strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? '')); });
 usort($bookings, function ($a, $b) { return strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? '')); });
@@ -106,8 +107,8 @@ require_once __DIR__ . '/../includes/header.php';
               <td class="muted"><?= e($placed) ?></td>
               <td class="t-right">
                 <?php if (!empty($receipt)): ?>
-                  <a class="thumb--link" href="<?= e(upload_web('user/bookings', $receipt)) ?>" target="_blank" rel="noopener" title="View receipt">
-                    <img class="thumb" src="<?= e(upload_web('user/bookings', $receipt)) ?>" alt="Receipt thumbnail">
+                  <a class="thumb--link" href="<?= e(image_display_src($receipt, 'user/bookings')) ?>" target="_blank" rel="noopener" title="View receipt">
+                    <img class="thumb" src="<?= e(image_display_src($receipt, 'user/bookings')) ?>" alt="Receipt thumbnail">
                   </a>
                 <?php else: ?>
                   <span class="muted">—</span>
@@ -174,8 +175,8 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php if ($canCancel): ?>
                   <a class="btn btn--ghost btn--sm" href="/user/booking.php?cancel=<?= e($id) ?>" data-confirm="Cancel this booking? Reserved stock will be returned.">Cancel</a>
                 <?php elseif (!empty($receipt)): ?>
-                  <a class="thumb--link" href="<?= e(upload_web('user/bookings', $receipt)) ?>" target="_blank" rel="noopener" title="View receipt">
-                    <img class="thumb" src="<?= e(upload_web('user/bookings', $receipt)) ?>" alt="Receipt thumbnail">
+                  <a class="thumb--link" href="<?= e(image_display_src($receipt, 'user/bookings')) ?>" target="_blank" rel="noopener" title="View receipt">
+                    <img class="thumb" src="<?= e(image_display_src($receipt, 'user/bookings')) ?>" alt="Receipt thumbnail">
                   </a>
                 <?php else: ?>
                   <span class="muted">—</span>

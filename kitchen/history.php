@@ -6,6 +6,8 @@
 require_once __DIR__ . '/../init.php';
 require_kitchen();
 
+use App\Models\Order;
+
 /* ---------- small display helpers (shared shape with index.php) ---------- */
 if (!function_exists('k_short_id')) {
     function k_short_id(string $id): string {
@@ -42,8 +44,7 @@ if (!function_exists('k_format_ts')) {
     }
 }
 
-$db    = getDB();
-$all   = rows($db->retrieve('/orders'));
+$all   = Order::raw();
 
 $done = [];
 foreach ($all as $id => $o) {

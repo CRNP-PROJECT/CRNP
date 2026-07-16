@@ -7,7 +7,6 @@
 require_once __DIR__ . '/../init.php';
 require_user();
 
-$db = getDB();
 $activeNav = 'cart';
 $pageTitle = 'Your Cart';
 $layout    = 'narrow';
@@ -80,7 +79,7 @@ require_once __DIR__ . '/../includes/header.php';
       $qty      = (int)   ($item['qty']   ?? 1);
       $subtotal = $unit * $qty;
       $stock    = max(1, (int) ($item['stock'] ?? 1));
-      $img      = upload_web('admin/item', $item['image'] ?? '');
+      $img      = image_display_src($item['image'] ?? '');
     ?>
       <div class="cart-item">
         <img class="cart-item__media" src="<?= e($img) ?>" alt="" loading="lazy">

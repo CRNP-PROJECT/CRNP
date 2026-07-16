@@ -4,8 +4,7 @@
  */
 require_once __DIR__ . '/../init.php';
 require_admin();
-
-$db = getDB();
+use App\Models\Staff;
 
 /* ---------- POST handling ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -22,28 +21,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('Please enter a valid email.', 'danger');
         } elseif (strlen($password) < 8) {
             flash('Cashier password must be at least 8 characters.', 'danger');
+        } elseif (Staff::emailExists('cashiers', $email)) {
+            flash('A cashier with that email already exists.', 'danger');
         } else {
-            $existing = rows($db->retrieve('/cashiers'));
-            $dup = false;
-            foreach ($existing as $c) {
-                if (is_array($c) && !empty($c['email']) && strcasecmp((string) $c['email'], $email) === 0) {
-                    $dup = true; break;
-                }
-            }
-            if ($dup) {
-                flash('A cashier with that email already exists.', 'danger');
-            } else {
-                try {
-                    $db->insert('/cashiers', [
-                        'name'          => $name,
-                        'email'         => $email,
-                        'password_hash' => password_hash($password, PASSWORD_BCRYPT),
-                        'created_at'    => now(),
-                    ]);
-                    flash('Cashier account created.', 'ok');
-                } catch (Throwable $ex) {
-                    flash('Could not create cashier: ' . $ex->getMessage(), 'danger');
-                }
+            try {
+                Staff::createIn('cashiers', [
+                    'name'          => $name,
+                    'email'         => $email,
+                    'password_hash' => password_hash($password, PASSWORD_BCRYPT),
+                    'created_at'    => now(),
+                ]);
+                flash('Cashier account created.', 'ok');
+            } catch (Throwable $ex) {
+                flash('Could not create cashier: ' . $ex->getMessage(), 'danger');
             }
         }
         redirect('/admin/staff.php#cashiers');
@@ -57,28 +47,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('Please enter a valid email.', 'danger');
         } elseif (strlen($password) < 8) {
             flash('Kitchen password must be at least 8 characters.', 'danger');
+        } elseif (Staff::emailExists('kitchen', $email)) {
+            flash('A kitchen staff member with that email already exists.', 'danger');
         } else {
-            $existing = rows($db->retrieve('/kitchen'));
-            $dup = false;
-            foreach ($existing as $k) {
-                if (is_array($k) && !empty($k['email']) && strcasecmp((string) $k['email'], $email) === 0) {
-                    $dup = true; break;
-                }
-            }
-            if ($dup) {
-                flash('A kitchen staff member with that email already exists.', 'danger');
-            } else {
-                try {
-                    $db->insert('/kitchen', [
-                        'full_name'     => $fullName,
-                        'email'         => $email,
-                        'password_hash' => password_hash($password, PASSWORD_BCRYPT),
-                        'created_at'    => now(),
-                    ]);
-                    flash('Kitchen staff account created.', 'ok');
-                } catch (Throwable $ex) {
-                    flash('Could not create kitchen staff: ' . $ex->getMessage(), 'danger');
-                }
+            try {
+                Staff::createIn('kitchen', [
+                    'full_name'     => $fullName,
+                    'email'         => $email,
+                    'password_hash' => password_hash($password, PASSWORD_BCRYPT),
+                    'created_at'    => now(),
+                ]);
+                flash('Kitchen staff account created.', 'ok');
+            } catch (Throwable $ex) {
+                flash('Could not create kitchen staff: ' . $ex->getMessage(), 'danger');
             }
         }
         redirect('/admin/staff.php#kitchen');
@@ -89,14 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ---------- List data ---------- */
-$cashiers = rows($db->retrieve('/cashiers'));
+$cashiers = Staff::allFrom('cashiers');
 uasort($cashiers, function ($a, $b) {
     $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
     $tb = strtotime((string) ($b['created_at'] ?? '')) ?: 0;
     return $tb <=> $ta;
 });
 
-$kitchen = rows($db->retrieve('/kitchen'));
+$kitchen = Staff::allFrom('kitchen');
 uasort($kitchen, function ($a, $b) {
     $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
     $tb = strtotime((string) ($b['created_at'] ?? '')) ?: 0;

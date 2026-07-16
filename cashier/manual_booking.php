@@ -9,9 +9,11 @@
 require_once __DIR__ . '/../init.php';
 require_cashier();
 
-$db          = getDB();
+use App\Models\Booking;
+use App\Models\RentItem;
+
 $cashierName = $_SESSION['cashier_name'] ?? 'Cashier';
-$rentItems   = rows($db->retrieve('/rent_items'));
+$rentItems   = RentItem::raw();
 
 /** price accessor that tolerates either `price` or `rental_price`. */
 $priceOf = static function (array $item): float {
@@ -49,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Re-fetch rent_items fresh so we check live stock.
-    $liveItems = rows($db->retrieve('/rent_items'));
+    $liveItems = RentItem::raw();
 
     $items  = [];
     $total  = 0.0;
@@ -86,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $receiptFile = null;
     if ($paymentMethod === 'gcash') {
         try {
-            $receiptFile = save_upload('receipt', UPLOAD_ROOT . '/user/bookings');
+            $receiptFile = upload_to_base64('receipt', UPLOAD_ROOT . '/user/bookings');
         } catch (Throwable $ex) {
             $errors[] = 'Receipt upload failed: ' . $ex->getMessage();
         }
@@ -123,15 +125,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'source'           => 'walk-in',
         ];
 
-        $newId = $db->insert('/bookings', $booking);
-        if (!$newId) {
+        $newBooking = (new Booking($booking))->save();
+        if (!$newBooking) {
             flash('Could not create the booking. Please try again.', 'danger');
         } else {
             // Decrement rent stock by KEY (only after a successful insert).
             foreach ($items as $itemId => $info) {
-                decrement_rent_stock($db, (string)$itemId, (int)$info['qty']);
+                RentItem::decrementStock((string)$itemId, (int)$info['qty']);
             }
-            flash('Walk-in booking #' . substr($newId, 0, 6) . ' created for ' . $fullName . '.', 'ok');
+            flash('Walk-in booking #' . substr($newBooking, 0, 6) . ' created for ' . $fullName . '.', 'ok');
             redirect('/cashier/bookings.php');
         }
     }

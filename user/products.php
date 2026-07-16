@@ -6,8 +6,8 @@
  */
 require_once __DIR__ . '/../init.php';
 require_user();
+use App\Models\Product;
 
-$db = getDB();
 $activeNav = 'shop';
 $pageTitle = 'Shop the Menu';
 $layout    = 'wide';
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/user/products.php');
     }
 
-    $p = $db->retrieve('/products/' . $pid);
+    $p = Product::find($pid);
     if (!is_array($p) || empty($p)) {
         flash('Item not found.', 'danger');
         redirect('/user/products.php');
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /* ---------- GET: list + search ---------- */
 $q         = trim($_GET['q'] ?? '');
-$products  = rows($db->retrieve('/products'));
+$products  = Product::raw();
 if ($q !== '') {
     $products = filter_like($products, 'name', $q);
 }
@@ -118,7 +118,7 @@ require_once __DIR__ . '/../includes/header.php';
         if (mb_strlen($desc) > 130) {
             $desc = mb_substr($desc, 0, 127) . '…';
         }
-        $img = upload_web('admin/item', $p['image'] ?? '');
+        $img = image_display_src($p['image'] ?? '');
       ?>
         <article class="product">
           <div class="product__media">

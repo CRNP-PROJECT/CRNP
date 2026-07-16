@@ -6,12 +6,14 @@
  * submits. Stock is decremented immediately and the order lands in the
  * orders queue as 'pending'.
  */
+use App\Models\Order;
+use App\Models\Product;
+
 require_once __DIR__ . '/../init.php';
 require_cashier();
 
-$db          = getDB();
 $cashierName = $_SESSION['cashier_name'] ?? 'Cashier';
-$products    = rows($db->retrieve('/products'));
+$products    = Product::raw();
 
 /* ---------- POST: create walk-in order ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -44,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Re-fetch products fresh to validate live stock.
-    $liveProducts = rows($db->retrieve('/products'));
+    $liveProducts = Product::raw();
 
     $items  = [];
     $total  = 0.0;
@@ -81,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $receiptFile = null;
     if ($paymentMethod === 'gcash') {
         try {
-            $receiptFile = save_upload('receipt', UPLOAD_ROOT . '/user/bookings');
+            $receiptFile = upload_to_base64('receipt', UPLOAD_ROOT . '/user/bookings');
         } catch (Throwable $ex) {
             $errors[] = 'Receipt upload failed: ' . $ex->getMessage();
         }
@@ -123,12 +125,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'source'           => 'walk-in',
         ];
 
-        $newId = $db->insert('/orders', $order);
+        $orderObj = new Order($order);
+        $newId = $orderObj->save();
         if (!$newId) {
             flash('Could not create the order. Please try again.', 'danger');
         } else {
             foreach ($items as $productId => $info) {
-                decrement_product_stock($db, (string)$productId, (int)$info['qty']);
+                Product::decrementStock((string)$productId, (int)$info['qty']);
             }
             flash('Walk-in order #' . substr($newId, 0, 6) . ' created for ' . $fullName . ' (Table ' . $tableNumber . ', ' . $numCustomers . ' pax).', 'ok');
             redirect('/cashier/');
@@ -149,7 +152,7 @@ foreach ($products as $pid => $p) {
         'name'  => $p['name'] ?? 'Item',
         'price' => (float)($p['price'] ?? 0),
         'stock' => (int)($p['stock'] ?? 0),
-        'image' => upload_web('admin/item', $p['image'] ?? ''),
+            'image' => image_display_src($p['image'] ?? ''),
         'cat'   => $p['category'] ?? '',
     ];
 }
@@ -257,7 +260,7 @@ foreach ($products as $pid => $p) {
             $stock   = (int)($p['stock'] ?? 0);
             $soldOut = $stock <= 0;
             $low     = !$soldOut && $stock <= 5;
-            $img     = upload_web('admin/item', $p['image'] ?? '');
+            $img     = image_display_src($p['image'] ?? '');
         ?>
           <div class="pos-item <?= $soldOut ? 'is-soldout' : '' ?>"
                data-pid="<?= e($pid) ?>"

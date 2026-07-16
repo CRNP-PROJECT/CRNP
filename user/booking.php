@@ -9,8 +9,9 @@
  */
 require_once __DIR__ . '/../init.php';
 require_user();
+use App\Models\Booking;
+use App\Models\RentItem;
 
-$db = getDB();
 $activeNav = 'rent';
 $pageTitle = 'Rent Tableware';
 $layout    = 'wide';
@@ -18,7 +19,7 @@ $layout    = 'wide';
 /* ---------- Cancel a booking (GET or POST) ---------- */
 $cancelId = $_GET['cancel'] ?? post('cancel');
 if ($cancelId) {
-    $booking = $db->retrieve('/bookings/' . $cancelId);
+    $booking = Booking::find($cancelId);
     if (!is_array($booking) || empty($booking)) {
         flash('Booking not found.', 'danger');
         redirect('/user/your_orders.php');
@@ -37,11 +38,11 @@ if ($cancelId) {
     if (is_array($items)) {
         foreach ($items as $itemId => $row) {
             if (!is_array($row)) continue;
-            restore_rent_stock($db, (string)$itemId, (int)($row['qty'] ?? 0));
+            RentItem::restoreStock((string)$itemId, (int)($row['qty'] ?? 0));
         }
     }
     try {
-        $db->update('/bookings', $cancelId, [
+        Booking::find($cancelId)->update([
             'status'       => 'cancelled',
             'cancelled_at' => now(),
         ]);
@@ -76,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     /* Collect requested qtys and re-fetch rent_items for fresh stock. */
     $qtys = post('qtys', []);
     if (!is_array($qtys)) $qtys = [];
-    $rentItems = rows($db->retrieve('/rent_items'));
+    $rentItems = RentItem::raw();
 
     $items = [];
     $total = 0.0;
@@ -121,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Please upload your GCash receipt.';
         } else {
             try {
-                $receipt = save_upload('receipt', UPLOAD_ROOT . '/user/bookings');
+                $receipt = upload_to_base64('receipt', UPLOAD_ROOT . '/user/bookings');
                 if (!$receipt) {
                     $errors[] = 'Receipt upload failed. Please try again.';
                 }
@@ -152,13 +153,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         try {
-            $newId = $db->insert('/bookings', $booking);
+            $newId = (new Booking($booking))->save();
             if (!$newId) {
                 throw new RuntimeException('Firebase did not return a booking id.');
             }
             /* Decrement rent stock after a successful insert. */
             foreach ($items as $itemId => $row) {
-                decrement_rent_stock($db, (string)$itemId, (int)$row['qty']);
+                RentItem::decrementStock((string)$itemId, (int)$row['qty']);
             }
             flash('Booking request submitted! We will confirm shortly.', 'ok');
             redirect('/user/your_orders.php');
@@ -173,13 +174,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ---------- Render ---------- */
-$rentItems = rows($db->retrieve('/rent_items'));
+$rentItems = RentItem::raw();
 uasort($rentItems, function ($a, $b) {
     return strcasecmp((string)($a['name'] ?? ''), (string)($b['name'] ?? ''));
 });
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+
+<style>
+  .rent-thumb { width:52px; height:52px; border-radius:9px; object-fit:cover; border:1px solid var(--line); background:var(--bg-2); cursor:pointer; transition:transform .15s; }
+  .rent-thumb:hover { transform:scale(1.08); }
+
+  /* lightbox overlay */
+  .lightbox-overlay { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.78); align-items:center; justify-content:center; cursor:zoom-out; }
+  .lightbox-overlay.active { display:flex; }
+  .lightbox-overlay img { max-width:90vw; max-height:85vh; border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,.55); }
+  .lightbox-close { position:absolute; top:18px; right:24px; width:40px; height:40px; border-radius:50%; border:0; background:rgba(255,255,255,.15); color:#fff; font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+  .lightbox-close:hover { background:rgba(255,255,255,.3); }
+</style>
+
+<!-- lightbox container -->
+<div class="lightbox-overlay" id="lightbox">
+  <button class="lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
+  <img id="lightbox-img" src="" alt="Preview">
+</div>
 
 <div class="page-head">
   <span class="eyebrow">Rentals · For private dinners &amp; events</span>
@@ -209,7 +228,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="table-wrap" style="border:0">
           <table class="tbl">
             <thead>
-              <tr><th>Item</th><th>Description</th><th class="num">Rate</th><th class="num">Available</th><th class="num">Qty</th></tr>
+              <tr><th></th><th>Item</th><th>Description</th><th class="num">Rate</th><th class="num">Available</th><th class="num">Qty</th></tr>
             </thead>
             <tbody>
               <?php foreach ($rentItems as $id => $r):
@@ -219,6 +238,10 @@ require_once __DIR__ . '/../includes/header.php';
                 $prev  = isset($_POST['qtys'][$id]) ? (int) $_POST['qtys'][$id] : 0;
               ?>
                 <tr>
+                  <td>
+                    <?php $imgSrc = image_display_src($r['image'] ?? ''); ?>
+                    <img class="rent-thumb" src="<?= e($imgSrc) ?>" alt="<?= e($label) ?>" data-lightbox="<?= e($imgSrc) ?>">
+                  </td>
                   <td>
                     <strong><?= e($label) ?></strong>
                     <?php if (!empty($r['display_name']) && !empty($r['name']) && $r['display_name'] !== $r['name']): ?>
@@ -307,6 +330,41 @@ require_once __DIR__ . '/../includes/header.php';
   counter.addEventListener('change', sync);
   gcash.addEventListener('change', sync);
   sync();
+})();
+</script>
+
+<script>
+(function () {
+  var overlay   = document.getElementById('lightbox');
+  var lightImg  = document.getElementById('lightbox-img');
+  var closeBtn  = document.getElementById('lightbox-close');
+  if (!overlay || !lightImg) return;
+
+  function openLightbox(src) {
+    lightImg.src = src;
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    overlay.classList.remove('active');
+    lightImg.src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('[data-lightbox]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var src = el.getAttribute('data-lightbox');
+      if (src) openLightbox(src);
+    });
+  });
+
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay || e.target === closeBtn) closeLightbox();
+  });
+  closeBtn.addEventListener('click', closeLightbox);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
 })();
 </script>
 

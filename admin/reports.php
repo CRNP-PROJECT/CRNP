@@ -2,10 +2,11 @@
 /**
  * admin/reports.php — Daily sales report with date filter + breakdown + chart.
  */
+use App\Models\Order;
+use App\Models\Booking;
+
 require_once __DIR__ . '/../init.php';
 require_admin();
-
-$db = getDB();
 
 /* ---------- Date range (GET) ---------- */
 $today = date('Y-m-d');
@@ -25,33 +26,15 @@ if (($toTs - $fromTs) / 86400 > 90) {
 }
 
 /* ---------- Filter orders in range ---------- */
-$orders = rows($db->retrieve('/orders'));
-$inRange = [];
-foreach ($orders as $id => $o) {
-    if (!is_array($o)) continue;
-    $created = (string) ($o['created_at'] ?? '');
-    $day = substr($created, 0, 10);
-    if ($day >= $from && $day <= $to) {
-        $inRange[$id] = $o;
-    }
-}
+$inRange = Order::byDateRange($from, $to);
 uasort($inRange, function ($a, $b) {
     $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
     $tb = strtotime((string) ($b['created_at'] ?? '')) ?: 0;
-    return $ta <=> $tb; // ascending by date
+    return $ta <=> $tb;
 });
 
 /* ---------- Filter bookings in range ---------- */
-$allBookings = rows($db->retrieve('/bookings'));
-$bookingsInRange = [];
-foreach ($allBookings as $bid => $b) {
-    if (!is_array($b)) continue;
-    $created = (string) ($b['created_at'] ?? '');
-    $day = substr($created, 0, 10);
-    if ($day >= $from && $day <= $to) {
-        $bookingsInRange[$bid] = $b;
-    }
-}
+$bookingsInRange = Booking::byDateRange($from, $to);
 uasort($bookingsInRange, function ($a, $b) {
     $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
     $tb = strtotime((string) ($b['created_at'] ?? '')) ?: 0;
