@@ -20,30 +20,36 @@ if($password == ""){
 try {
     $rdb = new firebaseRDB($databaseURL);
 
-    // Retrieve user by email
-    $retrieve = $rdb->retrieve("/user", "email", "EQUAL", $email);
-    $data = json_decode($retrieve, true);
+    // Retrieve all users, scan locally for email match
+    $all = json_decode($rdb->retrieve("/user"), true);
+    $id = null;
+    $data = null;
+    if (is_array($all)) {
+        foreach ($all as $k => $u) {
+            if (($u['email'] ?? '') === $email) { $id = $k; $data = $u; break; }
+        }
+    }
 
-    if(!is_array($data) || count($data) == 0){
+    if (!$id) {
         echo "Email not registered";
         exit;
     }
 
-    $id = array_keys($data)[0];
+    // Support both password and password_hash field names
+    $hashed = $data['password'] ?? $data['password_hash'] ?? '';
 
-    // Make sure password field exists
-    if(!isset($data[$id]['password'])){
+    if ($hashed === '') {
         echo "User password not set";
         exit;
     }
 
     // Verify password
-    if(password_verify($password, $data[$id]['password'])){
+    if (password_verify($password, $hashed)) {
         // Login success: set session
         session_regenerate_id(true);
         $_SESSION['user_id'] = $id;
         $_SESSION['email'] = $email;
-        $_SESSION['username'] = $data[$id]['name'] ?? '';
+        $_SESSION['username'] = $data['name'] ?? '';
 
         // Pure PHP redirect to index.php
         header("Location: index.php"); // Adjust folder path

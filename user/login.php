@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../config.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +17,7 @@
 <body class="user-auth-body">
 
     <div id="g_id_onload"
-        data-client_id="169153827262-v3jf50qufjq3ikvo8j1t4u1s4qgttc5e.apps.googleusercontent.com"
+        data-client_id="<?= htmlspecialchars($_ENV['GOOGLE_CLIENT_ID']) ?>"
         data-callback="handleCredentialResponse">
     </div>
 

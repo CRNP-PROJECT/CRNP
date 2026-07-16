@@ -2,6 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-$databaseURL= "https://crnp-31b28-default-rtdb.asia-southeast1.firebasedatabase.app/";
-?>
 
+$_ENV = array_merge($_ENV, parse_ini_string(preg_replace('/^\s*#/m', ';', file_get_contents(__DIR__ . '/.env'))));
+$databaseURL = $_ENV['FIREBASE_URL'];
+?>

@@ -69,6 +69,9 @@ class firebaseRDB{
       $pars = isset($pars) ? "?$pars" : "";
       $path = $this->url."/$dbPath.json$pars";
       $grab = $this->grab($path, "GET");
+      $parsed = json_decode($grab, true);
+      if (isset($parsed['error']))
+         return '{}';
       return $grab;
    }
 

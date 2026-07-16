@@ -28,21 +28,31 @@ if (isset($_GET['resend']) && isset($_SESSION['otp_email'])) {
 
     // Validate
     if ($name === '' || $email === '' || $password === '') {
-        die("All fields are required.");
+        header("Location: sign_up.php?error=required");
+        exit;
     }
     if (strlen($password) < 8) {
-        die("Password must be at least 8 characters.");
+        header("Location: sign_up.php?error=password_short");
+        exit;
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        die('Invalid email format.');
+        header("Location: sign_up.php?error=invalid_email");
+        exit;
     }
 
-    // Check duplicate email
+    // Check duplicate email — fetch all, scan locally (no Firebase email index)
     $rdb = new firebaseRDB($databaseURL);
-    $existing = json_decode($rdb->retrieve("/user", "email", "EQUAL", $email), true);
-    if (is_array($existing) && count($existing) > 0) {
-        die('Email already registered.');
+    $all = json_decode($rdb->retrieve("/user"), true);
+    $email_taken = false;
+    if (is_array($all)) {
+        foreach ($all as $u) {
+            if (($u['email'] ?? '') === $email) { $email_taken = true; break; }
+        }
+    }
+    if ($email_taken) {
+        header("Location: sign_up.php?error=email_taken");
+        exit;
     }
 }
 

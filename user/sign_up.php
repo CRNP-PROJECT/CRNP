@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../config.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,13 +11,27 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../styles.css">
+<style>
+.signup-error { background: #fef2f2; color: #d32f2f; padding: 10px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; text-align: center; }
+</style>
 </head>
 
 <body class="signup-body">
 
+    <?php
+    $error = $_GET['error'] ?? '';
+    $err_msgs = [
+        'required' => 'All fields are required.',
+        'password_short' => 'Password must be at least 8 characters.',
+        'invalid_email' => 'Invalid email format.',
+        'email_taken' => 'Email already registered.',
+    ];
+    $err_msg = $err_msgs[$error] ?? '';
+    ?>
+
     <!-- GOOGLE CONFIG -->
     <div id="g_id_onload"
-        data-client_id="169153827262-v3jf50qufjq3ikvo8j1t4u1s4qgttc5e.apps.googleusercontent.com"
+        data-client_id="<?= htmlspecialchars($_ENV['GOOGLE_CLIENT_ID']) ?>"
         data-callback="handleCredentialResponse">
     </div>
 
@@ -49,6 +64,10 @@
                     </p>
 
                     <form method="POST" action="send_otp.php">
+
+                        <?php if ($err_msg): ?>
+                            <div class="signup-error"><?= htmlspecialchars($err_msg) ?></div>
+                        <?php endif; ?>
 
                         <div class="signup-group">
                             <label class="signup-label">

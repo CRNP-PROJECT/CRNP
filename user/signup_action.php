@@ -42,7 +42,7 @@ try {
     $insert = $rdb->insert("/user", [
         "name" => $name,
         "email" => $email,
-        "password" => $hashedPassword
+        "password_hash" => $hashedPassword
     ]);
 
     $result = json_decode($insert, true);
