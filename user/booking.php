@@ -20,21 +20,21 @@ $layout    = 'wide';
 $cancelId = $_GET['cancel'] ?? post('cancel');
 if ($cancelId) {
     $booking = Booking::find($cancelId);
-    if (!is_array($booking) || empty($booking)) {
+    if (!$booking) {
         flash('Booking not found.', 'danger');
         redirect('/user/your_orders.php');
     }
-    if (strcasecmp((string)($booking['user_email'] ?? ''), user_email()) !== 0) {
+    if (strcasecmp((string)($booking->user_email ?? ''), user_email()) !== 0) {
         flash('You can only cancel your own bookings.', 'danger');
         redirect('/user/your_orders.php');
     }
-    $status = (string)($booking['status'] ?? '');
+    $status = (string)($booking->status ?? '');
     if (!in_array($status, ['pending', 'accepted'], true)) {
         flash('That booking can no longer be cancelled.', 'warn');
         redirect('/user/your_orders.php');
     }
     /* Restore stock using the Firebase KEY stored in items. */
-    $items = $booking['items'] ?? [];
+    $items = $booking->get('items') ?? [];
     if (is_array($items)) {
         foreach ($items as $itemId => $row) {
             if (!is_array($row)) continue;

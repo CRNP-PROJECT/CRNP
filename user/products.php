@@ -24,12 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $p = Product::find($pid);
-    if (!is_array($p) || empty($p)) {
+    if (!$p) {
         flash('Item not found.', 'danger');
         redirect('/user/products.php');
     }
 
-    $stock = (int) ($p['stock'] ?? 0);
+    $stock = (int) ($p->stock ?? 0);
     if ($stock <= 0) {
         flash('Sorry, "' . ($p['name'] ?? 'that item') . '" is sold out.', 'danger');
         redirect('/user/products.php');
@@ -41,15 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $cart[$pid] = [
         'id'    => $pid,
-        'name'  => $p['name']  ?? 'Item',
-        'price' => (float) ($p['price'] ?? 0),
+        'name'  => $p->name  ?? 'Item',
+        'price' => (float) ($p->price ?? 0),
         'qty'   => $newQty,
-        'image' => $p['image'] ?? '',
+        'image' => $p->image ?? '',
         'stock' => $stock,
     ];
     set_cart($cart);
 
-    flash('Added "' . ($p['name'] ?? 'item') . '" to your cart.', 'ok');
+    flash('Added "' . ($p->name ?? 'item') . '" to your cart.', 'ok');
     redirect('/user/cart.php');
 }
 
