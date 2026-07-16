@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                         "price" => $price,
                         "description" => $description,
                         "category" => $category, // 🔥 IMPORTANT
-                        "image" => "uploads/" . $imageName
+                        "image" => "../admin/uploads/" . $imageName
                     ]);
 
                     if ($insert) {

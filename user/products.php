@@ -14,6 +14,7 @@ $username = $_SESSION['username'] ?? "User";
 $rdb = new firebaseRDB($databaseURL);
 
 $filter = $_GET['category'] ?? "All";
+$search = trim($_GET['search'] ?? '');
 
 $products = [];
 $productNames = [];
@@ -26,13 +27,23 @@ try {
     if (is_array($data)) {
         foreach ($data as $id => $product) {
             $category = $product['category'] ?? 'Food';
+            $name = $product['name'] ?? '';
 
-            if ($filter === "All" || $category === $filter) {
-                $products[$id] = $product;
-                $productNames[] = $product['name'];
-            }
+            // Category filter
+            if ($filter !== "All" && $category !== $filter) continue;
+
+            // Search filter
+            if ($search !== '' && stripos($name, $search) === false) continue;
+
+            $products[$id] = $product;
+            $productNames[] = $name;
         }
     }
+
+    // Sort products by name
+    uasort($products, function($a, $b) {
+        return strcasecmp($a['name'] ?? '', $b['name'] ?? '');
+    });
 } catch(Exception $e) {
     echo "Error: " . $e->getMessage();
 }
@@ -85,7 +96,7 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
                 <i class="fa-solid fa-magnifying-glass"></i>
             </button>
 
-            <input type="text" name="search" placeholder="Search..." class="navbar-search" autocomplete="off">
+            <input type="text" name="search" placeholder="Search..." class="navbar-search" autocomplete="off" value="<?php echo htmlspecialchars($search); ?>">
 
             <div id="suggestion-box"></div>
         </form>
@@ -114,10 +125,21 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
         <h1 class="page-title">AVAILABLE PRODUCTS</h1>
 
         <div class="filter-container">
-            <a href="?category=All" class="filter-btn <?php echo ($filter=='All')?'filter-active':''; ?>">All</a>
-            <a href="?category=Food" class="filter-btn <?php echo ($filter=='Food')?'filter-active':''; ?>">Food</a>
-            <a href="?category=Drinks" class="filter-btn <?php echo ($filter=='Drinks')?'filter-active':''; ?>">Alcohol</a>
-            <a href="?category=Beverages" class="filter-btn <?php echo ($filter=='Beverages')?'filter-active':''; ?>">Beverages</a>
+            <a href="?category=All&search=<?php echo urlencode($search); ?>" class="filter-btn <?php echo ($filter=='All')?'filter-active':''; ?>">All</a>
+            <?php
+            $cats = [];
+            $allData = $data ?? [];
+            if (is_array($allData)) {
+                foreach ($allData as $p) {
+                    $c = $p['category'] ?? '';
+                    if ($c !== '') $cats[$c] = true;
+                }
+            }
+            ksort($cats);
+            foreach (array_keys($cats) as $c):
+            ?>
+            <a href="?category=<?php echo urlencode($c); ?>&search=<?php echo urlencode($search); ?>" class="filter-btn <?php echo ($filter===$c)?'filter-active':''; ?>"><?php echo htmlspecialchars($c); ?></a>
+            <?php endforeach; ?>
         </div>
     </div>
 
@@ -126,7 +148,9 @@ $cartCount = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
         <?php foreach($products as $id => $product): ?>
         <div class="product-card">
 
-            <img src="../admin/<?php echo htmlspecialchars($product['image']); ?>">
+            <img src="<?php echo htmlspecialchars($product['image']); ?>"
+                 alt="<?php echo htmlspecialchars($product['name']); ?>"
+                 onerror="this.style.display='none'">
 
             <div class="product-card-body">
 

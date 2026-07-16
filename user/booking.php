@@ -115,7 +115,7 @@ if(!is_array($rent_items)){
                                 <div class="ui-item-row" style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
                                     <div class="ui-item-thumb">
                                         <?php if(!empty($item['image'])): ?>
-                                            <img src="../admin/<?php echo htmlspecialchars($item['image']); ?>" style="width:70px; height:70px; object-fit:cover; border-radius:10px;">
+                                            <img src="<?php echo htmlspecialchars($item['image']); ?>" style="width:70px; height:70px; object-fit:cover; border-radius:10px;">
                                         <?php else: ?>
                                             <div style="width:70px; height:70px; background:#ddd; border-radius:10px;"></div>
                                         <?php endif; ?>

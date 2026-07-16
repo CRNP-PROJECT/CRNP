@@ -93,7 +93,7 @@ $total = 0;
             <div class="cart-product">
 
                 <img
-                    src="../admin/<?php echo htmlspecialchars($product['image']); ?>"
+                    src="<?php echo htmlspecialchars($product['image']); ?>"
                     class="cart-product-img"
                     alt="Product Image"
                 >

@@ -71,7 +71,7 @@ class AdminProcess
             $file["tmp_name"],
             $target
         )){
-            return "item/" . $fileName;
+            return "../admin/item/" . $fileName;
         }
 
         return "";

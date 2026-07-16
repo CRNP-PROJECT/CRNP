@@ -85,7 +85,7 @@ foreach ($data as $id => $product) {
                     '<?= $product['category'] ?>'
                 )">
 
-                <img src="../admin/<?= htmlspecialchars($product['image']) ?>">
+                <img src="<?= htmlspecialchars($product['image']) ?>">
 
                 <div class="create-order-info">
                     <h4><?= htmlspecialchars($product['name']) ?></h4>
