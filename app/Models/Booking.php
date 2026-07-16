@@ -12,9 +12,9 @@ class Booking extends Model
 
     protected static array $fillable = [
         'user_id', 'user_name', 'user_email',
-        'items', 'total',
+        'items', 'total', 'full_name', 'contact', 'address',
         'status', 'payment_status', 'payment_method',
-        'appointment_time', 'created_at',
+        'appointment_time', 'return_time', 'receipt', 'created_at',
         'cancelled_at', 'cancelled_by', 'cancel_note',
         'accepted_at', 'accepted_by',
         'returned_at', 'returned_by',
