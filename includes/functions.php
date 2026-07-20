@@ -206,9 +206,9 @@ function upload_to_base64(string $field, string $localDir = '', int $maxMB = 5):
     $mime  = finfo_file($finfo, $tmp);
     finfo_close($finfo);
 
-    $mimeToExt = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    $mimeToExt = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
     if (!isset($mimeToExt[$mime])) {
-        throw new Exception('Invalid file type. Only JPG, PNG, and WebP are allowed.');
+        throw new Exception('Invalid file type. Only JPG, PNG, GIF, and WebP are allowed.');
     }
     $imgInfo = @getimagesize($tmp);
     if ($imgInfo === false) {
@@ -238,13 +238,28 @@ function upload_to_base64(string $field, string $localDir = '', int $maxMB = 5):
 /**
  * Return an <img>-ready src attribute from a stored image value.
  * Handles both legacy filenames and new "b64:..." base64 strings.
+ * Detects the correct MIME type from the raw bytes for b64: values.
  */
 function image_display_src(?string $image, string $legacyDir = 'admin/item'): string {
     if (!$image || $image === '') {
         return '/assets/img/placeholder.svg';
     }
     if (strncmp($image, 'b64:', 4) === 0) {
-        return 'data:image/jpeg;base64,' . substr($image, 4);
+        $raw = base64_decode(substr($image, 4), true);
+        if ($raw === false || strlen($raw) < 8) {
+            return '/assets/img/placeholder.svg';
+        }
+        $mime = 'image/jpeg';
+        if (str_starts_with($raw, "\x89PNG\r\n\x1a\n")) {
+            $mime = 'image/png';
+        } elseif (str_starts_with($raw, 'RIFF') && substr($raw, 8, 4) === 'WEBP') {
+            $mime = 'image/webp';
+        } elseif (str_starts_with($raw, "\xff\xd8\xff")) {
+            $mime = 'image/jpeg';
+        } elseif (str_starts_with($raw, 'GIF87a') || str_starts_with($raw, 'GIF89a')) {
+            $mime = 'image/gif';
+        }
+        return 'data:' . $mime . ';base64,' . substr($image, 4);
     }
     return upload_web($legacyDir, $image);
 }

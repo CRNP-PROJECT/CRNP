@@ -12,11 +12,12 @@ $activeNav = 'shop';
 $pageTitle = 'Shop the Menu';
 $layout    = 'wide';
 
-/* ---------- POST: buy now ---------- */
+/* ---------- POST: add to cart / buy now ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
-    $pid = post('product_id');
-    $qty = max(1, (int) post('qty', 1));
+    $pid    = post('product_id');
+    $qty    = max(1, (int) post('qty', 1));
+    $action = post('cart_action', 'add');
 
     if ($pid === '') {
         flash('Invalid request.', 'danger');
@@ -50,6 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     set_cart($cart);
 
     flash('Added "' . ($p->name ?? 'item') . '" to your cart.', 'ok');
+
+    if ($action === 'buy_now') {
+        redirect('/user/checkout.php');
+    }
     redirect('/user/cart.php');
 }
 
@@ -77,6 +82,7 @@ require_once __DIR__ . '/../includes/header.php';
     border:1px solid var(--line,#e6dfd1); background:var(--surface,#fff);
     cursor:pointer; color:var(--muted); transition:.15s; }
   .prod-cat.is-active { background:var(--ink,#211b14); color:#fff; border-color:var(--ink); }
+  .product__actions { display:flex; gap:6px; flex-wrap:wrap; }
 </style>
 
 <div class="hero">
@@ -142,7 +148,7 @@ require_once __DIR__ . '/../includes/header.php';
       ?>
         <article class="product">
           <div class="product__media">
-            <img src="<?= e($img) ?>" alt="<?= e($p['name'] ?? 'Dish') ?>" loading="lazy">
+            <img src="<?= e($img) ?>" alt="<?= e($p['name'] ?? 'Dish') ?>" loading="lazy" onerror="this.onerror=null;this.src='/assets/img/placeholder.svg'">
             <?php if ($soldOut): ?>
               <span class="badge badge--muted" style="position:absolute;top:10px;left:10px">Sold out</span>
             <?php elseif ($low): ?>
@@ -168,14 +174,26 @@ require_once __DIR__ . '/../includes/header.php';
                   <div class="product__stock">In stock: <?= $stock ?></div>
                 <?php endif; ?>
               </div>
-              <form method="post" action="/user/products.php">
-                <?= csrf_field() ?>
-                <input type="hidden" name="product_id" value="<?= e($id) ?>">
-                <input type="hidden" name="qty" value="1">
-                <button class="btn btn--gold btn--sm" type="submit" <?= $soldOut ? 'disabled' : '' ?>>
-                  <?= $soldOut ? 'Sold out' : 'Buy now' ?>
-                </button>
-              </form>
+              <div class="product__actions">
+                <form method="post" action="/user/products.php" style="display:inline">
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="product_id" value="<?= e($id) ?>">
+                  <input type="hidden" name="qty" value="1">
+                  <input type="hidden" name="cart_action" value="add">
+                  <button class="btn btn--outline btn--sm" type="submit" <?= $soldOut ? 'disabled' : '' ?>>
+                    <?= $soldOut ? 'Sold out' : ' Add to Cart' ?>
+                  </button>
+                </form>
+                <form method="post" action="/user/products.php" style="display:inline">
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="product_id" value="<?= e($id) ?>">
+                  <input type="hidden" name="qty" value="1">
+                  <input type="hidden" name="cart_action" value="buy_now">
+                  <button class="btn btn--gold btn--sm" type="submit" <?= $soldOut ? 'disabled' : '' ?>>
+                    <?= $soldOut ? 'Sold out' : ' Buy Now' ?>
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </article>
