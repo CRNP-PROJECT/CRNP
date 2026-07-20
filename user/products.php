@@ -30,15 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/user/products.php');
     }
 
-    $stock = (int) ($p->stock ?? 0);
-    if ($stock <= 0) {
-        flash('Sorry, "' . ($p['name'] ?? 'that item') . '" is sold out.', 'danger');
+    if (($p->status ?? 'available') !== 'available') {
+        flash('Sorry, "' . ($p->name ?? 'that item') . '" is not available.', 'danger');
         redirect('/user/products.php');
     }
 
     $cart  = get_cart();
     $cur   = isset($cart[$pid]) ? (int) $cart[$pid]['qty'] : 0;
-    $newQty = min($stock, $cur + $qty);
+    $newQty = $cur + $qty;
 
     $cart[$pid] = [
         'id'    => $pid,
@@ -46,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'price' => (float) ($p->price ?? 0),
         'qty'   => $newQty,
         'image' => $p->image ?? '',
-        'stock' => $stock,
     ];
     set_cart($cart);
 
@@ -137,22 +135,18 @@ require_once __DIR__ . '/../includes/header.php';
 <?php endif; ?>
     <div class="grid grid--products">
       <?php foreach ($products as $id => $p):
-        $stock   = (int) ($p['stock'] ?? 0);
-        $soldOut = $stock <= 0;
-        $low     = !$soldOut && $stock <= 5;
+        $isAvailable = ($p['status'] ?? 'available') === 'available';
         $desc    = trim($p['description'] ?? $p['short'] ?? '');
         if (mb_strlen($desc) > 130) {
             $desc = mb_substr($desc, 0, 127) . '…';
         }
         $img = image_display_src($p['image'] ?? '');
       ?>
-        <article class="product">
+        <article class="product" style="<?= !$isAvailable ? 'opacity:.55;' : '' ?>">
           <div class="product__media">
             <img src="<?= e($img) ?>" alt="<?= e($p['name'] ?? 'Dish') ?>" loading="lazy" onerror="this.onerror=null;this.src='/assets/img/placeholder.svg'">
-            <?php if ($soldOut): ?>
-              <span class="badge badge--muted" style="position:absolute;top:10px;left:10px">Sold out</span>
-            <?php elseif ($low): ?>
-              <span class="badge badge--warn" style="position:absolute;top:10px;left:10px">Low stock</span>
+            <?php if (!$isAvailable): ?>
+              <span class="badge badge--muted" style="position:absolute;top:10px;left:10px">Not Available</span>
             <?php endif; ?>
           </div>
           <div class="product__body">
@@ -166,22 +160,19 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="product__foot">
               <div>
                 <div class="product__price"><?= money($p['price'] ?? 0) ?></div>
-                <?php if ($soldOut): ?>
-                  <div class="product__stock out">Sold out</div>
-                <?php elseif ($low): ?>
-                  <div class="product__stock low">Only <?= $stock ?> left</div>
-                <?php else: ?>
-                  <div class="product__stock">In stock: <?= $stock ?></div>
+                <?php if (!$isAvailable): ?>
+                  <div class="product__stock out">Not Available</div>
                 <?php endif; ?>
               </div>
+              <?php if ($isAvailable): ?>
               <div class="product__actions">
                 <form method="post" action="/user/products.php" style="display:inline">
                   <?= csrf_field() ?>
                   <input type="hidden" name="product_id" value="<?= e($id) ?>">
                   <input type="hidden" name="qty" value="1">
                   <input type="hidden" name="cart_action" value="add">
-                  <button class="btn btn--outline btn--sm" type="submit" <?= $soldOut ? 'disabled' : '' ?>>
-                    <?= $soldOut ? 'Sold out' : ' Add to Cart' ?>
+                  <button class="btn btn--outline btn--sm" type="submit">
+                    🛒 Add to Cart
                   </button>
                 </form>
                 <form method="post" action="/user/products.php" style="display:inline">
@@ -189,11 +180,16 @@ require_once __DIR__ . '/../includes/header.php';
                   <input type="hidden" name="product_id" value="<?= e($id) ?>">
                   <input type="hidden" name="qty" value="1">
                   <input type="hidden" name="cart_action" value="buy_now">
-                  <button class="btn btn--gold btn--sm" type="submit" <?= $soldOut ? 'disabled' : '' ?>>
-                    <?= $soldOut ? 'Sold out' : ' Buy Now' ?>
+                  <button class="btn btn--gold btn--sm" type="submit">
+                    ⚡ Buy Now
                   </button>
                 </form>
               </div>
+              <?php else: ?>
+              <div class="product__actions">
+                <button class="btn btn--muted btn--sm" type="button" disabled>Not Available</button>
+              </div>
+              <?php endif; ?>
             </div>
           </div>
         </article>

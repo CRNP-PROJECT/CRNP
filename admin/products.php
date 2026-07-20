@@ -34,6 +34,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/admin/products.php');
     }
 
+    if ($action === 'toggle') {
+        $id = (string) post('id', '');
+        $product = Product::find($id);
+        if ($product) {
+            $current = $product->status ?? 'available';
+            $newStatus = $current === 'available' ? 'unavailable' : 'available';
+            $product->update(['status' => $newStatus]);
+            flash('Product is now ' . $newStatus . '.', 'ok');
+        }
+        redirect('/admin/products.php');
+    }
+
     if ($action === 'save') {
         $id          = (string) post('id', '');
         $name        = trim((string) post('name', ''));
@@ -158,21 +170,20 @@ require_once __DIR__ . '/../includes/header.php';
       <table class="tbl">
         <thead>
           <tr>
-            <th>Item</th><th>Category</th><th class="num">Price</th><th class="num">Stock</th><th>Actions</th>
+            <th>Item</th><th>Category</th><th class="num">Price</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
         <?php if (!$products): ?>
           <tr><td colspan="5" class="muted t-center">No products yet — add your first dish using the form on the right.</td></tr>
         <?php else: foreach ($products as $pid => $p):
-            $stock = (int) ($p['stock'] ?? 0);
-            $stockClass = $stock === 0 ? 'stock-out' : ($stock <= 5 ? 'stock-low' : '');
+            $isAvailable = ($p['status'] ?? 'available') === 'available';
             $img = image_display_src($p['image'] ?? '');
         ?>
           <tr>
             <td>
               <div class="img-row">
-                <img class="thumb--sm" src="<?= e($img) ?>" alt="">
+                <img class="thumb--sm" src="<?= e($img) ?>" alt="" onerror="this.onerror=null;this.src='/assets/img/placeholder.svg'">
                 <div>
                   <strong><?= e($p['name'] ?? 'Untitled') ?></strong><br>
                   <small class="micro"><?= mb_substr((string) ($p['description'] ?? ''), 0, 60) ?><?= mb_strlen((string) ($p['description'] ?? '')) > 60 ? '…' : '' ?></small>
@@ -181,7 +192,17 @@ require_once __DIR__ . '/../includes/header.php';
             </td>
             <td><?= e($p['category'] ?? '—') ?></td>
             <td class="num"><?= e(money((float) ($p['price'] ?? 0))) ?></td>
-            <td class="num <?= $stockClass ?>"><?= $stock ?></td>
+            <td>
+              <form method="post" action="/admin/products.php" style="display:inline">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="toggle">
+                <input type="hidden" name="id" value="<?= e((string) $pid) ?>">
+                <button class="btn btn--sm <?= $isAvailable ? 'btn--ok' : 'btn--muted' ?>" type="submit"
+                        title="Click to <?= $isAvailable ? 'disable' : 'enable' ?> this product">
+                  <?= $isAvailable ? '● Available' : '○ Not Available' ?>
+                </button>
+              </form>
+            </td>
             <td>
               <div class="row" style="flex-wrap:nowrap">
                 <a class="btn btn--ghost btn--sm" href="/admin/products.php?edit=<?= urlencode((string) $pid) ?>">Edit</a>
@@ -237,12 +258,6 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="field">
           <label for="description">Description</label>
           <textarea class="textarea" id="description" name="description" placeholder="Slow-braised beef in peanut sauce…"><?= e($formDescription) ?></textarea>
-        </div>
-
-        <div class="field">
-          <label for="stock">Stock (units)</label>
-          <input class="input" type="number" id="stock" name="stock" min="0" step="1" value="<?= e($formStock) ?>" placeholder="0">
-          <span class="hint">Items with ≤ 5 units are flagged as low stock.</span>
         </div>
 
         <div class="field">
