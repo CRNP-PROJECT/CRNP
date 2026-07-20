@@ -65,10 +65,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Client-side canvas crop (no GD dependency)
             $cropped = post('cropped');
             if ($cropped) {
-                $raw = base64_decode(explode(',', $cropped)[1] ?? $cropped);
-                $filename = bin2hex(random_bytes(16)) . '.jpg';
-                file_put_contents(__DIR__ . '/../assets/img/products/' . $filename, $raw);
-                $data['image'] = $filename;
+                $parts = explode(',', $cropped, 2);
+                $raw = base64_decode($parts[1] ?? $parts[0] ?? '', true);
+                if ($raw !== false && strlen($raw) > 0) {
+                    $filename = bin2hex(random_bytes(16)) . '.jpg';
+                    file_put_contents(__DIR__ . '/../assets/img/products/' . $filename, $raw);
+                    $data['image'] = 'b64:' . base64_encode($raw);
+                }
             }
 
             if ($id !== '') {
@@ -249,7 +252,7 @@ require_once __DIR__ . '/../includes/header.php';
                  src="<?= $formImage ? e(image_display_src($formImage)) : e('/assets/img/placeholder.svg') ?>"
                  alt="Preview">
             <div>
-              <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp">
+              <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
               <span class="hint">JPG, PNG or WebP · max 5MB<?= $formImage ? ' · leave blank to keep current' : '' ?></span>
             </div>
           </div>

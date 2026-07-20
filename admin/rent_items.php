@@ -215,7 +215,7 @@ require_once __DIR__ . '/../includes/header.php';
                  src="<?= $formImage ? e(image_display_src($formImage)) : e('/assets/img/placeholder.svg') ?>"
                  alt="Preview">
             <div>
-              <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp">
+              <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
               <span class="hint">JPG, PNG or WebP · max 5MB<?= $formImage ? ' · leave blank to keep current' : '' ?></span>
             </div>
           </div>
