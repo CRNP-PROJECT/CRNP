@@ -266,7 +266,7 @@ require_once __DIR__ . '/../includes/header.php';
               <?php foreach ($rentItems as $rid => $r):
                 $onHand = (int) ($r['quantity'] ?? 0);
                 $lowClass = $onHand <= 2 ? 'low' : '';
-                $img = image_display_src($r['image'] ?? '');
+                $img = product_image_url($r['image'] ?? '', $rid, 'rent_items');
               ?>
                 <div class="item-row">
                   <img src="<?= e($img) ?>" alt="">

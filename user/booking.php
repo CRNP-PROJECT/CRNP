@@ -239,7 +239,7 @@ require_once __DIR__ . '/../includes/header.php';
               ?>
                 <tr>
                   <td>
-                    <?php $imgSrc = image_display_src($r['image'] ?? ''); ?>
+                    <?php $imgSrc = product_image_url($r['image'] ?? '', $id, 'rent_items'); ?>
                     <img class="rent-thumb" src="<?= e($imgSrc) ?>" alt="<?= e($label) ?>" data-lightbox="<?= e($imgSrc) ?>">
                   </td>
                   <td>

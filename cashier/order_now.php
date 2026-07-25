@@ -158,7 +158,7 @@ foreach ($products as $pid => $p) {
         'name'  => $p['name'] ?? 'Item',
         'price' => (float)($p['price'] ?? 0),
         'stock' => (int)($p['stock'] ?? 0),
-            'image' => image_display_src($p['image'] ?? ''),
+            'image' => product_image_url($p['image'] ?? '', $pid, 'products'),
         'cat'   => $p['category'] ?? '',
     ];
 }
@@ -280,7 +280,7 @@ foreach ($products as $pid => $p) {
             $stock   = (int)($p['stock'] ?? 0);
             $soldOut = $stock <= 0;
             $low     = !$soldOut && $stock <= 5;
-            $img     = image_display_src($p['image'] ?? '');
+            $img     = product_image_url($p['image'] ?? '', $pid, 'products');
         ?>
           <div class="pos-item <?= $soldOut ? 'is-soldout' : '' ?>"
                data-pid="<?= e($pid) ?>"

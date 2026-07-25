@@ -272,6 +272,21 @@ function image_display_src(?string $image, string $legacyDir = 'admin/item'): st
     return upload_web($legacyDir, $image);
 }
 
+/**
+ * Return a proxy URL for product/rent-item images stored as b64: in Firebase.
+ * Falls back to image_display_src() for legacy filenames or external URLs.
+ * Keeps the HTML response small — the browser fetches the image separately.
+ */
+function product_image_url(?string $image, string $id, string $table = 'products'): string {
+    if (!$image || $image === '') {
+        return '/assets/img/placeholder.svg';
+    }
+    if (str_starts_with($image, 'b64:')) {
+        return '/user/product_image.php?id=' . rawurlencode($id) . '&table=' . rawurlencode($table);
+    }
+    return image_display_src($image);
+}
+
 /* ---------- session cart ---------- */
 function get_cart(): array {
     return $_SESSION['cart'] ?? [];

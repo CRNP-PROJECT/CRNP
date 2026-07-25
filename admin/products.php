@@ -178,7 +178,7 @@ require_once __DIR__ . '/../includes/header.php';
           <tr><td colspan="5" class="muted t-center">No products yet — add your first dish using the form on the right.</td></tr>
         <?php else: foreach ($products as $pid => $p):
             $isAvailable = ($p['status'] ?? 'available') === 'available';
-            $img = image_display_src($p['image'] ?? '');
+            $img = product_image_url($p['image'] ?? '', $pid, 'products');
         ?>
           <tr>
             <td>

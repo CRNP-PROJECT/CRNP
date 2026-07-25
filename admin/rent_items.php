@@ -140,7 +140,7 @@ require_once __DIR__ . '/../includes/header.php';
         <?php else: foreach ($rentItems as $rid => $r):
             $qty = (int) ($r['quantity'] ?? 0);
             $qtyClass = $qty === 0 ? 'qty-out' : ($qty <= 2 ? 'qty-low' : '');
-            $img = image_display_src($r['image'] ?? '');
+            $img = product_image_url($r['image'] ?? '', $rid, 'rent_items');
         ?>
           <tr>
             <td>

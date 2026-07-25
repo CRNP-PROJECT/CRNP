@@ -140,7 +140,7 @@ require_once __DIR__ . '/../includes/header.php';
         if (mb_strlen($desc) > 130) {
             $desc = mb_substr($desc, 0, 127) . '…';
         }
-        $img = image_display_src($p['image'] ?? '');
+        $img = product_image_url($p['image'] ?? '', $id, 'products');
       ?>
         <article class="product" style="<?= !$isAvailable ? 'opacity:.55;' : '' ?>">
           <div class="product__media">
