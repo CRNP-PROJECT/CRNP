@@ -97,7 +97,11 @@ $userLabel = match ($role) {
           <a class="nav-link cart-pill<?= $activeNav === 'cart' ? ' is-active' : '' ?>" href="/user/cart.php">Cart
             <?php if (cart_count() > 0): ?><span class="count"><?= cart_count() ?></span><?php endif; ?>
           </a>
-          <a class="nav-link <?= $activeNav === 'profile' ? 'is-active' : '' ?>" href="/user/your_profile.php"><?= e($userLabel) ?></a>
+          <a class="nav-link <?= $activeNav === 'profile' ? 'is-active' : '' ?>" href="/user/your_profile.php">
+            <?php $navAvatar = user_image(); if ($navAvatar): ?>
+              <img src="<?= e(upload_web('user/profile', $navAvatar)) ?>" alt="" width="22" height="22"
+                   style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:5px;border:1.5px solid var(--surface);">
+            <?php endif; ?><?= e($userLabel) ?></a>
         <?php else: ?>
           <span class="nav-link" style="cursor:default;color:var(--muted)"><?= e($userLabel) ?></span>
         <?php endif; ?>

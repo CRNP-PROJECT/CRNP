@@ -178,6 +178,14 @@ function upload_web(string $category, ?string $filename): string {
     if (!$filename) {
         return '/assets/img/placeholder.svg';
     }
+    /* External URLs (e.g. Google profile pictures) — return as-is. */
+    if (preg_match('#^https?://#i', $filename)) {
+        return $filename;
+    }
+    /* base64 data URIs (Firebase dual-save) — return as-is. */
+    if (str_starts_with($filename, 'b64:')) {
+        return $filename;
+    }
     if ($category === 'admin/item') {
         return '/assets/img/products/' . rawurlencode($filename);
     }

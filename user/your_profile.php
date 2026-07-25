@@ -38,6 +38,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action', '') === 'update_name
     redirect('/user/your_profile.php');
 }
 
+// ---------- Change password ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action', '') === 'change_password') {
+    csrf_verify();
+    $current = (string) post('current_password', '');
+    $new     = (string) post('new_password', '');
+    $confirm = (string) post('confirm_password', '');
+    $isGoogle = ($user['provider'] ?? '') === 'google';
+
+    if (!$isGoogle && $current === '') {
+        flash('Please enter your current password.', 'danger');
+    } elseif ($new === '') {
+        flash('New password cannot be empty.', 'danger');
+    } elseif (strlen($new) < 8) {
+        flash('New password must be at least 8 characters.', 'danger');
+    } elseif ($new !== $confirm) {
+        flash('New passwords do not match.', 'danger');
+    } else {
+        $ok = true;
+        if (!$isGoogle) {
+            $hash = $user['password_hash'] ?? '';
+            if (!password_verify($current, $hash)) {
+                flash('Current password is incorrect.', 'danger');
+                $ok = false;
+            }
+        }
+        if ($ok) {
+            try {
+                $db->update('/user', $uid, ['password_hash' => password_hash($new, PASSWORD_BCRYPT)]);
+                flash('Password updated successfully.', 'ok');
+            } catch (Throwable $e) {
+                flash('Could not update password. Please try again.', 'danger');
+            }
+        }
+    }
+    redirect('/user/your_profile.php');
+}
+
 // ---------- Upload avatar ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action', '') === 'upload_image') {
     csrf_verify();
@@ -164,6 +201,41 @@ $verified  = !empty($user['email_verified']);
         </form>
       </div>
     </div>
+
+    <?php if ($provider !== 'google'): ?>
+    <div class="card">
+      <div class="card__head">
+        <h3>Change password</h3>
+      </div>
+      <div class="card__body">
+        <form method="post" action="/user/your_profile.php" novalidate>
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="change_password">
+          <div class="form-grid">
+            <div class="field">
+              <label for="current_password">Current password</label>
+              <input class="input" id="current_password" name="current_password" type="password"
+                     autocomplete="current-password" required>
+            </div>
+            <div class="field">
+              <label for="new_password">New password</label>
+              <input class="input" id="new_password" name="new_password" type="password"
+                     autocomplete="new-password" required minlength="8">
+              <span class="hint">At least 8 characters.</span>
+            </div>
+            <div class="field">
+              <label for="confirm_password">Confirm new password</label>
+              <input class="input" id="confirm_password" name="confirm_password" type="password"
+                     autocomplete="new-password" required minlength="8">
+            </div>
+            <div class="form-actions">
+              <button class="btn btn--gold" type="submit">Update password</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <?php endif; ?>
 
   </section>
 
