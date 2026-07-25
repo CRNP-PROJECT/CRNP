@@ -151,6 +151,9 @@ $flashes = get_flashes();
             <label for="password">Password</label>
             <input class="input" id="password" name="password" type="password" autocomplete="current-password"
                    placeholder="Your password" required>
+            <div style="text-align:right;margin-top:6px;">
+              <a href="/user/forgot_password.php" style="font-size:13px;color:var(--gold);">Forgot password?</a>
+            </div>
           </div>
           <div class="form-actions">
             <button class="btn btn--gold btn--lg btn--block" type="submit">Sign in</button>
