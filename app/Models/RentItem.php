@@ -26,19 +26,24 @@ class RentItem extends Model
     }
 
     /** Decrement stock for a rent item. */
-    public static function decrementStock(string $itemId, int $qty): void
+    public static function decrementStock(string $itemId, int $qty, ?int $currentStock = null): void
     {
-        $row = static::db()->retrieve('/rent_items/' . $itemId);
-        if (!is_array($row) || !isset($row['quantity'])) return;
-        $new = max(0, (int)$row['quantity'] - $qty);
+        if ($currentStock === null) {
+            $row = static::db()->retrieve('/rent_items/' . $itemId);
+            if (!is_array($row) || !isset($row['quantity'])) return;
+            $currentStock = (int)$row['quantity'];
+        }
+        $new = max(0, $currentStock - $qty);
         static::db()->update('/rent_items', $itemId, ['quantity' => $new]);
     }
 
     /** Restore stock for a rent item. */
-    public static function restoreStock(string $itemId, int $qty): void
+    public static function restoreStock(string $itemId, int $qty, ?int $currentStock = null): void
     {
-        $row = static::db()->retrieve('/rent_items/' . $itemId);
-        $cur = (is_array($row) && isset($row['quantity'])) ? (int)$row['quantity'] : 0;
-        static::db()->update('/rent_items', $itemId, ['quantity' => $cur + $qty]);
+        if ($currentStock === null) {
+            $row = static::db()->retrieve('/rent_items/' . $itemId);
+            $currentStock = (is_array($row) && isset($row['quantity'])) ? (int)$row['quantity'] : 0;
+        }
+        static::db()->update('/rent_items', $itemId, ['quantity' => $currentStock + $qty]);
     }
 }

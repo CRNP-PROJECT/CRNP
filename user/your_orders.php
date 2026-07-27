@@ -13,18 +13,6 @@ $activeNav = 'orders';
 $pageTitle = 'My Orders';
 $layout    = 'wide';
 
-/** Short summary of an items map: total qty + distinct kinds. */
-function items_summary($items): string {
-    if (!is_array($items) || empty($items)) return '—';
-    $n = 0;
-    foreach ($items as $row) {
-        if (is_array($row)) $n += (int) ($row['qty'] ?? 0);
-    }
-    if ($n === 0) return '—';
-    $kinds = count($items);
-    return $n . ' item' . ($n === 1 ? '' : 's') . ' · ' . $kinds . ' kind' . ($kinds === 1 ? '' : 's');
-}
-
 /** Human-friendly datetime formatting. Output is escaped by the caller. */
 function fmt_time(?string $t): string {
     if (!$t) return '—';
@@ -100,7 +88,7 @@ require_once __DIR__ . '/../includes/header.php';
           ?>
             <tr>
               <td><code class="kbd"><?= e($shortId) ?></code><?php if (!empty($o['pickup_time'])): ?><br><small class="muted"><?= e($o['pickup_time']) ?></small><?php endif; ?></td>
-              <td><?= e(items_summary($o['items'] ?? [])) ?></td>
+              <td><?= items_html($o['items'] ?? []) ?></td>
               <td class="num"><?= money($o['total'] ?? 0) ?></td>
               <td><?= order_tracker_html((string)($o['status'] ?? '')) ?></td>
               <td><span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span></td>
@@ -166,7 +154,7 @@ require_once __DIR__ . '/../includes/header.php';
           ?>
             <tr>
               <td><code class="kbd"><?= e($shortId) ?></code></td>
-              <td><?= e(items_summary($b['items'] ?? [])) ?></td>
+              <td><?= items_html($b['items'] ?? []) ?></td>
               <td class="muted"><?= e(fmt_time($b['appointment_time'] ?? null)) ?></td>
               <td class="muted"><?= e(fmt_time($b['return_time'] ?? null)) ?></td>
               <td class="num"><?= money($b['total'] ?? 0) ?></td>

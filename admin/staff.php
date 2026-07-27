@@ -4,6 +4,7 @@
  */
 require_once __DIR__ . '/../init.php';
 require_admin();
+$db = getDB();
 use App\Models\Staff;
 
 /* ---------- POST handling ---------- */

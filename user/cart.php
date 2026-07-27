@@ -20,17 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'update' && $id !== '' && isset($cart[$id])) {
         $stock = max(1, (int) ($cart[$id]['stock'] ?? 1));
-        $cur   = (int) ($cart[$id]['qty'] ?? 1);
-        $delta = post('delta', '');
-        $typed = (int) post('qty', $cur);
-
-        if ($delta !== '') {
-            $base  = $typed;              // input reflects what user sees
-            $newQ  = $base + (int) $delta;
-        } else {
-            $newQ  = $typed;              // user pressed Enter / Update
-        }
-        $newQ = max(1, min($stock, $newQ));
+        $newQ  = max(1, min($stock, (int) post('qty', $cart[$id]['qty'] ?? 1)));
 
         $cart[$id]['qty'] = $newQ;
         set_cart($cart);
@@ -50,6 +40,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $cart = get_cart();
+
+foreach ($cart as $id => &$item) {
+    if (empty($item['stock'])) {
+        try {
+            $db   = \App\Core\Model::db();
+            $row  = $db->retrieve('/products/' . $id);
+            $item['stock'] = is_array($row) ? (int) ($row['stock'] ?? 0) : 0;
+        } catch (\Throwable $e) {
+            $item['stock'] = 0;
+        }
+    }
+}
+unset($item);
+set_cart($cart);
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -89,11 +93,11 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="cart-item__price"><?= money($unit) ?> each</div>
           <form method="post" class="qty mt-2" aria-label="Quantity for <?= e($item['name'] ?? 'item') ?>">
             <?= csrf_field() ?>
-            <input type="hidden" name="action"  value="update">
+            <input type="hidden" name="action" value="update">
             <input type="hidden" name="item_id" value="<?= e($id) ?>">
-            <button type="submit" name="delta" value="-1" aria-label="Decrease quantity">&minus;</button>
+            <button type="button" data-delta="-1" aria-label="Decrease quantity">&minus;</button>
             <input type="number" name="qty" value="<?= $qty ?>" min="1" max="<?= $stock ?>" inputmode="numeric" aria-label="Quantity">
-            <button type="submit" name="delta" value="1" aria-label="Increase quantity">+</button>
+            <button type="button" data-delta="1" aria-label="Increase quantity">+</button>
           </form>
         </div>
 
@@ -123,5 +127,29 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
   </div>
 <?php endif; ?>
+
+<script>
+(function () {
+  document.querySelectorAll('form.qty').forEach(function (form) {
+    var input = form.querySelector('input[name="qty"]');
+    if (!input) return;
+
+    form.querySelectorAll('button[data-delta]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var cur = (parseInt(input.value, 10) || 1) + (parseInt(btn.getAttribute('data-delta'), 10) || 0);
+        input.value = Math.max(parseInt(input.min || '1'), Math.min(parseInt(input.max || '99'), cur));
+        form.submit();
+      });
+    });
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        form.submit();
+      }
+    });
+  });
+})();
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

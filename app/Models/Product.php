@@ -32,19 +32,24 @@ class Product extends Model
     }
 
     /** Decrement stock for a product. */
-    public static function decrementStock(string $productId, int $qty): void
+    public static function decrementStock(string $productId, int $qty, ?int $currentStock = null): void
     {
-        $row = static::db()->retrieve('/products/' . $productId);
-        if (!is_array($row) || !isset($row['stock'])) return;
-        $new = max(0, (int)$row['stock'] - $qty);
+        if ($currentStock === null) {
+            $row = static::db()->retrieve('/products/' . $productId);
+            if (!is_array($row) || !isset($row['stock'])) return;
+            $currentStock = (int)$row['stock'];
+        }
+        $new = max(0, $currentStock - $qty);
         static::db()->update('/products', $productId, ['stock' => $new]);
     }
 
     /** Restore stock for a product. */
-    public static function restoreStock(string $productId, int $qty): void
+    public static function restoreStock(string $productId, int $qty, ?int $currentStock = null): void
     {
-        $row = static::db()->retrieve('/products/' . $productId);
-        $cur = (is_array($row) && isset($row['stock'])) ? (int)$row['stock'] : 0;
-        static::db()->update('/products', $productId, ['stock' => $cur + $qty]);
+        if ($currentStock === null) {
+            $row = static::db()->retrieve('/products/' . $productId);
+            $currentStock = (is_array($row) && isset($row['stock'])) ? (int)$row['stock'] : 0;
+        }
+        static::db()->update('/products', $productId, ['stock' => $currentStock + $qty]);
     }
 }

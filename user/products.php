@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'price' => (float) ($p->price ?? 0),
         'qty'   => $newQty,
         'image' => $p->image ?? '',
+        'stock' => (int) ($p->stock ?? 0),
     ];
     set_cart($cart);
 
@@ -165,26 +166,20 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
               </div>
               <?php if ($isAvailable): ?>
-              <div class="product__actions">
-                <form method="post" action="/user/products.php" style="display:inline">
-                  <?= csrf_field() ?>
-                  <input type="hidden" name="product_id" value="<?= e($id) ?>">
-                  <input type="hidden" name="qty" value="1">
-                  <input type="hidden" name="cart_action" value="add">
-                  <button class="btn btn--outline btn--sm" type="submit">
-                    🛒 Add to Cart
-                  </button>
-                </form>
-                <form method="post" action="/user/products.php" style="display:inline">
-                  <?= csrf_field() ?>
-                  <input type="hidden" name="product_id" value="<?= e($id) ?>">
-                  <input type="hidden" name="qty" value="1">
-                  <input type="hidden" name="cart_action" value="buy_now">
-                  <button class="btn btn--gold btn--sm" type="submit">
-                    ⚡ Buy Now
-                  </button>
-                </form>
-              </div>
+  <div class="product__actions">
+    <form method="post" action="/user/products.php" style="display:inline">
+      <?= csrf_field() ?>
+      <input type="hidden" name="product_id" value="<?= e($id) ?>">
+      <input type="hidden" name="qty" value="1">
+      <input type="hidden" name="cart_action" value="add">
+      <button class="btn btn--outline btn--sm" type="submit">
+        🛒 Add to Cart
+      </button>
+    </form>
+    <a class="btn btn--gold btn--sm" href="/user/checkout.php?buy_now=1&product_id=<?= e($id) ?>&qty=1">
+      ⚡ Buy Now
+    </a>
+  </div>
               <?php else: ?>
               <div class="product__actions">
                 <button class="btn btn--muted btn--sm" type="button" disabled>Not Available</button>

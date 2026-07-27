@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // PATCH the /settings node directly (no child id)
         $db->updateNode('/settings', $updated);
+        cache_file_forget('business_settings');
         flash('Business settings saved.', 'ok');
     } catch (Exception $e) {
         flash('Could not save settings: ' . $e->getMessage(), 'danger');
