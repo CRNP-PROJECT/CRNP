@@ -35,12 +35,24 @@ if (is_readable($envFile)) {
 // These MUST run before session_start() so the cookie sent to the browser
 // picks up the hardened flags.
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_samesite', 'Strict');
+ini_set('session.cookie_samesite', 'Lax');
 ini_set('session.use_strict_mode', 1);
 ini_set('session.use_only_cookies', 1);
 // cookie_secure: only when HTTPS detected (so dev on http:// still works)
 if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
     ini_set('session.cookie_secure', 1);
+}
+
+// Give each role its own session cookie so they can be open simultaneously.
+$uri = $_SERVER['REQUEST_URI'] ?? '/';
+if (preg_match('#/admin(?:/|$)#', $uri)) {
+    session_name('SESS_ADMIN');
+} elseif (preg_match('#/cashier(?:/|$)#', $uri)) {
+    session_name('SESS_CASHIER');
+} elseif (preg_match('#/kitchen(?:/|$)#', $uri)) {
+    session_name('SESS_KITCHEN');
+} else {
+    session_name('SESS_USER');
 }
 
 if (session_status() === PHP_SESSION_NONE) {

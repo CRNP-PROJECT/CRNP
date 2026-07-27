@@ -190,7 +190,7 @@ $itemsCount = static function (array $b): int {
                   <br><small class="muted"><?= e($contact) ?></small>
                 <?php endif; ?>
               </td>
-              <td><?= (int)$count ?> item<?= (int)$count === 1 ? '' : 's' ?></td>
+              <td><?= items_html($b['items'] ?? []) ?></td>
               <td class="num"><strong><?= e(money($total)) ?></strong></td>
               <td><small><?= e($appt ?: '—') ?></small></td>
               <td><small><?= e($ret ?: '—') ?></small></td>

@@ -26,6 +26,9 @@ abstract class Model
     /** Firebase push key (set after insert). */
     protected ?string $key = null;
 
+    /** Per-request cache for raw() to avoid duplicate cURL calls. */
+    private static array $rawCache = [];
+
     /* ------------------------------------------------------------------ */
     /*  Construction                                                       */
     /* ------------------------------------------------------------------ */
@@ -51,9 +54,7 @@ abstract class Model
     /** Return every row under the table node, keyed by Firebase push key. */
     public static function all(): array
     {
-        $raw = static::db()->retrieve('/' . static::$table);
-        $rows = \is_array($raw) ? $raw : [];
-        return static::hydrateMany($rows);
+        return static::hydrateMany(static::raw());
     }
 
     /** Find a single record by its Firebase key. Returns null when missing. */
@@ -69,8 +70,12 @@ abstract class Model
     /** Retrieve raw rows (arrays) — for pages that still iterate raw data. */
     public static function raw(): array
     {
-        $raw = static::db()->retrieve('/' . static::$table);
-        return \is_array($raw) ? $raw : [];
+        $table = static::$table;
+        if (!isset(self::$rawCache[$table])) {
+            $raw = static::db()->retrieve('/' . $table);
+            self::$rawCache[$table] = \is_array($raw) ? $raw : [];
+        }
+        return self::$rawCache[$table];
     }
 
     /** PHP-side filter (avoids indexOn). Returns raw arrays keyed by key. */
@@ -78,6 +83,52 @@ abstract class Model
     {
         $all = static::raw();
         return \filter_by($all, $field, $value);
+    }
+
+    /** Return the latest $limit rows by a date field, newest first (raw arrays). */
+    public static function recentLimited(string $dateField, int $limit = 50): array
+    {
+        $all = static::raw();
+        if (count($all) <= $limit) {
+            uasort($all, function ($a, $b) use ($dateField) {
+                $ta = strtotime((string)($a[$dateField] ?? ''));
+                $tb = strtotime((string)($b[$dateField] ?? ''));
+                if ($ta === false && $tb === false) return 0;
+                if ($ta === false) return 1;
+                if ($tb === false) return -1;
+                return $tb <=> $ta;
+            });
+            return $all;
+        }
+        $timestamps = [];
+        foreach ($all as $k => $v) {
+            $t = strtotime((string)($v[$dateField] ?? ''));
+            $timestamps[$k] = $t === false ? 0 : $t;
+        }
+        arsort($timestamps);
+        $keys = array_slice(array_keys($timestamps), 0, $limit, true);
+        $out = [];
+        foreach ($keys as $k) {
+            $out[$k] = $all[$k];
+        }
+        return $out;
+    }
+
+    /** Paginate raw rows: returns ['data' => ..., 'page' => ..., 'perPage' => ..., 'total' => ...]. */
+    public static function paginate(int $page = 1, int $perPage = 50): array
+    {
+        $all = static::raw();
+        $total = count($all);
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+        $data = array_slice($all, $offset, $perPage, true);
+        return [
+            'data'    => $data,
+            'page'    => $page,
+            'perPage' => $perPage,
+            'total'   => $total,
+            'pages'   => max(1, (int)ceil($total / $perPage)),
+        ];
     }
 
     /* ------------------------------------------------------------------ */

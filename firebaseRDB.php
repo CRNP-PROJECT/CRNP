@@ -27,17 +27,33 @@ class firebaseRDB {
     /**
      * GET a node. When $queryKey is supplied a server-side query is attempted;
      * returns an associative array (decoded). On cURL failure returns [].
+     *
+     * Advanced options ($options map):
+     *   limitToLast => int
+     *   limitToFirst => int
+     *   startAt => string|int
+     *   endAt => string|int
      */
-    public function retrieve(string $path, ?string $queryKey = null, string $queryType = self::EQUAL, $queryVal = null) {
+    public function retrieve(string $path, ?string $queryKey = null, string $queryType = self::EQUAL, $queryVal = null, array $options = []) {
         $url = $this->url . '/' . ltrim($path, '/') . '.json';
+        $qs = [];
         if ($queryKey !== null && $queryVal !== null) {
             $val = (string)$queryVal;
             if ($queryType === self::LIKE) {
-                // prefix match
-                $url .= '?orderBy="' . rawurlencode($queryKey) . '"&startAt="' . rawurlencode($val) . '"&endAt="' . rawurlencode($val) . '\uf8ff"';
+                $qs[] = 'orderBy="' . rawurlencode($queryKey) . '"';
+                $qs[] = 'startAt="' . rawurlencode($val) . '"';
+                $qs[] = 'endAt="' . rawurlencode($val) . '\uf8ff"';
             } else {
-                $url .= '?orderBy="' . rawurlencode($queryKey) . '"&equalTo="' . rawurlencode($val) . '"';
+                $qs[] = 'orderBy="' . rawurlencode($queryKey) . '"';
+                $qs[] = 'equalTo="' . rawurlencode($val) . '"';
             }
+        }
+        if (!empty($options['limitToLast']))  $qs[] = 'limitToLast=' . (int)$options['limitToLast'];
+        if (!empty($options['limitToFirst'])) $qs[] = 'limitToFirst=' . (int)$options['limitToFirst'];
+        if (isset($options['startAt']))       $qs[] = 'startAt="' . rawurlencode((string)$options['startAt']) . '"';
+        if (isset($options['endAt']))         $qs[] = 'endAt="' . rawurlencode((string)$options['endAt']) . '"';
+        if ($qs !== []) {
+            $url .= '?' . implode('&', $qs);
         }
         $resp = $this->_exec($url, 'GET');
         if ($resp === null) {

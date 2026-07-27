@@ -107,7 +107,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ---------- List data ---------- */
-$products = Product::raw();
+$page  = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 50;
+$productPage = Product::paginate($page, $perPage);
+$products = $productPage['data'];
+$totalProducts = $productPage['total'];
+$pages = $productPage['pages'];
+
 // Sort newest first
 uasort($products, function ($a, $b) {
     $ta = strtotime((string) ($a['created_at'] ?? '')) ?: 0;
@@ -164,7 +170,13 @@ require_once __DIR__ . '/../includes/header.php';
   <!-- List -->
   <div class="card">
     <div class="card__head">
-      <div><h2>All products</h2><small><?= count($products) ?> item(s)</small></div>
+      <div><h2>All products</h2><small><?= $totalProducts ?> item(s) &middot; page <?= $page ?> of <?= $pages ?></small></div>
+      <?php if ($pages > 1): ?>
+        <div class="row" style="gap:6px">
+          <?php if ($page > 1): ?><a class="btn btn--ghost btn--sm" href="?page=<?= $page - 1 ?>">&larr; Prev</a><?php endif; ?>
+          <?php if ($page < $pages): ?><a class="btn btn--ghost btn--sm" href="?page=<?= $page + 1 ?>">Next &rarr;</a><?php endif; ?>
+        </div>
+      <?php endif; ?>
     </div>
     <div class="table-wrap" style="border:0;border-radius:0;">
       <table class="tbl">

@@ -37,11 +37,38 @@ for ($m = 11 * 60; $m <= 21 * 60 + 30; $m += 30) {
 /* Reservation date = today only. */
 $reservationDate = date('Y-m-d');
 
-/* Guard: empty cart can't be checked out. */
+/* ---------- Buy-Now mode: bypass cart when ?buy_now=1 ---------- */
+$buyNowProductId = '';
+$buyNowQty = 1;
+if (isset($_GET['buy_now']) && $_GET['buy_now'] === '1') {
+    $buyNowProductId = trim((string)($_GET['product_id'] ?? ''));
+    $buyNowQty = max(1, (int)($_GET['qty'] ?? 1));
+}
+
+/* Guard: need either cart or buy-now item. */
 $cart = get_cart();
-if (!$cart) {
+if (!$cart && $buyNowProductId === '') {
     flash('Your cart is empty. Add a few dishes first.', 'warn');
     redirect('/user/products.php');
+}
+
+/* If buy-now mode, build a single-item "cart" so the rest of the page works. */
+if ($buyNowProductId !== '' && !$cart) {
+    $p = Product::find($buyNowProductId);
+    if (!$p || ($p->status ?? 'available') !== 'available') {
+        flash('Sorry, that item is not available.', 'warn');
+        redirect('/user/products.php');
+    }
+    $cart = [
+        $buyNowProductId => [
+            'id'    => $buyNowProductId,
+            'name'  => $p->name ?? 'Item',
+            'price' => (float)($p->price ?? 0),
+            'qty'   => $buyNowQty,
+            'image' => $p->image ?? '',
+            'stock' => (int)($p->stock ?? 0),
+        ],
+    ];
 }
 
 /* ---------- POST: confirm checkout ---------- */
@@ -62,8 +89,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Please choose a pickup time.';
     }
 
-    /* Refresh cart snapshot so we don't trust stale stock. */
+    /* Refresh cart snapshot so we don't trust stale stock.
+       In buy-now mode, rebuild the single-item cart from POST data. */
     $cart = get_cart();
+    if (isset($_POST['buy_now']) && $_POST['buy_now'] === '1') {
+        $bPid = trim((string)post('buy_now_product_id', ''));
+        $bQty = max(1, (int)post('buy_now_qty', 1));
+        if ($bPid !== '') {
+            $bp = Product::find($bPid);
+            if ($bp && ($bp->status ?? 'available') === 'available') {
+                $cart = [
+                    $bPid => [
+                        'id'    => $bPid,
+                        'name'  => $bp->name ?? 'Item',
+                        'price' => (float)($bp->price ?? 0),
+                        'qty'   => $bQty,
+                        'image' => $bp->image ?? '',
+                        'stock' => (int)($bp->stock ?? 0),
+                    ],
+                ];
+            }
+        }
+    }
     if (!$cart) {
         flash('Your cart emptied before checkout.', 'warn');
         redirect('/user/products.php');
@@ -198,6 +245,11 @@ require_once __DIR__ . '/../includes/header.php';
 <form method="post" enctype="multipart/form-data" class="form-grid" novalidate>
   <?= csrf_field() ?>
   <input type="hidden" name="confirmCheckout" value="1">
+  <?php if ($buyNowProductId !== ''): ?>
+    <input type="hidden" name="buy_now" value="1">
+    <input type="hidden" name="buy_now_product_id" value="<?= e($buyNowProductId) ?>">
+    <input type="hidden" name="buy_now_qty" value="<?= (int)$buyNowQty ?>">
+  <?php endif; ?>
 
   <div class="card">
     <div class="card__head"><h2>Order summary</h2><small class="muted"><?= count($cart) ?> item<?= count($cart) === 1 ? '' : 's' ?></small></div>

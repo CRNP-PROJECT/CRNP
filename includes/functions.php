@@ -288,6 +288,19 @@ function product_image_url(?string $image, string $id, string $table = 'products
 }
 
 /* ---------- session cart ---------- */
+function items_html($items): string {
+    if (!is_array($items) || empty($items)) {
+        return '<span class="muted">No items</span>';
+    }
+    $parts = [];
+    foreach ($items as $it) {
+        if (!is_array($it)) continue;
+        $name = (string)($it['name'] ?? 'Item');
+        $qty  = (int)($it['qty'] ?? $it['quantity'] ?? 1);
+        $parts[] = e($name) . ' <span class="muted">&times;' . $qty . '</span>';
+    }
+    return $parts ? implode(', ', $parts) : '<span class="muted">No items</span>';
+}
 function get_cart(): array {
     return $_SESSION['cart'] ?? [];
 }
@@ -310,26 +323,34 @@ function cart_total(): float {
 }
 
 /* ---------- stock operations ---------- */
-function decrement_product_stock(firebaseRDB $db, string $productId, int $qty): void {
-    $row = $db->retrieve('/products/' . $productId);
-    if (!is_array($row) || !isset($row['stock'])) {
-        return;
+function decrement_product_stock(firebaseRDB $db, string $productId, int $qty, ?int $currentStock = null): void {
+    if ($currentStock === null) {
+        $row = $db->retrieve('/products/' . $productId);
+        if (!is_array($row) || !isset($row['stock'])) {
+            return;
+        }
+        $currentStock = (int)$row['stock'];
     }
-    $new = max(0, (int)$row['stock'] - $qty);
+    $new = max(0, $currentStock - $qty);
     $db->update('/products', $productId, ['stock' => $new]);
 }
-function decrement_rent_stock(firebaseRDB $db, string $itemId, int $qty): void {
-    $row = $db->retrieve('/rent_items/' . $itemId);
-    if (!is_array($row) || !isset($row['quantity'])) {
-        return;
+function decrement_rent_stock(firebaseRDB $db, string $itemId, int $qty, ?int $currentStock = null): void {
+    if ($currentStock === null) {
+        $row = $db->retrieve('/rent_items/' . $itemId);
+        if (!is_array($row) || !isset($row['quantity'])) {
+            return;
+        }
+        $currentStock = (int)$row['quantity'];
     }
-    $new = max(0, (int)$row['quantity'] - $qty);
+    $new = max(0, $currentStock - $qty);
     $db->update('/rent_items', $itemId, ['quantity' => $new]);
 }
-function restore_rent_stock(firebaseRDB $db, string $itemId, int $qty): void {
-    $row = $db->retrieve('/rent_items/' . $itemId);
-    $cur = (is_array($row) && isset($row['quantity'])) ? (int)$row['quantity'] : 0;
-    $db->update('/rent_items', $itemId, ['quantity' => $cur + $qty]);
+function restore_rent_stock(firebaseRDB $db, string $itemId, int $qty, ?int $currentStock = null): void {
+    if ($currentStock === null) {
+        $row = $db->retrieve('/rent_items/' . $itemId);
+        $currentStock = (is_array($row) && isset($row['quantity'])) ? (int)$row['quantity'] : 0;
+    }
+    $db->update('/rent_items', $itemId, ['quantity' => $currentStock + $qty]);
 }
 
 /* ---------- status helpers ---------- */
@@ -393,35 +414,74 @@ function cache_remember(string $key, int $ttl, callable $loader) {
     return $data;
 }
 
-/* ---------- business settings ---------- */
-function get_settings(): array {
-    static $cache = null;
-    if ($cache !== null) return $cache;
-    $defaults = [
-        'business_name'   => BRAND_NAME,
-        'tagline'         => BRAND_TAGLINE,
-        'address'         => 'Mabolo, Iloilo City Proper, Iloilo City, Philippines',
-        'phone'           => '+63 (033) 320-0000',
-        'hours'           => 'Mon–Sun · 10:00 AM – 11:00 PM',
-        'facebook_url'    => '',
-        'instagram_url'   => '',
-        'support_email'   => '',
-        'hero_title'      => 'Your table is waiting.',
-        'hero_subtitle'   => 'Order ahead for pickup, reserve a table, or book equipment for your next celebration — all from one account.',
-        'about_headline'  => 'Your trusted partner for events and celebrations.',
-        'about_body'      => "From everyday meals to special gatherings, we bring quality food and reliable rental equipment to every table we serve in Iloilo City.",
-        'about_stat1_num' => '10+', 'about_stat1_lbl' => 'Years Experience',
-        'about_stat2_num' => '500+', 'about_stat2_lbl' => 'Events Served',
-        'about_stat3_num' => '100%', 'about_stat3_lbl' => 'Satisfaction',
-    ];
-    try {
-        $db = getDB();
-        $s = $db->retrieve('/settings');
-        $cache = is_array($s) ? array_merge($defaults, $s) : $defaults;
-    } catch (Throwable $e) {
-        $cache = $defaults;
+/* ---------- cross-request file cache (P0) ----------
+ * Persists data across requests with a TTL. Useful for slow Firebase reads
+ * that are acceptable to serve slightly stale (settings, dashboard charts).
+ * Stored in sys_get_temp_dir() to avoid permission issues. */
+function cache_file_get(string $key, int $ttl, callable $loader) {
+    $dir = sys_get_temp_dir() . '/crnp_cache';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0775, true);
     }
-    return $cache;
+    $file = $dir . '/' . md5($key) . '.cache';
+    if (is_file($file) && (time() - filemtime($file)) < $ttl) {
+        $raw = @file_get_contents($file);
+        if ($raw !== false) {
+            return unserialize($raw);
+        }
+    }
+    $data = $loader();
+    @file_put_contents($file, serialize($data), LOCK_EX);
+    return $data;
+}
+function cache_file_forget(string $key): void {
+    $dir = sys_get_temp_dir() . '/crnp_cache';
+    $file = $dir . '/' . md5($key) . '.cache';
+    if (is_file($file)) {
+        @unlink($file);
+    }
+}
+function cache_file_clear_all(): void {
+    $dir = sys_get_temp_dir() . '/crnp_cache';
+    if (!is_dir($dir)) return;
+    foreach (glob($dir . '/*.cache') ?: [] as $f) {
+        @unlink($f);
+    }
+}
+
+/* ---------- business settings ----------
+ * Cached across requests for 300s (5 min). Stale reads are acceptable for
+ * business info; admin can manually clear by saving in Settings. */
+function get_settings(): array {
+    return cache_file_get('business_settings', 300, function () {
+        static $cache = null;
+        if ($cache !== null) return $cache;
+        $defaults = [
+            'business_name'   => BRAND_NAME,
+            'tagline'         => BRAND_TAGLINE,
+            'address'         => 'Mabolo, Iloilo City Proper, Iloilo City, Philippines',
+            'phone'           => '+63 (033) 320-0000',
+            'hours'           => 'Tue–Sun · 11:00 AM – 10:00 PM (Closed Mondays)',
+            'facebook_url'    => '',
+            'instagram_url'   => '',
+            'support_email'   => '',
+            'hero_title'      => 'Your table is waiting.',
+            'hero_subtitle'   => "Order ahead for pickup, reserve a table, or book equipment for your next celebration — all from one account.",
+            'about_headline'  => 'Your trusted partner for events and celebrations.',
+            'about_body'      => "From everyday meals to special gatherings, we bring quality food and reliable rental equipment to every table we serve in Iloilo City.",
+            'about_stat1_num' => '10+', 'about_stat1_lbl' => 'Years Experience',
+            'about_stat2_num' => '500+', 'about_stat2_lbl' => 'Events Served',
+            'about_stat3_num' => '100%', 'about_stat3_lbl' => 'Satisfaction',
+        ];
+        try {
+            $db = getDB();
+            $s = $db->retrieve('/settings');
+            $cache = is_array($s) ? array_merge($defaults, $s) : $defaults;
+        } catch (Throwable $e) {
+            $cache = $defaults;
+        }
+        return $cache;
+    });
 }
 
 /* ---------- order tracker stepper ---------- */

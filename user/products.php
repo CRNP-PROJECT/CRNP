@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'price' => (float) ($p->price ?? 0),
         'qty'   => $newQty,
         'image' => $p->image ?? '',
+        'stock' => (int) ($p->stock ?? 0),
     ];
     set_cart($cart);
 
