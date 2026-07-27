@@ -224,7 +224,7 @@ foreach ($products as $pid => $p) {
   .order-panel__foot { padding:16px 20px; border-top:1px solid var(--line,#e6dfd1); }
   .order-total { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
   .order-total__label { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
-  .order-total__val { font-family:var(--serif); font-size:1.5rem; font-weight:700; }
+  .order-total__val { font-family:var(--sans); font-size:1.5rem; font-weight:700; }
 
   .pos-customer { padding:16px 20px; border-top:1px solid var(--line,#e6dfd1); }
   .pos-customer .field { margin-bottom:10px; }
@@ -363,7 +363,7 @@ foreach ($products as $pid => $p) {
           </div>
           <div class="field" id="change-display" style="display:none">
             <label>Change</label>
-            <div style="font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--ok,#16a34a)" id="changeValue">₱0.00</div>
+            <div style="font-family:var(--sans);font-size:1.3rem;font-weight:700;color:var(--ok,#16a34a)" id="changeValue">₱0.00</div>
           </div>
           <div class="field" id="receipt-field" style="display:none">
             <label for="receipt">GCash receipt</label>

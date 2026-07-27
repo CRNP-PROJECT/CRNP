@@ -124,6 +124,81 @@ $flashes = get_flashes();
   <style>
     .theme-toggle--floating { position: fixed; top: 16px; right: 16px; z-index: 100; width: 42px; height: 42px; }
     @media (min-width: 901px) { .theme-toggle--floating { top: 20px; right: 24px; } }
+
+    .auth {
+      height: 100vh;
+      height: 100dvh;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .auth__aside {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .auth__main {
+      height: 100vh;
+      height: 100dvh;
+      padding: 20px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .auth__main::-webkit-scrollbar {
+      display: none;
+    }
+
+    .auth__card {
+      width: 100%;
+      max-height: none;
+      overflow: hidden;
+      flex-shrink: 0;
+      margin: auto 0;
+    }
+
+    .auth__card.card--pad-lg {
+      padding: 14px 20px;
+    }
+
+    .auth__card::before {
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .auth__card h2 {
+      position: static;
+      background: transparent;
+      margin: 0 0 2px;
+      padding: 0;
+      font-size: 1.35rem;
+    }
+
+    .auth__card .mt-4 { margin-top: 4px; }
+    .auth__card .form-grid { gap: 10px; }
+    .auth__card .field { gap: 3px; }
+    .auth__card .input { min-height: 40px; padding: 9px 13px; }
+    .auth__card .btn--lg { min-height: 42px; padding: 10px 24px; }
+    .auth__card .form-actions { margin-top: 2px; }
+    .auth__card .divider { margin: 6px 0; }
+    .auth__card .t-center.muted { margin-bottom: 4px; font-size: 12px; }
+    .auth__card .g_id_signin { margin-bottom: 0; }
+
+    .auth__switch {
+      margin-top: 4px;
+      padding-top: 6px;
+    }
+
+    .pwd-toggle { right: 4px; }
+
+    @media (max-width: 479px) {
+      .auth__main { padding: 16px 14px; }
+      .auth__card.card--pad-lg { padding: 14px 16px; }
+    }
   </style>
   <link rel="icon" href="/assets/img/logo.png">
   <?php if ($googleConfigured): ?>
@@ -186,8 +261,10 @@ $flashes = get_flashes();
           </div>
           <div class="field">
             <label for="password">Password</label>
-            <input class="input" id="password" name="password" type="password" autocomplete="new-password"
-                   placeholder="At least 8 characters" required>
+            <div class="input-wrap">
+              <input class="input" id="password" name="password" type="password" autocomplete="new-password"
+                     placeholder="At least 8 characters" required>
+            </div>
             <span class="hint">Use 8 characters or more — mix in numbers for strength.</span>
           </div>
           <div class="form-actions">
@@ -198,7 +275,7 @@ $flashes = get_flashes();
 
       <?php if ($googleConfigured): ?>
         <div class="divider"></div>
-        <div class="t-center muted" style="font-size:13px;margin-bottom:10px;">or continue with</div>
+        <div class="t-center muted">or continue with</div>
         <div id="g_id_onload"
              data-client_id="<?= e(GOOGLE_CLIENT_ID) ?>"
              data-callback="handleGoogle"

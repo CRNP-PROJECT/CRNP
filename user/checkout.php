@@ -224,7 +224,7 @@ require_once __DIR__ . '/../includes/header.php';
           <tfoot>
             <tr>
               <td colspan="3" class="t-right muted" style="text-transform:uppercase;font-size:12px;letter-spacing:.08em">Total</td>
-              <td class="num"><strong style="font-family:var(--serif);font-size:1.1rem"><?= money(cart_total()) ?></strong></td>
+              <td class="num"><strong style="font-family:var(--sans);font-size:1.1rem"><?= money(cart_total()) ?></strong></td>
             </tr>
           </tfoot>
         </table>

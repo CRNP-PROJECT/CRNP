@@ -179,7 +179,7 @@ require_once __DIR__ . '/../includes/header.php';
   @media (max-width:640px) { .today-grid { grid-template-columns:1fr; } }
   .today-card { padding:18px 20px; border:1px solid var(--line,#e6dfd1); border-radius:12px; background:var(--surface,#fff); }
   .today-card__label { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:4px; }
-  .today-card__value { font-family:var(--serif); font-size:1.6rem; font-weight:700; }
+  .today-card__value { font-family:var(--sans); font-size:1.6rem; font-weight:700; }
   .today-card__hint { font-size:12px; color:var(--muted); margin-top:4px; }
 </style>
 

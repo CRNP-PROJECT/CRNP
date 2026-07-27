@@ -152,7 +152,7 @@ require_once __DIR__ . '/../includes/header.php';
   .avatar {
     width:38px; height:38px; border-radius:999px;
     background:linear-gradient(150deg,#2a2118,#211b14); color:var(--gold-100);
-    display:grid; place-items: center; font-family:var(--serif); font-weight:700; font-size:15px;
+    display:grid; place-items: center; font-family:var(--sans); font-weight:700; font-size:15px;
   }
   .form-card { position:sticky; top:90px; }
 </style>

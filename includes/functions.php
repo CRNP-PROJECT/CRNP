@@ -370,6 +370,11 @@ function post(string $key, $default = '') {
     return isset($_POST[$key]) ? $_POST[$key] : $default;
 }
 
+function is_ajax_request(): bool {
+    return !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+        && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
+
 /* ---------- local-memory cache (P1) ----------
  * Simple per-request cache to avoid re-fetching the same Firebase nodes on a
  * single page load (e.g. an admin dashboard that reads /orders, /bookings,
@@ -397,7 +402,7 @@ function get_settings(): array {
         'tagline'         => BRAND_TAGLINE,
         'address'         => 'Mabolo, Iloilo City Proper, Iloilo City, Philippines',
         'phone'           => '+63 (033) 320-0000',
-        'hours'           => 'Tue–Sun · 11:00 AM – 10:00 PM (Closed Mondays)',
+        'hours'           => 'Mon–Sun · 10:00 AM – 11:00 PM',
         'facebook_url'    => '',
         'instagram_url'   => '',
         'support_email'   => '',

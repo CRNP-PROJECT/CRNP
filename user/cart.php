@@ -14,26 +14,62 @@ $layout    = 'narrow';
 /* ---------- POST: update / remove ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
+    $isAjax = is_ajax_request();
     $action = post('action');
     $cart   = get_cart();
     $id     = post('item_id');
 
     if ($action === 'update' && $id !== '' && isset($cart[$id])) {
         $stock = max(1, (int) ($cart[$id]['stock'] ?? 1));
-        $cur   = (int) ($cart[$id]['qty'] ?? 1);
         $delta = post('delta', '');
-        $typed = (int) post('qty', $cur);
+        $typed = (int) post('qty', (int) ($cart[$id]['qty'] ?? 1));
 
         if ($delta !== '') {
-            $base  = $typed;              // input reflects what user sees
-            $newQ  = $base + (int) $delta;
+            $newQ = $typed + (int) $delta;
         } else {
-            $newQ  = $typed;              // user pressed Enter / Update
+            $newQ = $typed;
         }
-        $newQ = max(1, min($stock, $newQ));
+
+        // auto-remove when quantity drops to zero or below
+        if ($newQ <= 0) {
+            unset($cart[$id]);
+            set_cart($cart);
+
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'item_id' => $id,
+                    'total'   => money(cart_total()),
+                    'count'   => cart_count(),
+                    'empty'   => empty($cart),
+                    'removed' => true,
+                ]);
+                exit;
+            }
+
+            flash('Item removed from your cart.', 'ok');
+            redirect('/user/cart.php');
+        }
+
+        $newQ = min($stock, $newQ);
 
         $cart[$id]['qty'] = $newQ;
         set_cart($cart);
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success'  => true,
+                'item_id'  => $id,
+                'qty'      => $newQ,
+                'subtotal' => money((float) ($cart[$id]['price'] ?? 0) * $newQ),
+                'total'    => money(cart_total()),
+                'count'    => cart_count(),
+            ]);
+            exit;
+        }
+
         flash('Quantity updated.', 'ok');
         redirect('/user/cart.php');
     }
@@ -41,8 +77,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'remove' && $id !== '' && isset($cart[$id])) {
         unset($cart[$id]);
         set_cart($cart);
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'item_id' => $id,
+                'total'   => money(cart_total()),
+                'count'   => cart_count(),
+                'empty'   => empty($cart),
+            ]);
+            exit;
+        }
+
         flash('Item removed from your cart.', 'ok');
         redirect('/user/cart.php');
+    }
+
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Could not process that action.']);
+        exit;
     }
 
     flash('Could not process that action.', 'warn');
@@ -61,7 +116,7 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <?php if (!$cart): ?>
-  <div class="empty">
+  <div class="empty" id="cartEmpty">
     <div class="empty__icon" aria-hidden="true">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -73,7 +128,8 @@ require_once __DIR__ . '/../includes/header.php';
     <a class="btn btn--gold mt-2" href="/user/products.php">Browse the menu</a>
   </div>
 <?php else: ?>
-  <div class="card card--pad">
+  <div class="card card--pad" id="cartWrap">
+    <div id="cartItems">
     <?php foreach ($cart as $id => $item):
       $unit     = (float) ($item['price'] ?? 0);
       $qty      = (int)   ($item['qty']   ?? 1);
@@ -81,7 +137,7 @@ require_once __DIR__ . '/../includes/header.php';
       $stock    = max(1, (int) ($item['stock'] ?? 1));
       $img      = product_image_url($item['image'] ?? '', $id, 'products');
     ?>
-      <div class="cart-item">
+      <div class="cart-item" data-item-id="<?= e($id) ?>" data-unit="<?= $unit ?>" data-stock="<?= $stock ?>">
         <img class="cart-item__media" src="<?= e($img) ?>" alt="" loading="lazy">
 
         <div>
@@ -98,8 +154,8 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
         <div class="t-right">
-          <div class="product__price"><?= money($subtotal) ?></div>
-          <form method="post" class="mt-2">
+          <div class="product__price" data-subtotal><?= money($subtotal) ?></div>
+          <form method="post" class="cart-remove-form mt-2">
             <?= csrf_field() ?>
             <input type="hidden" name="action"  value="remove">
             <input type="hidden" name="item_id" value="<?= e($id) ?>">
@@ -108,13 +164,14 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
       </div>
     <?php endforeach; ?>
+    </div>
 
     <hr class="divider">
 
-    <div class="row row--between">
+    <div class="row row--between" id="cartFooter">
       <div>
         <div class="muted" style="font-size:13px;letter-spacing:.06em;text-transform:uppercase">Order total</div>
-        <div style="font-family:var(--serif);font-size:1.7rem;font-weight:700;line-height:1.1"><?= money(cart_total()) ?></div>
+        <div id="cartTotal" style="font-family:var(--sans);font-size:1.7rem;font-weight:700;line-height:1.1"><?= money(cart_total()) ?></div>
       </div>
       <div class="row">
         <a class="btn btn--ghost" href="/user/products.php">Keep shopping</a>
