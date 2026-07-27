@@ -343,14 +343,20 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="muted" style="padding:20px 0">No paid orders yet.</div>
         <?php else: ?>
           <div class="pie-wrap">
-            <?= svgPie($paymentMethods) ?>
+            <?php
+              $pmColors = [];
+              foreach (array_keys($paymentMethods) as $pmLabel) {
+                  $pmColors[$pmLabel] = (strtolower($pmLabel) === 'gcash') ? '#2563eb' : $pieColors[count($pmColors) % count($pieColors)];
+              }
+            ?>
+            <?= svgPie($paymentMethods, 180, $pmColors) ?>
             <ul class="pie-legend">
-              <?php $pi = 0; foreach ($paymentMethods as $label => $count): ?>
+              <?php foreach ($paymentMethods as $label => $count): ?>
                 <li>
-                  <span class="pie-legend__dot" style="background:<?= $pieColors[$pi % count($pieColors)] ?>"></span>
+                  <span class="pie-legend__dot" style="background:<?= $pmColors[$label] ?>"></span>
                   <span><?= e($label) ?>: <strong><?= $count ?></strong> orders</span>
                 </li>
-              <?php $pi++; endforeach; ?>
+              <?php endforeach; ?>
             </ul>
           </div>
         <?php endif; ?>

@@ -1020,6 +1020,12 @@ table.tbl .muted {
   border-color: color-mix(in srgb, var(--gold) 40%, transparent);
 }
 
+.badge--blue {
+  color: #2563eb;
+  background: #eff6ff;
+  border-color: color-mix(in srgb, #2563eb 35%, transparent);
+}
+
 .badge--muted {
   color: var(--muted);
   background: var(--surface-2);
@@ -1172,10 +1178,10 @@ table.tbl .muted {
 .product__foot {
   margin-top: auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding-top: 8px;
+  gap: 8px;
+  padding-top: 10px;
 }
 
 .product__price {
@@ -1201,7 +1207,9 @@ table.tbl .muted {
 
 .product__actions {
   display: flex;
+  justify-content: center;
   gap: 8px;
+  width: 100%;
 }
 
 /* ---------- cart ---------- */
@@ -2293,6 +2301,97 @@ table.tbl .muted {
   .cart-toast {
     top: 118px;
     right: 24px;
+  }
+}
+
+/* ---------- cart toast error variant ---------- */
+.cart-toast--error .cart-toast__icon {
+  background: var(--danger-bg, #fde8e8);
+  color: var(--danger, #c0392b);
+}
+
+/* ---------- confirm toast (inline confirm/cancel) ---------- */
+.confirm-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  z-index: 9600;
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--line);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 420px;
+  width: calc(100% - 32px);
+  opacity: 0;
+  transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+  pointer-events: none;
+}
+
+.confirm-toast.is-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.confirm-toast__msg {
+  flex: 1;
+  min-width: 0;
+}
+
+.confirm-toast__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.confirm-toast__btn {
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  border: 1px solid var(--line);
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+
+.confirm-toast__btn--cancel {
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.confirm-toast__btn--cancel:hover {
+  background: var(--bg-2, #f5f0e8);
+  color: var(--ink);
+}
+
+.confirm-toast__btn--ok {
+  background: var(--danger, #c0392b);
+  color: #fff;
+  border-color: var(--danger, #c0392b);
+}
+
+.confirm-toast__btn--ok:hover {
+  opacity: .88;
+}
+
+@media (max-width: 480px) {
+  .confirm-toast {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    text-align: center;
+  }
+  .confirm-toast__actions {
+    justify-content: center;
   }
 }
 

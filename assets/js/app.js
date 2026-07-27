@@ -38,9 +38,35 @@
   document.addEventListener('click', function (e) {
     var el = e.target.closest('[data-confirm]');
     if (el) {
-      if (!window.confirm(el.getAttribute('data-confirm'))) {
-        e.preventDefault();
-      }
+      e.preventDefault();
+      var msg = el.getAttribute('data-confirm');
+      var old = document.querySelector('.confirm-toast');
+      if (old) old.remove();
+      var toast = document.createElement('div');
+      toast.className = 'confirm-toast';
+      toast.innerHTML =
+        '<span class="confirm-toast__msg">' + msg + '</span>' +
+        '<div class="confirm-toast__actions">' +
+          '<button class="confirm-toast__btn confirm-toast__btn--cancel" type="button">Cancel</button>' +
+          '<button class="confirm-toast__btn confirm-toast__btn--ok" type="button">Confirm</button>' +
+        '</div>';
+      document.body.appendChild(toast);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { toast.classList.add('is-visible'); });
+      });
+      toast.querySelector('.confirm-toast__btn--cancel').addEventListener('click', function () {
+        toast.classList.remove('is-visible');
+        setTimeout(function () { toast.remove(); }, 300);
+      });
+      toast.querySelector('.confirm-toast__btn--ok').addEventListener('click', function () {
+        toast.classList.remove('is-visible');
+        setTimeout(function () { toast.remove(); }, 300);
+        if (el.tagName === 'FORM') {
+          el.submit();
+        } else {
+          el.click();
+        }
+      });
     }
   });
 
@@ -139,6 +165,37 @@
     .catch(function () { form.submit(); })
     .finally(function () {
       if (btn) { btn.disabled = false; btn.textContent = 'Add to Cart'; }
+    });
+  });
+
+  // ====================================================================
+  //  PRODUCTS PAGE — AJAX Buy Now
+  // ====================================================================
+
+  document.addEventListener('submit', function (e) {
+    var form = e.target.closest('.ajax-buy-now');
+    if (!form) return;
+    e.preventDefault();
+
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Adding...'; }
+
+    var fd = new FormData(form);
+    fetch(form.action, {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.success) {
+        window.location.href = '/user/checkout.php';
+      }
+    })
+    .catch(function () { form.submit(); })
+    .finally(function () {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Buy Now'; }
     });
   });
 })();

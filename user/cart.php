@@ -197,23 +197,187 @@ require_once __DIR__ . '/../includes/header.php';
 
 <script>
 (function () {
-  document.querySelectorAll('form.qty').forEach(function (form) {
-    var input = form.querySelector('input[name="qty"]');
-    if (!input) return;
+  var csrfToken = '<?= csrf_token() ?>';
 
+  function fmtMoney(n) { return '\u20B1' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+  /* ── toast notification ── */
+  function showToast(message, type) {
+    var old = document.querySelector('.cart-toast');
+    if (old) old.remove();
+    var toast = document.createElement('div');
+    toast.className = 'cart-toast' + (type === 'error' ? ' cart-toast--error' : '');
+    var icon = type === 'error'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    toast.innerHTML = '<span class="cart-toast__icon">' + icon + '</span><span>' + message + '</span>';
+    document.body.appendChild(toast);
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { toast.classList.add('is-visible'); });
+    });
+    setTimeout(function () {
+      toast.classList.remove('is-visible');
+      setTimeout(function () { toast.remove(); }, 400);
+    }, 2500);
+  }
+
+  /* ── confirm toast ── */
+  function showConfirm(message, onConfirm) {
+    var old = document.querySelector('.confirm-toast');
+    if (old) old.remove();
+    var toast = document.createElement('div');
+    toast.className = 'confirm-toast';
+    toast.innerHTML =
+      '<span class="confirm-toast__msg">' + message + '</span>' +
+      '<div class="confirm-toast__actions">' +
+        '<button class="confirm-toast__btn confirm-toast__btn--cancel" type="button">Cancel</button>' +
+        '<button class="confirm-toast__btn confirm-toast__btn--ok" type="button">Remove</button>' +
+      '</div>';
+    document.body.appendChild(toast);
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { toast.classList.add('is-visible'); });
+    });
+    toast.querySelector('.confirm-toast__btn--cancel').addEventListener('click', function () {
+      toast.classList.remove('is-visible');
+      setTimeout(function () { toast.remove(); }, 300);
+    });
+    toast.querySelector('.confirm-toast__btn--ok').addEventListener('click', function () {
+      toast.classList.remove('is-visible');
+      setTimeout(function () { toast.remove(); }, 300);
+      onConfirm();
+    });
+  }
+
+  /* ── AJAX POST helper ── */
+  function cartPost(data, callback) {
+    var fd = new FormData();
+    for (var k in data) fd.append(k, data[k]);
+    fd.append('csrf_token', csrfToken);
+    fetch('/user/cart.php', {
+      method: 'POST', body: fd,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin'
+    })
+    .then(function (r) { return r.json(); })
+    .then(callback)
+    .catch(function () { window.location.reload(); });
+  }
+
+  /* ── update footer totals ── */
+  function updateFooter(total, count) {
+    var totalEl = document.getElementById('cartTotal');
+    if (totalEl) totalEl.textContent = total;
+    var badge = document.querySelector('.cart-pill .count');
+    if (badge) {
+      if (count > 0) badge.textContent = count;
+      else badge.remove();
+    }
+  }
+
+  /* ── remove item row ── */
+  function removeRow(itemId) {
+    var row = document.querySelector('.cart-item[data-item-id="' + itemId + '"]');
+    if (row) {
+      row.style.transition = 'opacity .25s, transform .25s';
+      row.style.opacity = '0';
+      row.style.transform = 'translateX(30px)';
+      setTimeout(function () { row.remove(); checkEmpty(); }, 260);
+    }
+  }
+
+  function checkEmpty() {
+    var items = document.querySelectorAll('.cart-item');
+    if (items.length === 0) {
+      var wrap = document.getElementById('cartWrap');
+      if (wrap) {
+        wrap.outerHTML = '<div class="empty" id="cartEmpty">' +
+          '<div class="empty__icon" aria-hidden="true">' +
+          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>' +
+          '<path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>' +
+          '<h3>Your cart is empty</h3>' +
+          '<p>Browse the menu and add a few plates to get started.</p>' +
+          '<a class="btn btn--gold mt-2" href="/user/products.php">Browse the menu</a></div>';
+      }
+    }
+  }
+
+  /* ── quantity delta buttons ── */
+  document.querySelectorAll('.qty').forEach(function (form) {
     form.querySelectorAll('button[data-delta]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var cur = (parseInt(input.value, 10) || 1) + (parseInt(btn.getAttribute('data-delta'), 10) || 0);
-        input.value = Math.max(parseInt(input.min || '1'), Math.min(parseInt(input.max || '99'), cur));
-        form.submit();
+        var input = form.querySelector('input[name="qty"]');
+        var itemId = form.querySelector('input[name="item_id"]').value;
+        var delta = parseInt(btn.getAttribute('data-delta'), 10) || 0;
+        var cur = (parseInt(input.value, 10) || 1) + delta;
+        var max = parseInt(input.max || '99', 10);
+        var min = parseInt(input.min || '1', 10);
+        var newQ = Math.max(min, Math.min(max, cur));
+        if (newQ === cur) {
+          input.value = newQ;
+          btn.disabled = true;
+          cartPost({ action: 'update', item_id: itemId, qty: newQ }, function (data) {
+            btn.disabled = false;
+            if (data.success) {
+              var row = form.closest('.cart-item');
+              if (row && data.subtotal) {
+                var sub = row.querySelector('[data-subtotal]');
+                if (sub) sub.textContent = data.subtotal;
+              }
+              if (data.total) updateFooter(data.total, data.count || 0);
+              if (data.removed) {
+                removeRow(itemId);
+                showToast('Item removed from your cart.', 'error');
+              }
+            }
+          });
+        }
       });
     });
 
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        form.submit();
-      }
+    var input = form.querySelector('input[name="qty"]');
+    if (input) {
+      input.addEventListener('change', function () {
+        var itemId = form.querySelector('input[name="item_id"]').value;
+        var newQ = Math.max(parseInt(input.min || '1', 10), parseInt(input.value, 10) || 1);
+        input.value = newQ;
+        cartPost({ action: 'update', item_id: itemId, qty: newQ }, function (data) {
+          if (data.success) {
+            var row = form.closest('.cart-item');
+            if (row && data.subtotal) {
+              var sub = row.querySelector('[data-subtotal]');
+              if (sub) sub.textContent = data.subtotal;
+            }
+            if (data.total) updateFooter(data.total, data.count || 0);
+            if (data.removed) {
+              removeRow(itemId);
+              showToast('Item removed from your cart.', 'error');
+            }
+          }
+        });
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      });
+    }
+  });
+
+  /* ── remove button → confirm toast → AJAX ── */
+  document.querySelectorAll('.cart-remove-form').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var itemId = form.querySelector('input[name="item_id"]').value;
+      var row = form.closest('.cart-item');
+      var name = row ? (row.querySelector('.cart-item__name')?.textContent || 'this item') : 'this item';
+      showConfirm('Remove ' + name + ' from your cart?', function () {
+        cartPost({ action: 'remove', item_id: itemId }, function (data) {
+          if (data.success) {
+            removeRow(itemId);
+            if (data.total) updateFooter(data.total, data.count || 0);
+            showToast('Item removed from your cart.', 'error');
+          }
+        });
+      });
     });
   });
 })();

@@ -165,7 +165,7 @@ $maxCnt        = max($maxOrderCnt, $maxBookingCnt);
 /* ---------- Chart geometry ---------- */
 $dayCount = count($dayTotals);
 $chartH   = 300;
-$chartPad = 36;
+$chartPad = 48;
 $barW     = $dayCount <= 14 ? 46 : ($dayCount <= 30 ? 26 : 14);
 $gap      = $dayCount <= 14 ? 22 : ($dayCount <= 30 ? 12 : 6);
 $chartW   = max(360, $dayCount * ($barW + $gap) + $gap);
@@ -203,7 +203,7 @@ require_once __DIR__ . '/../includes/header.php';
   .grid--charts { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
   @media (max-width:980px) { .grid--charts { grid-template-columns:1fr; } }
   .chart-legend { display:flex; gap:18px; margin-top:12px; flex-wrap:wrap; }
-  .chart-legend__item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+  .chart-legend__item { display:flex; align-items:center; gap:6px; font-size:14px; color:var(--muted); }
   .chart-legend__dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
   .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
   .cal-head { text-align:center; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; padding:8px 0; }
@@ -460,14 +460,14 @@ require_once __DIR__ . '/../includes/header.php';
                 <title><?= e($lab . ' — ' . money($val)) ?></title>
               </rect>
               <?php if ($val > 0 && $dayCount <= 14): ?>
-                <text x="<?= $x + $barW/2 ?>" y="<?= max(12, $y - 5) ?>" text-anchor="middle"
-                      font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#F5F1E8">
+                <text x="<?= $x + $barW/2 ?>" y="<?= max(16, $y - 5) ?>" text-anchor="middle"
+                      font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#F5F1E8">
                   <?= e('₱' . number_format($val, 0)) ?>
                 </text>
               <?php endif; ?>
               <?php if ($showLabel): ?>
-                <text x="<?= $x + $barW/2 ?>" y="<?= $chartH + 16 ?>" text-anchor="middle"
-                      font-family="Inter, sans-serif" font-size="10" fill="#A8A29E">
+                <text x="<?= $x + $barW/2 ?>" y="<?= $chartH + 18 ?>" text-anchor="middle"
+                      font-family="Inter, sans-serif" font-size="12" fill="#A8A29E">
                   <?= e($lab) ?>
                 </text>
               <?php endif; ?>
@@ -494,8 +494,8 @@ require_once __DIR__ . '/../includes/header.php';
         <?php
           $lineW = max(400, $dayCount * 60 + 60);
           $lineH = 180;
-          $linePadL = 50;
-          $linePadB = 28;
+          $linePadL = 60;
+          $linePadB = 38;
           $plotW = $lineW - $linePadL - 10;
           $plotH = $lineH - $linePadB - 10;
         ?>
@@ -510,7 +510,7 @@ require_once __DIR__ . '/../includes/header.php';
               <line x1="<?= $linePadL ?>" y1="<?= $gy ?>" x2="<?= $lineW - 10 ?>" y2="<?= $gy ?>"
                     stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
               <text x="<?= $linePadL - 6 ?>" y="<?= $gy + 4 ?>" text-anchor="end"
-                    font-family="Inter,sans-serif" font-size="9" fill="#A8A29E">₱<?= number_format($gv, 0) ?></text>
+                    font-family="Inter,sans-serif" font-size="12" fill="#A8A29E">₱<?= number_format($gv, 0) ?></text>
             <?php endfor; ?>
 
             <?php
@@ -553,8 +553,8 @@ require_once __DIR__ . '/../includes/header.php';
                 $showLabel = ($n <= 14) || ($i % max(1, intval($n / 12)) === 0);
             ?>
               <?php if ($showLabel): ?>
-                <text x="<?= $x ?>" y="<?= $lineH + 16 ?>" text-anchor="middle"
-                      font-family="Inter,sans-serif" font-size="9" fill="#A8A29E"><?= e($dayLabels[$d]) ?></text>
+                <text x="<?= $x ?>" y="<?= $lineH + 18 ?>" text-anchor="middle"
+                      font-family="Inter,sans-serif" font-size="12" fill="#A8A29E"><?= e($dayLabels[$d]) ?></text>
               <?php endif; ?>
             <?php endforeach; ?>
           </svg>
@@ -578,8 +578,8 @@ require_once __DIR__ . '/../includes/header.php';
         <?php
           $colW = max(400, $dayCount * 60 + 60);
           $colH = 180;
-          $colPadL = 40;
-          $colPadB = 28;
+          $colPadL = 50;
+          $colPadB = 38;
           $colPlotW = $colW - $colPadL - 10;
           $colPlotH = $colH - $colPadB - 10;
           $groupW = max(20, min(50, $colPlotW / max(1, $dayCount) * 0.7));
@@ -595,7 +595,7 @@ require_once __DIR__ . '/../includes/header.php';
               <line x1="<?= $colPadL ?>" y1="<?= $gy ?>" x2="<?= $colW - 10 ?>" y2="<?= $gy ?>"
                     stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
               <text x="<?= $colPadL - 6 ?>" y="<?= $gy + 4 ?>" text-anchor="end"
-                    font-family="Inter,sans-serif" font-size="9" fill="#A8A29E"><?= (int)$gv ?></text>
+                    font-family="Inter,sans-serif" font-size="12" fill="#A8A29E"><?= (int)$gv ?></text>
             <?php endfor; ?>
 
             <?php $days = array_keys($dayOrderCount); $n = count($days);
@@ -622,8 +622,8 @@ require_once __DIR__ . '/../includes/header.php';
                 <title><?= e(date('M j', strtotime($d)) . ' — Bookings: ' . $dayBookingCount[$d]) ?></title>
               </rect>
               <?php if ($showLabel): ?>
-                <text x="<?= $centerX ?>" y="<?= $colH + 16 ?>" text-anchor="middle"
-                      font-family="Inter,sans-serif" font-size="9" fill="#A8A29E"><?= e($dayLabels[$d]) ?></text>
+                <text x="<?= $centerX ?>" y="<?= $colH + 18 ?>" text-anchor="middle"
+                      font-family="Inter,sans-serif" font-size="12" fill="#A8A29E"><?= e($dayLabels[$d]) ?></text>
               <?php endif; ?>
             <?php endforeach; ?>
           </svg>
@@ -650,8 +650,8 @@ require_once __DIR__ . '/../includes/header.php';
       <?php
         $lineW = max(400, $dayCount * 60 + 60);
         $lineH = 300;
-        $linePadL = 50;
-        $linePadB = 28;
+        $linePadL = 60;
+        $linePadB = 38;
         $plotW = $lineW - $linePadL - 10;
         $plotH = $lineH - $linePadB - 10;
       ?>
@@ -665,7 +665,7 @@ require_once __DIR__ . '/../includes/header.php';
             <line x1="<?= $linePadL ?>" y1="<?= $gy ?>" x2="<?= $lineW - 10 ?>" y2="<?= $gy ?>"
                   stroke="#e6dfd1" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
             <text x="<?= $linePadL - 6 ?>" y="<?= $gy + 4 ?>" text-anchor="end"
-                  font-family="Inter,sans-serif" font-size="9" fill="#8a7f70">₱<?= number_format($gv, 0) ?></text>
+                  font-family="Inter,sans-serif" font-size="12" fill="#8a7f70">₱<?= number_format($gv, 0) ?></text>
           <?php endfor; ?>
 
           <?php
@@ -705,8 +705,8 @@ require_once __DIR__ . '/../includes/header.php';
               $showLabel = ($n <= 14) || ($i % max(1, intval($n / 12)) === 0);
           ?>
             <?php if ($showLabel): ?>
-              <text x="<?= $x ?>" y="<?= $lineH + 16 ?>" text-anchor="middle"
-                    font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= e($dayLabels[$d]) ?></text>
+              <text x="<?= $x ?>" y="<?= $lineH + 18 ?>" text-anchor="middle"
+                    font-family="Inter,sans-serif" font-size="12" fill="#8a7f70"><?= e($dayLabels[$d]) ?></text>
             <?php endif; ?>
           <?php endforeach; ?>
         </svg>
@@ -732,8 +732,8 @@ require_once __DIR__ . '/../includes/header.php';
       <?php
         $colW = max(400, $dayCount * 60 + 60);
         $colH = 300;
-        $colPadL = 40;
-        $colPadB = 28;
+        $colPadL = 50;
+        $colPadB = 38;
         $colPlotW = $colW - $colPadL - 10;
         $colPlotH = $colH - $colPadB - 10;
         $groupW = max(20, min(50, $colPlotW / max(1, $dayCount) * 0.7));
@@ -749,7 +749,7 @@ require_once __DIR__ . '/../includes/header.php';
             <line x1="<?= $colPadL ?>" y1="<?= $gy ?>" x2="<?= $colW - 10 ?>" y2="<?= $gy ?>"
                   stroke="#e6dfd1" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
             <text x="<?= $colPadL - 6 ?>" y="<?= $gy + 4 ?>" text-anchor="end"
-                  font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= (int)$gv ?></text>
+                  font-family="Inter,sans-serif" font-size="12" fill="#8a7f70"><?= (int)$gv ?></text>
           <?php endfor; ?>
 
           <?php $days = array_keys($dayOrderCount); $n = count($days);
@@ -774,8 +774,8 @@ require_once __DIR__ . '/../includes/header.php';
               <title><?= e(date('M j', strtotime($d)) . ' — Bookings: ' . $dayBookingCount[$d]) ?></title>
             </rect>
             <?php if ($showLabel): ?>
-              <text x="<?= $centerX ?>" y="<?= $colH + 16 ?>" text-anchor="middle"
-                    font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= e($dayLabels[$d]) ?></text>
+              <text x="<?= $centerX ?>" y="<?= $colH + 18 ?>" text-anchor="middle"
+                    font-family="Inter,sans-serif" font-size="12" fill="#8a7f70"><?= e($dayLabels[$d]) ?></text>
             <?php endif; ?>
           <?php endforeach; ?>
         </svg>

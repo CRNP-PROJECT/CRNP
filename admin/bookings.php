@@ -119,7 +119,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <dt>Booking ID</dt><dd><code><?= e((string) $bid) ?></code></dd>
                     <dt>Contact</dt><dd><?= e($b['contact'] ?? '—') ?></dd>
                     <dt>Address</dt><dd><?= e($b['address'] ?? '—') ?></dd>
-                    <dt>Payment</dt><dd><span class="badge <?= e($pc) ?>"><?= e($pl) ?></span> · <?= e(ucfirst((string) ($b['payment_method'] ?? 'counter'))) ?></dd>
+                    <dt>Payment</dt><dd><span class="badge <?= e($pc) ?>"><?= e($pl) ?></span> · <?php [$pmLabel, $pmCls] = payment_method_label((string) ($b['payment_method'] ?? 'counter')); ?><span class="badge <?= e($pmCls) ?>"><?= e($pmLabel) ?></span></dd>
                     <dt>Created by</dt><dd><?= e(ucfirst((string) ($b['created_by'] ?? '—'))) ?></dd>
                     <dt>Created</dt><dd><?= e((string) ($b['created_at'] ?? '—')) ?></dd>
                   </dl>

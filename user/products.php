@@ -122,11 +122,12 @@ function shop_cat_icon(string $cat): string {
   .product__badge{position:absolute;top:12px;left:12px;z-index:1}
   .product__desc{font-size:13px;color:var(--muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0}
   .product__price{font-family:var(--sans);font-size:1.15rem;color:var(--ink);font-weight:700;letter-spacing:-.01em}
-  .product__foot{margin-top:auto;display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding-top:8px}
-  .product__actions{display:flex;gap:8px}
+  .product__foot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:10px;width:100%}
+  .product__actions{display:flex;justify-content:center;gap:8px;width:100%}
+  .product__btn-wrap{display:flex;flex:1 1 0;min-width:0}
 
   /* ── product action buttons ── */
-  .product__btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 12px;font-size:12px;font-weight:600;font-family:var(--sans);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s ease;min-height:36px;flex:1;min-width:0;white-space:nowrap;text-decoration:none;line-height:1.2}
+  .product__btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;font-size:12px;font-weight:600;font-family:var(--sans);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s ease;min-height:38px;width:100%;white-space:nowrap;text-decoration:none;line-height:1.2}
   .product__btn svg{width:14px;height:14px;flex-shrink:0}
   .product__btn--cart{background:transparent;border:1px solid var(--line);color:var(--ink)}
   .product__btn--cart:hover{border-color:var(--gold);color:var(--gold);background:rgba(192,138,46,.08);transform:translateY(-1px);box-shadow:0 2px 8px rgba(192,138,46,.12)}
@@ -136,7 +137,7 @@ function shop_cat_icon(string $cat): string {
   .product__btn--buy:hover{background:var(--gold-600);border-color:var(--gold-600);transform:translateY(-1px);box-shadow:0 4px 16px rgba(192,138,46,.3)}
   .product__btn--buy:active{transform:translateY(0) scale(.97)}
   .product__btn--buy:focus-visible{outline:none;box-shadow:var(--ring)}
-  .product__btn--disabled{background:var(--surface-2);border:1px solid var(--line);color:var(--muted);cursor:not-allowed;opacity:.6;flex:1}
+  .product__btn--disabled{background:var(--surface-2);border:1px solid var(--line);color:var(--muted);cursor:not-allowed;opacity:.6;width:auto;min-width:140px;max-width:60%}
 
   @media (max-width:639px){
     .shop-toolbar{flex-direction:column;align-items:stretch}
@@ -239,7 +240,7 @@ function shop_cat_icon(string $cat): string {
               <div class="product__price"><?= money($p['price'] ?? 0) ?></div>
               <?php if ($isAvailable): ?>
               <div class="product__actions">
-                <form method="post" action="/user/products.php" class="ajax-add-to-cart" style="display:inline">
+                <form method="post" action="/user/products.php" class="ajax-add-to-cart product__btn-wrap">
                   <?= csrf_field() ?>
                   <input type="hidden" name="product_id" value="<?= e($id) ?>">
                   <input type="hidden" name="qty" value="1">
@@ -249,7 +250,7 @@ function shop_cat_icon(string $cat): string {
                     Add to Cart
                   </button>
                 </form>
-                <form method="post" action="/user/products.php" style="display:inline">
+                <form method="post" action="/user/products.php" class="ajax-buy-now product__btn-wrap">
                   <?= csrf_field() ?>
                   <input type="hidden" name="product_id" value="<?= e($id) ?>">
                   <input type="hidden" name="qty" value="1">
