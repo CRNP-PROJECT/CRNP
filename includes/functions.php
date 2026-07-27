@@ -333,6 +333,7 @@ function decrement_product_stock(firebaseRDB $db, string $productId, int $qty, ?
     }
     $new = max(0, $currentStock - $qty);
     $db->update('/products', $productId, ['stock' => $new]);
+    cache_file_forget('model_raw_products');
 }
 function decrement_rent_stock(firebaseRDB $db, string $itemId, int $qty, ?int $currentStock = null): void {
     if ($currentStock === null) {
@@ -344,6 +345,7 @@ function decrement_rent_stock(firebaseRDB $db, string $itemId, int $qty, ?int $c
     }
     $new = max(0, $currentStock - $qty);
     $db->update('/rent_items', $itemId, ['quantity' => $new]);
+    cache_file_forget('model_raw_rent_items');
 }
 function restore_rent_stock(firebaseRDB $db, string $itemId, int $qty, ?int $currentStock = null): void {
     if ($currentStock === null) {
@@ -351,6 +353,7 @@ function restore_rent_stock(firebaseRDB $db, string $itemId, int $qty, ?int $cur
         $currentStock = (is_array($row) && isset($row['quantity'])) ? (int)$row['quantity'] : 0;
     }
     $db->update('/rent_items', $itemId, ['quantity' => $currentStock + $qty]);
+    cache_file_forget('model_raw_rent_items');
 }
 
 /* ---------- status helpers ---------- */

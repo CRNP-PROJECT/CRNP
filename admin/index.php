@@ -127,7 +127,6 @@ function svgPie(array $data, int $size = 180): string {
 }
 
 /* ---------- 7-day sales chart ---------- */
-$dayTotals = Order::last7DaysSales();
 $dayLabels = [];
 for ($i = 6; $i >= 0; $i--) {
     $d = strtotime("-$i days");

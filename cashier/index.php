@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         if ($n > 0) {
+            Order::clearRawCache();
             flash('Accepted ' . $n . ' pending order' . ($n === 1 ? '' : 's') . '.', 'ok');
         } else {
             flash('No pending orders to accept.', 'info');

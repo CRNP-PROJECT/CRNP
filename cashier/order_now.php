@@ -145,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = 'Order Now';
+$pageTitle = 'POS';
 $activeNav = 'ordernow';
 $layout    = 'wide';
 require_once __DIR__ . '/../includes/header.php';
@@ -241,7 +241,7 @@ foreach ($products as $pid => $p) {
   <div class="page-head__row">
     <div>
       <span class="eyebrow">Cashier Console</span>
-      <h1>Order Now</h1>
+      <h1>POS</h1>
       <p>Create a walk-in food order. Tap products to add, fill in customer and table details, then submit.</p>
     </div>
     <a class="btn btn--outline btn--sm" href="/cashier/">&larr; Back to orders</a>

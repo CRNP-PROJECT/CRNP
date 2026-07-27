@@ -72,8 +72,10 @@ abstract class Model
     {
         $table = static::$table;
         if (!isset(self::$rawCache[$table])) {
-            $raw = static::db()->retrieve('/' . $table);
-            self::$rawCache[$table] = \is_array($raw) ? $raw : [];
+            self::$rawCache[$table] = cache_file_get('model_raw_' . $table, 30, function () use ($table) {
+                $raw = static::db()->retrieve('/' . $table);
+                return \is_array($raw) ? $raw : [];
+            });
         }
         return self::$rawCache[$table];
     }
@@ -141,10 +143,12 @@ abstract class Model
         $data = $this->toFillableArray();
         if ($this->key !== null) {
             static::db()->update('/' . static::$table, $this->key, $data);
+            static::clearRawCache();
             return $this->key;
         }
         $newKey = static::db()->insert('/' . static::$table, $data);
         $this->key = $newKey;
+        static::clearRawCache();
         return $newKey;
     }
 
@@ -156,6 +160,7 @@ abstract class Model
         }
         if ($this->key !== null) {
             static::db()->update('/' . static::$table, $this->key, $attrs);
+            static::clearRawCache();
         }
     }
 
@@ -165,7 +170,16 @@ abstract class Model
         if ($this->key !== null) {
             static::db()->delete('/' . static::$table, $this->key);
             $this->key = null;
+            static::clearRawCache();
         }
+    }
+
+    /** Bust the per-request + file cache for this table. */
+    public static function clearRawCache(): void
+    {
+        $table = static::$table;
+        unset(self::$rawCache[$table]);
+        cache_file_forget('model_raw_' . $table);
     }
 
     /* ------------------------------------------------------------------ */
