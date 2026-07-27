@@ -21,7 +21,7 @@ switch ($role) {
     case 'cashier':
         $navItems = [
             '/cashier/'              => ['Orders', 'orders'],
-            '/cashier/order_now.php' => ['Order Now', 'ordernow'],
+            '/cashier/order_now.php' => ['POS', 'ordernow'],
             '/cashier/bookings.php'  => ['Bookings', 'bookings'],
             '/cashier/history.php'   => ['History', 'history'],
         ];
