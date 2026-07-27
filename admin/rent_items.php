@@ -26,7 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (string) post('id', '');
         try {
             $item = RentItem::find($id);
-            if ($item) $item->delete();
+            if ($item) {
+                @unlink(UPLOAD_ROOT . '/cache/rent_items/' . $id . '.img');
+                @unlink(UPLOAD_ROOT . '/cache/rent_items/' . $id . '.img.meta');
+                $item->delete();
+            }
             flash('Rent item deleted.', 'ok');
         } catch (Throwable $ex) {
             flash('Could not delete rent item: ' . $ex->getMessage(), 'danger');
@@ -62,6 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($id !== '') {
+                if (isset($data['image'])) {
+                    @unlink(UPLOAD_ROOT . '/cache/rent_items/' . $id . '.img');
+                    @unlink(UPLOAD_ROOT . '/cache/rent_items/' . $id . '.img.meta');
+                }
                 $item = RentItem::find($id);
                 if ($item) $item->update($data);
                 flash('Rent item updated.', 'ok');

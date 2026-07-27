@@ -26,7 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (string) post('id', '');
         try {
             $product = Product::find($id);
-            if ($product) $product->delete();
+            if ($product) {
+                @unlink(UPLOAD_ROOT . '/cache/products/' . $id . '.img');
+                @unlink(UPLOAD_ROOT . '/cache/products/' . $id . '.img.meta');
+                $product->delete();
+            }
             flash('Product deleted.', 'ok');
         } catch (Throwable $ex) {
             flash('Could not delete product: ' . $ex->getMessage(), 'danger');
@@ -87,6 +91,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($id !== '') {
+                if (isset($data['image'])) {
+                    @unlink(UPLOAD_ROOT . '/cache/products/' . $id . '.img');
+                    @unlink(UPLOAD_ROOT . '/cache/products/' . $id . '.img.meta');
+                }
                 $product = Product::find($id);
                 if ($product) $product->update($data);
                 flash('Product updated.', 'ok');

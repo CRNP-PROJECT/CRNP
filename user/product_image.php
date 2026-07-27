@@ -30,7 +30,7 @@ if (is_file($cacheFile) && filesize($cacheFile) > 0) {
     $meta = @unserialize(file_get_contents($cacheFile . '.meta'));
     $mime = $meta['mime'] ?? 'image/jpeg';
     header('Content-Type: ' . $mime);
-    header('Cache-Control: public, max-age=2592000, immutable');
+    header('Cache-Control: public, max-age=300, must-revalidate');
     header('Content-Length: ' . filesize($cacheFile));
     readfile($cacheFile);
     exit;
@@ -74,6 +74,6 @@ file_put_contents($cacheFile . '.meta', serialize(['mime' => $mime]));
 
 /* Serve. */
 header('Content-Type: ' . $mime);
-header('Cache-Control: public, max-age=2592000, immutable');
+header('Cache-Control: public, max-age=300, must-revalidate');
 header('Content-Length: ' . strlen($raw));
 echo $raw;
