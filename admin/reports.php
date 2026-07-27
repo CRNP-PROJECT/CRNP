@@ -222,12 +222,12 @@ require_once __DIR__ . '/../includes/header.php';
                role="img" aria-label="Bar chart of daily sales from <?= e($from) ?> to <?= e($to) ?>">
             <defs>
               <linearGradient id="goldGrad2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"  stop-color="#d8a94e"/>
-                <stop offset="100%" stop-color="#a9751f"/>
+                <stop offset="0%"  stop-color="#D4A937"/>
+                <stop offset="100%" stop-color="#B8934A"/>
               </linearGradient>
             </defs>
             <line x1="<?= $gap/2 ?>" y1="<?= $chartH ?>" x2="<?= $chartW - $gap/2 ?>" y2="<?= $chartH ?>"
-                  stroke="#e6dfd1" stroke-width="1"/>
+                  stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
             <?php $i = 0; foreach ($dayTotals as $day => $val):
                 $h    = $val > 0 ? max(3, ($val / $maxDay) * ($chartH - 18)) : 2;
                 $x    = $gap + $i * ($barW + $gap);
@@ -236,20 +236,20 @@ require_once __DIR__ . '/../includes/header.php';
                 $showLabel = ($dayCount <= 14) || ($i % max(1, intval($dayCount/12)) === 0);
             ?>
               <rect x="<?= $x ?>" y="0" width="<?= $barW ?>" height="<?= $chartH ?>"
-                    fill="#efe8da" rx="4" opacity=".4"/>
+                    fill="#2D241B" rx="4" opacity=".4"/>
               <rect class="bar" x="<?= $x ?>" y="<?= $y ?>" width="<?= $barW ?>" height="<?= $h ?>"
                     fill="url(#goldGrad2)" rx="4">
                 <title><?= e($lab . ' — ' . money($val)) ?></title>
               </rect>
               <?php if ($val > 0 && $dayCount <= 14): ?>
                 <text x="<?= $x + $barW/2 ?>" y="<?= max(12, $y - 5) ?>" text-anchor="middle"
-                      font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#4b4136">
+                      font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#F5F1E8">
                   <?= e('₱' . number_format($val, 0)) ?>
                 </text>
               <?php endif; ?>
               <?php if ($showLabel): ?>
                 <text x="<?= $x + $barW/2 ?>" y="<?= $chartH + 16 ?>" text-anchor="middle"
-                      font-family="Inter, sans-serif" font-size="10" fill="#8a7f70">
+                      font-family="Inter, sans-serif" font-size="10" fill="#A8A29E">
                   <?= e($lab) ?>
                 </text>
               <?php endif; ?>
@@ -290,9 +290,9 @@ require_once __DIR__ . '/../includes/header.php';
                 $gv = ($maxRev / 4) * $gi;
             ?>
               <line x1="<?= $linePadL ?>" y1="<?= $gy ?>" x2="<?= $lineW - 10 ?>" y2="<?= $gy ?>"
-                    stroke="#e6dfd1" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
+                    stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
               <text x="<?= $linePadL - 6 ?>" y="<?= $gy + 4 ?>" text-anchor="end"
-                    font-family="Inter,sans-serif" font-size="9" fill="#8a7f70">₱<?= number_format($gv, 0) ?></text>
+                    font-family="Inter,sans-serif" font-size="9" fill="#A8A29E">₱<?= number_format($gv, 0) ?></text>
             <?php endfor; ?>
 
             <?php
@@ -313,18 +313,18 @@ require_once __DIR__ . '/../includes/header.php';
 
             <!-- Order revenue line (gold) -->
             <polyline points="<?= implode(' ', array_map(fn($p) => $p[0] . ',' . $p[1], $orderPts)) ?>"
-                      fill="none" stroke="#d8a94e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      fill="none" stroke="#D4A937" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             <?php foreach ($orderPts as $p): ?>
-              <circle cx="<?= $p[0] ?>" cy="<?= $p[1] ?>" r="3.5" fill="#d8a94e">
+              <circle cx="<?= $p[0] ?>" cy="<?= $p[1] ?>" r="3.5" fill="#D4A937">
                 <title><?= e(date('M j', strtotime($p[3])) . ' — Orders: ' . money($p[2])) ?></title>
               </circle>
             <?php endforeach; ?>
 
             <!-- Booking revenue line (green) -->
             <polyline points="<?= implode(' ', array_map(fn($p) => $p[0] . ',' . $p[1], $bookingPts)) ?>"
-                      fill="none" stroke="#2d6a4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      fill="none" stroke="#2E8B57" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             <?php foreach ($bookingPts as $p): ?>
-              <circle cx="<?= $p[0] ?>" cy="<?= $p[1] ?>" r="3.5" fill="#2d6a4f">
+              <circle cx="<?= $p[0] ?>" cy="<?= $p[1] ?>" r="3.5" fill="#2E8B57">
                 <title><?= e(date('M j', strtotime($p[3])) . ' — Bookings: ' . money($p[2])) ?></title>
               </circle>
             <?php endforeach; ?>
@@ -336,14 +336,14 @@ require_once __DIR__ . '/../includes/header.php';
             ?>
               <?php if ($showLabel): ?>
                 <text x="<?= $x ?>" y="<?= $lineH + 16 ?>" text-anchor="middle"
-                      font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= e($dayLabels[$d]) ?></text>
+                      font-family="Inter,sans-serif" font-size="9" fill="#A8A29E"><?= e($dayLabels[$d]) ?></text>
               <?php endif; ?>
             <?php endforeach; ?>
           </svg>
         </div>
         <div class="chart-legend">
-          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#d8a94e"></span> Order revenue</span>
-          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#2d6a4f"></span> Booking revenue</span>
+          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#D4A937"></span> Order revenue</span>
+          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#2E8B57"></span> Booking revenue</span>
         </div>
       </div>
     </div>
@@ -375,9 +375,9 @@ require_once __DIR__ . '/../includes/header.php';
                 $gv = ($maxCnt / 4) * $gi;
             ?>
               <line x1="<?= $colPadL ?>" y1="<?= $gy ?>" x2="<?= $colW - 10 ?>" y2="<?= $gy ?>"
-                    stroke="#e6dfd1" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
+                    stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '4,4' ?>"/>
               <text x="<?= $colPadL - 6 ?>" y="<?= $gy + 4 ?>" text-anchor="end"
-                    font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= (int)$gv ?></text>
+                    font-family="Inter,sans-serif" font-size="9" fill="#A8A29E"><?= (int)$gv ?></text>
             <?php endfor; ?>
 
             <?php $days = array_keys($dayOrderCount); $n = count($days);
@@ -395,24 +395,24 @@ require_once __DIR__ . '/../includes/header.php';
             ?>
               <!-- Order bar (gold) -->
               <rect x="<?= $bx ?>" y="<?= 10 + $colPlotH - max(2, $oh) ?>" width="<?= $halfW ?>" height="<?= max(2, $oh) ?>"
-                    fill="#d8a94e" rx="3" opacity=".9">
+                    fill="#D4A937" rx="3" opacity=".9">
                 <title><?= e(date('M j', strtotime($d)) . ' — Orders: ' . $dayOrderCount[$d]) ?></title>
               </rect>
               <!-- Booking bar (green) -->
               <rect x="<?= $bx + $halfW + 4 ?>" y="<?= 10 + $colPlotH - max(2, $bh) ?>" width="<?= $halfW ?>" height="<?= max(2, $bh) ?>"
-                    fill="#2d6a4f" rx="3" opacity=".9">
+                    fill="#2E8B57" rx="3" opacity=".9">
                 <title><?= e(date('M j', strtotime($d)) . ' — Bookings: ' . $dayBookingCount[$d]) ?></title>
               </rect>
               <?php if ($showLabel): ?>
                 <text x="<?= $centerX ?>" y="<?= $colH + 16 ?>" text-anchor="middle"
-                      font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= e($dayLabels[$d]) ?></text>
+                      font-family="Inter,sans-serif" font-size="9" fill="#A8A29E"><?= e($dayLabels[$d]) ?></text>
               <?php endif; ?>
             <?php endforeach; ?>
           </svg>
         </div>
         <div class="chart-legend">
-          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#d8a94e"></span> Orders</span>
-          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#2d6a4f"></span> Bookings</span>
+          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#D4A937"></span> Orders</span>
+          <span class="chart-legend__item"><span class="chart-legend__dot" style="background:#2E8B57"></span> Bookings</span>
         </div>
       </div>
     </div>

@@ -71,8 +71,8 @@ $rentItemSales = Booking::topRentItems(10, $rentItems);
 $maxRentQty = max($rentItemSales) ?: 1;
 
 /* ---------- SVG pie chart helper ---------- */
-$pieColors = ['#d8a94e','#a9751f','#2d6a4f','#40916c','#bc4749','#e07a5f','#3d405b','#81b29a'];
-function svgPie(array $data, int $size = 180): string {
+$pieColors = ['#D4A937','#2E8B57','#8B2E2E','#D97706','#6B7280','#B8934A','#3AAF6F','#A83535'];
+function svgPie(array $data, int $size = 180, array $customColors = []): string {
     global $pieColors;
     $total = array_sum($data);
     if ($total <= 0) return '';
@@ -89,7 +89,7 @@ function svgPie(array $data, int $size = 180): string {
         $sr = deg2rad($start); $er = deg2rad($end);
         $x1 = $cx + $r * cos($sr); $y1 = $cy + $r * sin($sr);
         $x2 = $cx + $r * cos($er); $y2 = $cy + $r * sin($er);
-        $color = $pieColors[$i % count($pieColors)];
+        $color = $customColors[$label] ?? $pieColors[$i % count($pieColors)];
         $svg .= '<path d="M' . $cx . ',' . $cy . ' L' . $x1 . ',' . $y1 . ' A' . $r . ',' . $r . ' 0 ' . $large . ',1 ' . $x2 . ',' . $y2 . ' Z" fill="' . $color . '">';
         $svg .= '<title>' . htmlspecialchars($label) . ': ' . $val . ' (' . round($pct * 100) . '%)</title>';
         $svg .= '</path>';
@@ -123,6 +123,14 @@ $paymentMethods = Order::paymentMethodBreakdown();
 
 /* ---------- Order status distribution (pie) ---------- */
 $orderStatuses = [];
+$orderStatusColors = [
+    'Accepted'   => '#2E8B57',
+    'Pending'    => '#8B2E2E',
+    'Ready'      => '#D4A937',
+    'Cancelled'  => '#6B7280',
+    'Preparing'  => '#D97706',
+    'Completed'  => '#2E8B57',
+];
 foreach (Order::raw() as $o) {
     if (!is_array($o)) continue;
     $st = (string) ($o['status'] ?? 'unknown');
@@ -156,10 +164,22 @@ $layout    = 'wide';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 <style>
-  /* Page-local chart polish (foundation .stat / .grid--stat used for KPIs) */
-  .stat__hint { font-size:12px; color:var(--muted); margin-top:8px; position:relative; z-index:1; }
-  .stat__hint.danger { color:var(--danger); font-weight:600; }
-  .stat__value.is-danger { color:var(--danger); }
+  /* Admin-only dark dashboard theme */
+  body { background:#17130F; color:#F5F1E8; }
+  .card, .chart-card, .today-card { background:#241D16; border-color:#3A2F24; }
+  .stat { background:#241D16; border:1px solid #3A2F24; border-radius:12px; }
+  .page-head h1, .page-head p, .section-head h2, .card__head h2, h1, h2, h3 { color:#F5F1E8; }
+  .page-head p, .eyebrow { color:#A8A29E; }
+  a.btn--ghost, a.btn--outline { color:#A8A29E; border-color:#3A2F24; }
+  .btn--gold { background:#D4A72C; color:#17130F; }
+  .btn--gold:hover { background:#E2B84D; }
+  .badge { color:#F5F1E8; }
+
+  /* Page-local chart polish */
+  .stat__hint { font-size:12px; color:#A8A29E; margin-top:8px; position:relative; z-index:1; }
+  .stat__hint.danger { color:#C0392B; font-weight:600; }
+  .stat__value, .stat__label { color:#F5F1E8; }
+  .stat__value.is-danger { color:#C0392B; }
 
   .chart-card .card__body { padding:24px 26px 12px; }
   .chart-svg { width:100%; height:auto; display:block; }
@@ -170,17 +190,19 @@ require_once __DIR__ . '/../includes/header.php';
   @media (max-width:980px) { .grid--2 { grid-template-columns:1fr; } }
   .grid--pie { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
   @media (max-width:980px) { .grid--pie { grid-template-columns:1fr; } }
-  .micro { font-size:12px; color:var(--muted); }
+  .micro { font-size:12px; color:#A8A29E; }
   .pie-wrap { display:flex; align-items:center; gap:24px; flex-wrap:wrap; padding:8px 0; }
   .pie-legend { list-style:none; padding:0; margin:0; }
-  .pie-legend li { display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:6px; }
+  .pie-legend li { display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:6px; color:#F5F1E8; }
   .pie-legend__dot { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
   .today-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
   @media (max-width:640px) { .today-grid { grid-template-columns:1fr; } }
-  .today-card { padding:18px 20px; border:1px solid var(--line,#e6dfd1); border-radius:12px; background:var(--surface,#fff); }
-  .today-card__label { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:4px; }
-  .today-card__value { font-family:var(--sans); font-size:1.6rem; font-weight:700; }
-  .today-card__hint { font-size:12px; color:var(--muted); margin-top:4px; }
+  .today-card { padding:18px 20px; border:1px solid #3A2F24; border-radius:12px; background:#241D16; }
+  .today-card__label { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:#A8A29E; margin-bottom:4px; }
+  .today-card__value { font-family:var(--sans); font-size:1.6rem; font-weight:700; color:#F5F1E8; }
+  .today-card__hint { font-size:12px; color:#A8A29E; margin-top:4px; }
+  .tbl th, .tbl td { border-color:#3A2F24; color:#F5F1E8; }
+  .scroll-x { overflow-x:auto; }
 </style>
 
 <div class="page-head">
@@ -327,11 +349,11 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="muted" style="padding:20px 0">No orders yet.</div>
         <?php else: ?>
           <div class="pie-wrap">
-            <?= svgPie($orderStatuses) ?>
+            <?= svgPie($orderStatuses, 180, $orderStatusColors) ?>
             <ul class="pie-legend">
               <?php $sti = 0; foreach ($orderStatuses as $label => $count): ?>
                 <li>
-                  <span class="pie-legend__dot" style="background:<?= $pieColors[$sti % count($pieColors)] ?>"></span>
+                  <span class="pie-legend__dot" style="background:<?= $orderStatusColors[$label] ?? $pieColors[$sti % count($pieColors)] ?>"></span>
                   <span><?= e($label) ?>: <strong><?= $count ?></strong></span>
                 </li>
               <?php $sti++; endforeach; ?>
@@ -362,22 +384,24 @@ require_once __DIR__ . '/../includes/header.php';
                 $gv = intval(($maxPeak / 3) * $gi);
             ?>
               <line x1="<?= $phPadL ?>" y1="<?= $gy ?>" x2="<?= $phW - 8 ?>" y2="<?= $gy ?>"
-                    stroke="#e6dfd1" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '3,3' ?>"/>
+                    stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '3,3' ?>"/>
               <text x="<?= $phPadL - 4 ?>" y="<?= $gy + 3 ?>" text-anchor="end"
-                    font-family="Inter,sans-serif" font-size="8" fill="#8a7f70"><?= $gv ?></text>
+                    font-family="Inter,sans-serif" font-size="8" fill="#A8A29E"><?= $gv ?></text>
             <?php endfor; ?>
             <?php for ($h = 0; $h < 24; $h++):
                 $x = $phPadL + $h * ($phBarW + 2);
                 $val = $peakHours[$h];
                 $bh = $maxPeak > 0 ? ($val / $maxPeak) * $phPlotH : 0;
+                $ratio = $maxPeak > 0 ? $val / $maxPeak : 0;
+                $phColor = $ratio > 0.66 ? '#E6B84A' : ($ratio > 0.33 ? '#C9962B' : '#8A6B2F');
             ?>
               <rect x="<?= $x ?>" y="<?= 4 + $phPlotH - max(1, $bh) ?>" width="<?= $phBarW ?>" height="<?= max(1, $bh) ?>"
-                    fill="#d8a94e" rx="2" opacity=".9">
+                    fill="<?= $phColor ?>" rx="2" opacity=".9">
                 <title><?= $h === 0 ? '12 AM' : ($h < 12 ? $h . ' AM' : ($h === 12 ? '12 PM' : ($h - 12) . ' PM')) ?>: <?= $val ?> order<?= $val === 1 ? '' : 's' ?></title>
               </rect>
               <?php if ($h % 3 === 0): ?>
                 <text x="<?= $x + $phBarW / 2 ?>" y="<?= $phH + 14 ?>" text-anchor="middle"
-                      font-family="Inter,sans-serif" font-size="8" fill="#8a7f70">
+                      font-family="Inter,sans-serif" font-size="8" fill="#A8A29E">
                   <?= $h === 0 ? '12a' : ($h < 12 ? $h . 'a' : ($h === 12 ? '12p' : ($h - 12) . 'p')) ?>
                 </text>
               <?php endif; ?>
@@ -417,13 +441,13 @@ require_once __DIR__ . '/../includes/header.php';
                 $displayName = mb_strlen($name) > 16 ? mb_substr($name, 0, 14) . '…' : $name;
             ?>
               <text x="<?= $tpPadL - 6 ?>" y="<?= $y + $tpBarH / 2 + 4 ?>" text-anchor="end"
-                    font-family="Inter,sans-serif" font-size="11" fill="#4b4136"><?= e($displayName) ?></text>
+                    font-family="Inter,sans-serif" font-size="11" fill="#F5F1E8"><?= e($displayName) ?></text>
               <rect x="<?= $tpPadL ?>" y="<?= $y ?>" width="<?= max(2, $bw) ?>" height="<?= $tpBarH ?>"
-                    fill="#d8a94e" rx="4" opacity=".9">
+                    fill="#D4A937" rx="4" opacity=".9">
                 <title><?= e($name) ?>: <?= $qty ?> sold</title>
               </rect>
               <text x="<?= $tpPadL + max(2, $bw) + 6 ?>" y="<?= $y + $tpBarH / 2 + 4 ?>"
-                    font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#4b4136"><?= $qty ?></text>
+                    font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#F5F1E8"><?= $qty ?></text>
             <?php $ti++; endforeach; ?>
           </svg>
         </div>
@@ -447,16 +471,16 @@ require_once __DIR__ . '/../includes/header.php';
            role="img" aria-label="Bar chart of daily sales for the last seven days">
         <defs>
           <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stop-color="#d8a94e"/>
-            <stop offset="100%" stop-color="#a9751f"/>
+            <stop offset="0%"  stop-color="#D4A937"/>
+            <stop offset="100%" stop-color="#B8934A"/>
           </linearGradient>
           <linearGradient id="trackGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stop-color="#efe8da"/>
-            <stop offset="100%" stop-color="#f6f2ea"/>
+            <stop offset="0%"  stop-color="#2D241B"/>
+            <stop offset="100%" stop-color="#342C21"/>
           </linearGradient>
         </defs>
         <line x1="<?= $gap/2 ?>" y1="<?= $chartH ?>" x2="<?= $chartW - $gap/2 ?>" y2="<?= $chartH ?>"
-              stroke="#e6dfd1" stroke-width="1"/>
+              stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
         <?php foreach ($days as $i => $day):
             $val   = $dayTotals[$day];
             $h     = $val > 0 ? max(4, ($val / $maxDay) * ($chartH - 18)) : 2;
@@ -473,12 +497,12 @@ require_once __DIR__ . '/../includes/header.php';
           </rect>
           <?php if ($val > 0): ?>
             <text x="<?= $x + $barW/2 ?>" y="<?= max(14, $y - 6) ?>" text-anchor="middle"
-                  font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#4b4136">
+                  font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#F5F1E8">
               <?= e('₱' . number_format($val, 0)) ?>
             </text>
           <?php endif; ?>
           <text x="<?= $x + $barW/2 ?>" y="<?= $chartH + 18 ?>" text-anchor="middle"
-                font-family="Inter, sans-serif" font-size="11" fill="#8a7f70">
+                font-family="Inter, sans-serif" font-size="11" fill="#A8A29E">
             <?= e($label) ?>
           </text>
         <?php endforeach; ?>
@@ -525,9 +549,9 @@ require_once __DIR__ . '/../includes/header.php';
                   $gv = intval(($maxBookingStatus / 3) * $gi);
               ?>
                 <line x1="<?= $bsGap / 2 ?>" y1="<?= $gy ?>" x2="<?= $bsChartW - $bsGap / 2 ?>" y2="<?= $gy ?>"
-                      stroke="#e6dfd1" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '3,3' ?>"/>
+                      stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="<?= $gi === 0 ? '0' : '3,3' ?>"/>
                 <text x="<?= $bsGap / 2 - 4 ?>" y="<?= $gy + 3 ?>" text-anchor="end"
-                      font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= $gv ?></text>
+                      font-family="Inter,sans-serif" font-size="9" fill="#A8A29E"><?= $gv ?></text>
               <?php endfor; ?>
               <?php $bsi = 0; foreach ($bookingStatuses as $label => $count):
                   $x = $bsGap + $bsi * ($bsBarW + $bsGap);
@@ -539,9 +563,9 @@ require_once __DIR__ . '/../includes/header.php';
                   <title><?= e($label) ?>: <?= $count ?></title>
                 </rect>
                 <text x="<?= $x + $bsBarW / 2 ?>" y="<?= 8 + ($bsChartH - 8) - max(2, $bh) - 5 ?>" text-anchor="middle"
-                      font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#4b4136"><?= $count ?></text>
+                      font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#F5F1E8"><?= $count ?></text>
                 <text x="<?= $x + $bsBarW / 2 ?>" y="<?= $bsChartH + 16 ?>" text-anchor="middle"
-                      font-family="Inter,sans-serif" font-size="9" fill="#8a7f70"><?= e($label) ?></text>
+                      font-family="Inter,sans-serif" font-size="9" fill="#A8A29E"><?= e($label) ?></text>
               <?php $bsi++; endforeach; ?>
             </svg>
           </div>
@@ -576,13 +600,13 @@ require_once __DIR__ . '/../includes/header.php';
                   $displayName = mb_strlen($name) > 16 ? mb_substr($name, 0, 14) . '…' : $name;
               ?>
                 <text x="<?= $riPadL - 6 ?>" y="<?= $y + $riBarH / 2 + 4 ?>" text-anchor="end"
-                      font-family="Inter,sans-serif" font-size="11" fill="#4b4136"><?= e($displayName) ?></text>
+                      font-family="Inter,sans-serif" font-size="11" fill="#F5F1E8"><?= e($displayName) ?></text>
                 <rect x="<?= $riPadL ?>" y="<?= $y ?>" width="<?= max(2, $bw) ?>" height="<?= $riBarH ?>"
-                      fill="#2d6a4f" rx="4" opacity=".9">
+                      fill="#2E8B57" rx="4" opacity=".9">
                   <title><?= e($name) ?>: <?= $qty ?> booked</title>
                 </rect>
                 <text x="<?= $riPadL + max(2, $bw) + 6 ?>" y="<?= $y + $riBarH / 2 + 4 ?>"
-                      font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#4b4136"><?= $qty ?></text>
+                      font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="#F5F1E8"><?= $qty ?></text>
               <?php $rpi++; endforeach; ?>
             </svg>
           </div>

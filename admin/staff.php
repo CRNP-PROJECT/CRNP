@@ -197,9 +197,11 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             <div class="field">
               <label for="c_password">Password</label>
-              <input class="input" type="password" id="c_password" name="password"
-                     <?= $isEditingCashier ? '' : 'required minlength="8"' ?>
-                     placeholder="<?= $isEditingCashier ? 'Leave blank to keep current' : '••••••••' ?>">
+              <div class="input-wrap">
+                <input class="input" type="password" id="c_password" name="password"
+                       <?= $isEditingCashier ? '' : 'required minlength="8"' ?>
+                       placeholder="<?= $isEditingCashier ? 'Leave blank to keep current' : '••••••••' ?>">
+              </div>
             </div>
           </div>
           <div class="form-actions">
@@ -292,9 +294,11 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             <div class="field">
               <label for="k_password">Password</label>
-              <input class="input" type="password" id="k_password" name="password"
-                     <?= $isEditingKitchen ? '' : 'required minlength="8"' ?>
-                     placeholder="<?= $isEditingKitchen ? 'Leave blank to keep current' : '••••••••' ?>">
+              <div class="input-wrap">
+                <input class="input" type="password" id="k_password" name="password"
+                       <?= $isEditingKitchen ? '' : 'required minlength="8"' ?>
+                       placeholder="<?= $isEditingKitchen ? 'Leave blank to keep current' : '••••••••' ?>">
+              </div>
             </div>
           </div>
           <div class="form-actions">
