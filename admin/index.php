@@ -1,6 +1,9 @@
 <?php
 /**
  * admin/index.php — Dashboard: KPI strip, 7-day sales chart, recent activity.
+ *
+ * Performance: raw data is cached per-request and chart stats are cached
+ * for 120s to keep the dashboard fast even as storage grows.
  */
 use App\Models\Order;
 use App\Models\Product;
@@ -10,13 +13,12 @@ use App\Models\RentItem;
 require_once __DIR__ . '/../init.php';
 require_admin();
 
-/* P1: wrap Firebase reads in a per-request cache (30s TTL) */
-$orders    = cache_remember('admin_orders',    30, fn() => Order::raw());
-$bookings  = cache_remember('admin_bookings',  30, fn() => Booking::raw());
-$products  = cache_remember('admin_products',  30, fn() => Product::raw());
-$rentItems = cache_remember('admin_rent_items', 30, fn() => RentItem::raw());
+$orders    = Order::raw();
+$bookings  = Booking::raw();
+$products  = Product::raw();
+$rentItems = RentItem::raw();
 
-/* ---------- KPIs ---------- */
+/* ---------- KPIs (cheap, computed from cached raw arrays) ---------- */
 $totalOrders   = count($orders);
 $pendingOrders = 0;
 $totalSales    = 0.0;
@@ -59,16 +61,40 @@ foreach ($bookings as $b) {
     if ($d === $today) $todayBookings++;
 }
 
-/* ---------- Best-selling by category (pie chart data) ---------- */
-$categorySales = Order::topCategories(8, $products);
+/* ---------- Heavy chart data: file-cached for 120s to keep dashboard fast ----- */
+$categorySales     = cache_file_get('dash_category_sales',     120, fn() => Order::topCategories(8, $products));
+$bookingStatuses   = cache_file_get('dash_booking_statuses',   120, fn() => Booking::statusBreakdown());
+$rentItemSales     = cache_file_get('dash_rent_item_sales',    120, fn() => Booking::topRentItems(10, $rentItems));
+$paymentMethods    = cache_file_get('dash_payment_methods',    120, fn() => Order::paymentMethodBreakdown());
+$orderStatuses     = cache_file_get('dash_order_statuses',     120, function () use ($orders) {
+    $statuses = [];
+    foreach ($orders as $o) {
+        if (!is_array($o)) continue;
+        $st = (string) ($o['status'] ?? 'unknown');
+        [$label] = order_status_label($st);
+        $statuses[$label] = ($statuses[$label] ?? 0) + 1;
+    }
+    arsort($statuses);
+    return $statuses;
+});
+$peakHours         = cache_file_get('dash_peak_hours',         120, fn() => Order::peakHours());
+$maxPeak           = max(0, ...(array)$peakHours);
+$productSalesRaw   = cache_file_get('dash_top_products',      120, fn() => Order::topProducts(10));
+$dayTotals         = cache_file_get('dash_last7_sales',        120, fn() => Order::last7DaysSales());
 
-/* ---------- Bookings by status (column chart data) ---------- */
-$bookingStatuses = Booking::statusBreakdown();
+$productSales      = [];
+foreach ($productSalesRaw as $pid => $qty) {
+    $name = (string) ($products[$pid]['name'] ?? 'Item');
+    $productSales[$name] = $qty;
+}
+$maxProdQty  = max($productSales) ?: 1;
+
 $maxBookingStatus = max($bookingStatuses) ?: 1;
-
-/* ---------- Best-selling rent items ---------- */
-$rentItemSales = Booking::topRentItems(10, $rentItems);
 $maxRentQty = max($rentItemSales) ?: 1;
+
+/* ---------- Recent activity ---------- */
+$recentOrders    = Order::recentLimited('created_at', 8);
+$recentBookings  = Booking::recentLimited('created_at', 5);
 
 /* ---------- SVG pie chart helper ---------- */
 $pieColors = ['#D4A937','#2E8B57','#8B2E2E','#D97706','#6B7280','#B8934A','#3AAF6F','#A83535'];

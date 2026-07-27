@@ -88,7 +88,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($newStatus === 'accepted')  $patch['accepted_at']  = now();
     if ($newStatus === 'preparing') $patch['preparing_at'] = now();
     if ($newStatus === 'ready')     $patch['ready_at']     = now();
-    if ($newStatus === 'done')      $patch['done_at']      = now();
+    if ($newStatus === 'done') {
+        $patch['done_at'] = now();
+        $patch['done_by'] = $_SESSION['kitchen_name'] ?? '';
+    }
 
     try {
         $order->update($patch);
@@ -102,11 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ---------- GET: list + filter ---------- */
 $allOrders = Order::raw();
 $statusFilter = isset($_GET['status']) ? (string)$_GET['status'] : 'active';
-$validFilters = ['all', 'active', 'pending', 'accepted', 'preparing', 'ready', 'done'];
+$validFilters = ['all', 'active', 'accepted', 'preparing', 'ready', 'done'];
 if (!in_array($statusFilter, $validFilters, true)) {
     $statusFilter = 'active';
 }
-$activeStatuses = ['pending', 'accepted', 'preparing', 'ready'];
+$activeStatuses = ['accepted', 'preparing', 'ready'];
 
 // Sort: newest created_at first (missing dates sink to the bottom).
 $sorted = $allOrders;
@@ -134,7 +137,7 @@ foreach ($sorted as $id => $o) {
 }
 
 // Stat strip counts (across ALL orders, ignoring the filter)
-$statCounts = ['pending' => 0, 'preparing' => 0, 'ready' => 0];
+$statCounts = ['preparing' => 0, 'ready' => 0];
 foreach ($allOrders as $o) {
     if (!is_array($o)) continue;
     $s = (string)($o['status'] ?? '');
@@ -143,7 +146,6 @@ foreach ($allOrders as $o) {
 
 $filterPills = [
     'active'    => 'Active',
-    'pending'   => 'Pending',
     'accepted'  => 'Accepted',
     'preparing' => 'Preparing',
     'ready'     => 'Ready',
@@ -162,18 +164,13 @@ require_once __DIR__ . '/../includes/header.php';
     <div>
       <span class="eyebrow">Kitchen Display</span>
       <h1 class="mt-2">Active Tickets</h1>
-      <p>Move each order along the line: pending &rarr; accepted &rarr; preparing &rarr; ready &rarr; done.</p>
+      <p>Move each order along the line: accepted &rarr; preparing &rarr; ready &rarr; done.</p>
     </div>
   </div>
 </div>
 
 <!-- Stat strip -->
 <section class="grid grid--stat mb-4" aria-label="Order counts">
-  <div class="stat">
-    <div class="stat__label">Pending</div>
-    <div class="stat__value"><?= (int)$statCounts['pending'] ?></div>
-    <div class="stat__delta muted">Awaiting accept</div>
-  </div>
   <div class="stat">
     <div class="stat__label">Preparing</div>
     <div class="stat__value"><?= (int)$statCounts['preparing'] ?></div>

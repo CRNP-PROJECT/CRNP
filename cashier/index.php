@@ -287,7 +287,7 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
                   <br><small class="muted"><?= e($contact) ?></small>
                 <?php endif; ?>
               </td>
-              <td><?= (int)$count ?> item<?= (int)$count === 1 ? '' : 's' ?></td>
+              <td><?= items_html($o['items'] ?? []) ?></td>
               <td class="num"><strong><?= e(money($total)) ?></strong></td>
               <td>
                 <span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span>

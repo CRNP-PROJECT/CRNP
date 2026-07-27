@@ -95,6 +95,7 @@ require_once __DIR__ . '/../includes/header.php';
         <col style="width:96px">
         <col style="width:170px">
         <col>
+        <col style="width:140px">
         <col style="width:180px">
         <col style="width:120px">
       </colgroup>
@@ -103,6 +104,7 @@ require_once __DIR__ . '/../includes/header.php';
           <th>Order</th>
           <th>Customer</th>
           <th>Items</th>
+          <th>Cook</th>
           <th>Completed</th>
           <th class="num">Total</th>
         </tr>
@@ -114,6 +116,7 @@ require_once __DIR__ . '/../includes/header.php';
             <td><span class="kbd">#<?= e(k_short_id((string)$id)) ?></span></td>
             <td><?= e(k_customer_name($o)) ?></td>
             <td><?= k_items_html($o['items'] ?? []) ?></td>
+            <td><?= e($o['done_by'] ?? '') ?></td>
             <td class="muted"><?= e(k_format_ts((string)($o['done_at'] ?? $o['updated_at'] ?? ''))) ?></td>
             <td class="num"><?= e(money($total)) ?></td>
           </tr>
