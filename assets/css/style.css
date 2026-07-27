@@ -2635,11 +2635,26 @@ table.tbl .muted {
 
 /* ---------- password toggle ---------- */
 .pwd-toggle {
-  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer;
-  color: var(--muted); padding: 6px; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 6px; transition: color .15s;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 6px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color .15s, background .15s;
+  z-index: 1;
 }
-.pwd-toggle:hover { color: var(--ink); }
+.pwd-toggle:hover { color: var(--ink); background: rgba(0,0,0,.04); }
+.pwd-toggle:active { color: var(--gold); transform: translateY(-50%) scale(.92); }
 .pwd-toggle svg { width: 18px; height: 18px; display: block; }
+
+/* reserve space so typed text never overlaps the eye icon */
+.field .has-toggle { padding-right: 42px; }

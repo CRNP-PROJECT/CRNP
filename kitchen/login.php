@@ -108,9 +108,11 @@ $pageTitle = 'Kitchen Sign In';
         </div>
         <div class="field">
           <label for="password">Password</label>
-          <input class="input" type="password" id="password" name="password"
-                 placeholder="Your password" required
-                 autocomplete="current-password">
+          <div class="input-wrap">
+            <input class="input" type="password" id="password" name="password"
+                   placeholder="Your password" required
+                   autocomplete="current-password">
+          </div>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn--gold btn--block btn--lg">Open display</button>

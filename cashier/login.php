@@ -119,9 +119,11 @@ $flashes   = get_flashes();
         </div>
         <div class="field">
           <label for="password">Password</label>
-          <input class="input" type="password" id="password" name="password"
-                 autocomplete="current-password" required
-                 placeholder="Your password">
+          <div class="input-wrap">
+            <input class="input" type="password" id="password" name="password"
+                   autocomplete="current-password" required
+                   placeholder="Your password">
+          </div>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn--gold btn--block btn--lg">Sign in to console</button>

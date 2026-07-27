@@ -112,8 +112,10 @@ $pageTitle = 'Admin Sign In';
           </div>
           <div class="field">
             <label for="password">Password</label>
-            <input class="input" type="password" id="password" name="password" required
-                   autocomplete="current-password" placeholder="••••••••">
+            <div class="input-wrap">
+              <input class="input" type="password" id="password" name="password" required
+                     autocomplete="current-password" placeholder="••••••••">
+            </div>
           </div>
           <div class="form-actions">
             <button class="btn btn--gold btn--block btn--lg" type="submit">Sign in</button>
