@@ -139,14 +139,32 @@ if (isset($_GET['check'])) {
     exit;
 }
 
-// Apply filter for display
-$orders = $allOrders;
+// Split active vs completed
+$activeOrders = [];
+$doneOrders   = [];
+foreach ($allOrders as $oid => $o) {
+    if (!is_array($o)) continue;
+    $st = (string)($o['status'] ?? '');
+    if ($st === 'done') {
+        $doneOrders[$oid] = $o;
+    } else {
+        $activeOrders[$oid] = $o;
+    }
+}
+
+// Apply filter for display (only active orders get filtered)
+$orders = $activeOrders;
 if ($statusFilter !== '') {
     $orders = filter_by($orders, 'status', $statusFilter);
 }
 
 // Newest first
 uasort($orders, function ($a, $b) {
+    $ta = strtotime((string)($a['created_at'] ?? $a['placed_at'] ?? 'now'));
+    $tb = strtotime((string)($b['created_at'] ?? $b['placed_at'] ?? 'now'));
+    return $tb <=> $ta;
+});
+uasort($doneOrders, function ($a, $b) {
     $ta = strtotime((string)($a['created_at'] ?? $a['placed_at'] ?? 'now'));
     $tb = strtotime((string)($b['created_at'] ?? $b['placed_at'] ?? 'now'));
     return $tb <=> $ta;
@@ -158,7 +176,6 @@ $statusOptions = [
     'accepted'           => 'Accepted',
     'preparing'          => 'Preparing',
     'ready'              => 'Ready',
-    'done'               => 'Completed',
     'cashier_cancelled'  => 'Cancelled (cashier)',
 ];
 
@@ -228,7 +245,7 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
 
 <section class="card">
   <div class="card__head">
-    <h2>All orders</h2>
+    <h2>Active orders</h2>
     <form method="get" class="row" style="gap:8px">
       <label for="status" class="sr-only">Filter by status</label>
       <select class="select" id="status" name="status" onchange="this.form.submit()">
@@ -360,6 +377,62 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
                     <?php endif; ?>
                   <?php endif; ?>
                 </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </div>
+</section>
+
+<!-- ============ HISTORY (completed orders) ============ -->
+<section class="card" style="margin-top:24px">
+  <div class="card__head">
+    <h2>History (<?= count($doneOrders) ?>)</h2>
+  </div>
+  <div class="card__body" style="padding:0">
+    <?php if (!$doneOrders): ?>
+      <div class="empty" style="border:0;border-radius:0">
+        <div class="empty__icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+        <h3>No completed orders yet</h3>
+        <p>Orders that are marked done will appear here.</p>
+      </div>
+    <?php else: ?>
+      <div class="table-wrap" style="border:0;border-radius:0">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Payment</th>
+              <th>Completed</th>
+              <th class="t-right">Receipt</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php foreach ($doneOrders as $id => $o):
+              $custName = e($o['customer_name'] ?? $o['full_name'] ?? $o['user_name'] ?? '—');
+              $pm       = (string)($o['payment_method'] ?? '');
+              $ps       = (string)($o['payment_status'] ?? '');
+              [$pLabel,$pCls] = payment_status_label($ps);
+              $total    = (float)($o['total'] ?? 0);
+              $placed   = (string)($o['created_at'] ?? $o['placed_at'] ?? '');
+          ?>
+            <tr>
+              <td><strong>#<?= e(substr((string)$id, 0, 6)) ?></strong></td>
+              <td><?= e($custName) ?></td>
+              <td><?= items_html($o['items'] ?? []) ?></td>
+              <td class="num"><strong><?= e(money($total)) ?></strong></td>
+              <td><span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span></td>
+              <td class="muted"><small><?= e($placed) ?></small></td>
+              <td class="t-right">
+                <a class="btn btn--gold btn--sm" href="/cashier/receipt.php?id=<?= e($id) ?>">Print receipt</a>
               </td>
             </tr>
           <?php endforeach; ?>
