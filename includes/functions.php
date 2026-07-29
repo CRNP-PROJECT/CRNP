@@ -376,6 +376,13 @@ function payment_status_label(string $status): array {
     ];
     return $map[$status] ?? [ucfirst($status), 'badge--muted'];
 }
+function payment_method_label(string $method): array {
+    $map = [
+        'gcash'   => ['GCash',   'badge--blue'],
+        'counter' => ['Counter', 'badge--muted'],
+    ];
+    return $map[$method] ?? [ucfirst($method), 'badge--muted'];
+}
 
 /* ---------- input ---------- */
 function post(string $key, $default = '') {
