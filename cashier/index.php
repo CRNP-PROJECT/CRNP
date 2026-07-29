@@ -7,7 +7,7 @@
  * P0/P1 improvements (Task A):
  *  1. Real-time polling — ?check=1 JSON endpoint + 20s JS poll + non-intrusive
  *     toast (no auto-reload) + green "Live" pulsing indicator in the header.
- *  2. Cancel undo / Restore — cashier_cancelled -> pending (no stock restore).
+ *  2. Cancel undo / Restore — cashier_cancelled -> pending.
  *  3. Receipt lightbox — inline modal replaces the new-tab <a> link.
  *  4. Bulk "Accept all pending" — one POST accepts every pending order.
  */

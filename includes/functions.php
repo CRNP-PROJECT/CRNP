@@ -323,18 +323,6 @@ function cart_total(): float {
 }
 
 /* ---------- stock operations ---------- */
-function decrement_product_stock(firebaseRDB $db, string $productId, int $qty, ?int $currentStock = null): void {
-    if ($currentStock === null) {
-        $row = $db->retrieve('/products/' . $productId);
-        if (!is_array($row) || !isset($row['stock'])) {
-            return;
-        }
-        $currentStock = (int)$row['stock'];
-    }
-    $new = max(0, $currentStock - $qty);
-    $db->update('/products', $productId, ['stock' => $new]);
-    cache_file_forget('model_raw_products');
-}
 function decrement_rent_stock(firebaseRDB $db, string $itemId, int $qty, ?int $currentStock = null): void {
     if ($currentStock === null) {
         $row = $db->retrieve('/rent_items/' . $itemId);

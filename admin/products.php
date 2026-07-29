@@ -56,8 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $category    = trim((string) post('category', ''));
         $description = trim((string) post('description', ''));
         $price       = (float) post('price', 0);
-        $stock       = (int) post('stock', 0);
-
         if ($name === '' || $category === '' || $price < 0) {
             flash('Name, category and a valid price are required.', 'danger');
             if ($id) redirect('/admin/products.php?edit=' . urlencode($id));
@@ -69,7 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'category'    => $category,
             'description' => $description,
             'price'       => $price,
-            'stock'       => $stock,
             'updated_at'  => now(),
         ];
 
@@ -134,7 +131,6 @@ $formName        = $editing?->get('name')        ?? post('name', '');
 $formCategory    = $editing?->get('category')    ?? post('category', '');
 $formDescription = $editing?->get('description') ?? post('description', '');
 $formPrice       = $editing?->get('price')       ?? post('price', '');
-$formStock       = $editing?->get('stock')       ?? post('stock', '');
 $formImage       = $editing?->get('image')       ?? '';
 
 $pageTitle = 'Products';
@@ -148,8 +144,6 @@ require_once __DIR__ . '/../includes/header.php';
   .img-row { display:flex; align-items:center; gap:14px; }
   .layout-2 { display:grid; grid-template-columns:1.6fr 1fr; gap:24px; align-items:start; }
   @media (max-width:980px) { .layout-2 { grid-template-columns:1fr; } }
-  .stock-low { color:var(--danger); font-weight:600; }
-  .stock-out { color:var(--muted); }
   .crop-modal { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; }
   .crop-modal-bg { position:absolute; inset:0; background:rgba(0,0,0,.7); }
   .crop-modal-box { position:relative; background:var(--bg); border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,.4); width:fit-content; height:fit-content; max-width:90vw; max-height:90vh; padding:20px; }
@@ -168,7 +162,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div>
       <span class="eyebrow">Menu</span>
       <h1 class="mt-2">Products</h1>
-      <p>Create, edit and remove dishes on your menu. Items with stock ≤ 5 are flagged as low.</p>
+      <p>Create, edit and remove dishes on your menu.</p>
     </div>
     <a class="btn btn--gold" href="#product-form"><?= $editing ? 'Editing product' : 'Add product' ?></a>
   </div>

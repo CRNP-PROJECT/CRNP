@@ -35,10 +35,6 @@ $activeRent    = 0;
 foreach ($rentItems as $r) {
     if (is_array($r) && (int) ($r['quantity'] ?? 0) > 0) $activeRent++;
 }
-$lowStock = 0;
-foreach ($products as $p) {
-    if (is_array($p) && (int) ($p['stock'] ?? 0) <= 5) $lowStock++;
-}
 
 /* ---------- Today's stats ---------- */
 $today          = date('Y-m-d');
@@ -265,11 +261,6 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="stat__label">Active rent items</div>
     <div class="stat__value"><?= $activeRent ?></div>
     <div class="stat__hint">With stock on hand</div>
-  </div>
-  <div class="stat">
-    <div class="stat__label">Low-stock products</div>
-    <div class="stat__value<?= $lowStock ? ' is-danger' : '' ?>"><?= $lowStock ?></div>
-    <div class="stat__hint <?= $lowStock ? 'danger' : '' ?>">Stock ≤ 5 units</div>
   </div>
 </div>
 

@@ -3,8 +3,7 @@
  * cashier/order_now.php — POS / walk-in order creation.
  * Cashier browses products, adds to a running order, fills customer details,
  * picks a payment method (gcash with optional receipt, or counter), and
- * submits. Stock is decremented immediately and the order lands in the
- * orders queue as 'pending'.
+ * submits. The order lands in the orders queue as 'accepted'.
  */
 use App\Models\Order;
 use App\Models\Product;
@@ -51,8 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Please enter the cash amount tendered.';
     }
 
-    // Re-fetch products fresh to validate live stock.
-    $liveProducts = Product::raw();
+    $productsList = Product::raw();
 
     $items  = [];
     $total  = 0.0;
@@ -60,17 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($qtyMap as $productId => $qty) {
         $productId = (string)$productId;
         $qty       = (int)$qty;
-        if ($qty <= 0 || !isset($liveProducts[$productId]) || !is_array($liveProducts[$productId])) {
+        if ($qty <= 0 || !isset($productsList[$productId]) || !is_array($productsList[$productId])) {
             continue;
         }
         $anyQty = true;
-        $p      = $liveProducts[$productId];
-        $stock  = (int)($p['stock'] ?? 0);
-        if ($qty > $stock) {
-            $errors[] = 'Requested ' . $qty . ' × ' . ($p['name'] ?? 'item')
-                      . ' but only ' . $stock . ' in stock.';
-            continue;
-        }
+        $p      = $productsList[$productId];
         $price    = (float)($p['price'] ?? 0);
         $subtotal = $price * $qty;
         $items[$productId] = [
@@ -136,9 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$newId) {
             flash('Could not create the order. Please try again.', 'danger');
         } else {
-            foreach ($items as $productId => $info) {
-                Product::decrementStock((string)$productId, (int)$info['qty']);
-            }
             flash('Walk-in order #' . substr($newId, 0, 6) . ' created for ' . $fullName . ' (Table ' . $tableNumber . ', ' . $numCustomers . ' pax).', 'ok');
             redirect('/cashier/');
         }
@@ -157,7 +146,6 @@ foreach ($products as $pid => $p) {
         'id'    => $pid,
         'name'  => $p['name'] ?? 'Item',
         'price' => (float)($p['price'] ?? 0),
-        'stock' => (int)($p['stock'] ?? 0),
             'image' => product_image_url($p['image'] ?? '', $pid, 'products'),
         'cat'   => $p['category'] ?? '',
     ];
@@ -277,19 +265,16 @@ foreach ($products as $pid => $p) {
 <?php endif; ?>
       <div class="pos-grid" id="posGrid">
         <?php foreach ($products as $pid => $p):
-            $stock   = (int)($p['stock'] ?? 0);
-            $soldOut = $stock <= 0;
-            $low     = !$soldOut && $stock <= 5;
+            $isUnavailable = ($p['status'] ?? 'available') !== 'available';
             $img     = product_image_url($p['image'] ?? '', $pid, 'products');
         ?>
-          <div class="pos-item <?= $soldOut ? 'is-soldout' : '' ?>"
+          <div class="pos-item <?= $isUnavailable ? 'is-soldout' : '' ?>"
                data-pid="<?= e($pid) ?>"
                data-name="<?= e($p['name'] ?? 'Item') ?>"
                data-price="<?= (float)($p['price'] ?? 0) ?>"
-               data-stock="<?= $stock ?>"
                data-img="<?= e($img) ?>"
                data-cat="<?= e($p['category'] ?? '') ?>"
-               <?= $soldOut ? '' : 'tabindex="0" role="button" aria-label="Add ' . e($p['name'] ?? 'item') . ' to order"' ?>>
+               <?= $isUnavailable ? '' : 'tabindex="0" role="button" aria-label="Add ' . e($p['name'] ?? 'item') . ' to order"' ?>>
             <?php if (!empty($p['category'])): ?>
               <span class="pos-item__cat"><?= e($p['category']) ?></span>
             <?php endif; ?>
@@ -298,13 +283,6 @@ foreach ($products as $pid => $p) {
               <p class="pos-item__name"><?= e($p['name'] ?? 'Untitled') ?></p>
               <div class="pos-item__meta">
                 <span class="pos-item__price"><?= e(money($p['price'] ?? 0)) ?></span>
-                <?php if ($soldOut): ?>
-                  <span class="pos-item__stock out">Sold out</span>
-                <?php elseif ($low): ?>
-                  <span class="pos-item__stock low"><?= $stock ?> left</span>
-                <?php else: ?>
-                  <span class="pos-item__stock">Stock: <?= $stock ?></span>
-                <?php endif; ?>
               </div>
             </div>
           </div>
@@ -384,7 +362,7 @@ foreach ($products as $pid => $p) {
 <script>
 (function () {
   var products = <?= json_encode($jsProducts, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
-  var cart     = {};  // pid => { name, price, qty, stock, img }
+  var cart     = {};  // pid => { name, price, qty, img }
   var form     = document.getElementById('posForm');
   var grid     = document.getElementById('posGrid');
   var itemsEl  = document.getElementById('orderItems');
@@ -430,13 +408,12 @@ foreach ($products as $pid => $p) {
 
   /* ---- add to cart ---- */
   function addToCart(pid) {
-    var p = products[pid];
-    if (!p || p.stock <= 0) return;
+    if (!products[pid]) return;
     if (cart[pid]) {
-      if (cart[pid].qty >= p.stock) return;
       cart[pid].qty++;
     } else {
-      cart[pid] = { name:p.name, price:p.price, qty:1, stock:p.stock, img:p.image };
+      var p = products[pid];
+      cart[pid] = { name:p.name, price:p.price, qty:1, img:p.image };
     }
     render();
   }
@@ -446,7 +423,6 @@ foreach ($products as $pid => $p) {
     if (!cart[pid]) return;
     cart[pid].qty += delta;
     if (cart[pid].qty <= 0) { delete cart[pid]; }
-    else if (cart[pid].qty > cart[pid].stock) { cart[pid].qty = cart[pid].stock; }
     render();
   }
 

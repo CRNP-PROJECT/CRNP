@@ -20,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id     = post('item_id');
 
     if ($action === 'update' && $id !== '' && isset($cart[$id])) {
-        $stock = max(1, (int) ($cart[$id]['stock'] ?? 1));
         $delta = post('delta', '');
         $typed = (int) post('qty', (int) ($cart[$id]['qty'] ?? 1));
 
@@ -51,8 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('Item removed from your cart.', 'ok');
             redirect('/user/cart.php');
         }
-
-        $newQ = min($stock, $newQ);
 
         $cart[$id]['qty'] = $newQ;
         set_cart($cart);
@@ -106,20 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $cart = get_cart();
 
-foreach ($cart as $id => &$item) {
-    if (empty($item['stock'])) {
-        try {
-            $db   = \App\Core\Model::db();
-            $row  = $db->retrieve('/products/' . $id);
-            $item['stock'] = is_array($row) ? (int) ($row['stock'] ?? 0) : 0;
-        } catch (\Throwable $e) {
-            $item['stock'] = 0;
-        }
-    }
-}
-unset($item);
-set_cart($cart);
-
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -148,10 +131,9 @@ require_once __DIR__ . '/../includes/header.php';
       $unit     = (float) ($item['price'] ?? 0);
       $qty      = (int)   ($item['qty']   ?? 1);
       $subtotal = $unit * $qty;
-      $stock    = max(1, (int) ($item['stock'] ?? 1));
       $img      = product_image_url($item['image'] ?? '', $id, 'products');
     ?>
-      <div class="cart-item" data-item-id="<?= e($id) ?>" data-unit="<?= $unit ?>" data-stock="<?= $stock ?>">
+      <div class="cart-item" data-item-id="<?= e($id) ?>" data-unit="<?= $unit ?>">
         <img class="cart-item__media" src="<?= e($img) ?>" alt="" loading="lazy">
 
         <div>
@@ -162,7 +144,7 @@ require_once __DIR__ . '/../includes/header.php';
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="item_id" value="<?= e($id) ?>">
             <button type="button" data-delta="-1" aria-label="Decrease quantity">&minus;</button>
-            <input type="number" name="qty" value="<?= $qty ?>" min="1" max="<?= $stock ?>" inputmode="numeric" aria-label="Quantity">
+            <input type="number" name="qty" value="<?= $qty ?>" min="1" inputmode="numeric" aria-label="Quantity">
             <button type="button" data-delta="1" aria-label="Increase quantity">+</button>
           </form>
         </div>

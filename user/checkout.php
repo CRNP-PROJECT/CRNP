@@ -2,12 +2,11 @@
 /**
  * checkout.php — Customer order checkout.
  * Validates contact info, builds the order from the session cart, persists
- * to /orders, decrements stock, clears the cart, and emails a receipt.
+ * to /orders, clears the cart, and emails a receipt.
  */
 require_once __DIR__ . '/../init.php';
 require_user();
 use App\Models\Order;
-use App\Models\Product;
 
 $db = getDB();
 $activeNav = 'shop';
@@ -66,7 +65,6 @@ if ($buyNowProductId !== '' && !$cart) {
             'price' => (float)($p->price ?? 0),
             'qty'   => $buyNowQty,
             'image' => $p->image ?? '',
-            'stock' => (int)($p->stock ?? 0),
         ],
     ];
 }
@@ -89,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Please choose a pickup time.';
     }
 
-    /* Refresh cart snapshot so we don't trust stale stock.
+    /* Refresh cart snapshot.
        In buy-now mode, rebuild the single-item cart from POST data. */
     $cart = get_cart();
     if (isset($_POST['buy_now']) && $_POST['buy_now'] === '1') {
@@ -105,7 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'price' => (float)($bp->price ?? 0),
                         'qty'   => $bQty,
                         'image' => $bp->image ?? '',
-                        'stock' => (int)($bp->stock ?? 0),
                     ],
                 ];
             }
@@ -116,32 +113,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/user/products.php');
     }
 
-    /* Validate stock against live products. */
-    $liveProducts = rows($db->retrieve('/products'));
-    foreach ($cart as $pid => $item) {
-        $qty   = (int)($item['qty'] ?? 1);
-        $stock = (int)(($liveProducts[$pid] ?? [])['stock'] ?? 0);
-        if (!isset($liveProducts[$pid])) {
-            $errors[] = 'A product in your cart is no longer available.';
-        } elseif ($qty > $stock) {
-            $errors[] = 'Only ' . $stock . ' × "' . ($liveProducts[$pid]['name'] ?? 'Item') . '" left (requested ' . $qty . ').';
-        }
-    }
-    if ($errors) {
-        foreach ($errors as $err) flash($err, 'danger');
-        redirect('/user/checkout.php');
-    }
-
     /* Build items map { productId => {name, qty, price, subtotal} }. */
     $items = [];
     $total = 0.0;
     foreach ($cart as $pid => $item) {
         $qty   = (int)   ($item['qty']   ?? 1);
-        $lp    = $liveProducts[$pid] ?? [];
-        $price = (float) ($lp['price'] ?? $item['price'] ?? 0);
+        $price = (float) ($item['price'] ?? 0);
         $sub   = $price * $qty;
         $items[$pid] = [
-            'name'     => $lp['name'] ?? $item['name'] ?? 'Item',
+            'name'     => $item['name'] ?? 'Item',
             'qty'      => $qty,
             'price'    => $price,
             'subtotal' => $sub,
@@ -190,10 +170,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newId = (new Order($order))->save();
             if (!$newId) {
                 throw new RuntimeException('Firebase did not return an order id.');
-            }
-            /* Decrement stock only after a successful insert. */
-            foreach ($items as $pid => $row) {
-                Product::decrementStock($pid, (int) $row['qty']);
             }
             set_cart([]);
 
