@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../init.php';
 require_user();
 use App\Models\Order;
+use App\Models\Product;
 
 $db = getDB();
 $activeNav = 'shop';
