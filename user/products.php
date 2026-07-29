@@ -49,8 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     set_cart($cart);
 
     if ($action === 'buy_now') {
-        flash('Added "' . ($p->name ?? 'item') . '" to your cart.', 'ok');
-        redirect('/user/checkout.php');
+        redirect('/user/checkout.php?buy_now=1&product_id=' . rawurlencode($pid) . '&qty=' . $qty);
     }
 
     if (is_ajax_request()) {

@@ -52,7 +52,7 @@ if (!$cart && $buyNowProductId === '') {
 }
 
 /* If buy-now mode, build a single-item "cart" so the rest of the page works. */
-if ($buyNowProductId !== '' && !$cart) {
+if ($buyNowProductId !== '') {
     $p = Product::find($buyNowProductId);
     if (!$p || ($p->status ?? 'available') !== 'available') {
         flash('Sorry, that item is not available.', 'warn');
