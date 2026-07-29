@@ -75,7 +75,6 @@ require_once __DIR__ . '/../includes/header.php';
             <th>Progress</th>
             <th>Payment</th>
             <th>Placed</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -85,23 +84,20 @@ require_once __DIR__ . '/../includes/header.php';
             $shortId = strtoupper(substr((string)$id, 0, 6));
             $placed  = fmt_time($o['created_at'] ?? null);
             $receipt = $o['receipt'] ?? null;
+            $method  = (string)($o['payment_method'] ?? '');
           ?>
             <tr>
               <td><code class="kbd"><?= e($shortId) ?></code><?php if (!empty($o['pickup_time'])): ?><br><small class="muted"><?= e($o['pickup_time']) ?></small><?php endif; ?></td>
               <td><?= items_html($o['items'] ?? []) ?></td>
               <td class="num"><?= money($o['total'] ?? 0) ?></td>
               <td><?= order_tracker_html((string)($o['status'] ?? '')) ?></td>
-              <td><span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span></td>
-              <td class="muted"><?= e($placed) ?></td>
-              <td class="t-right">
-                <?php if (!empty($receipt)): ?>
-                  <a class="thumb--link" href="<?= e(image_display_src($receipt, 'user/bookings')) ?>" target="_blank" rel="noopener" title="View receipt">
-                    <img class="thumb" src="<?= e(image_display_src($receipt, 'user/bookings')) ?>" alt="Receipt thumbnail">
-                  </a>
-                <?php else: ?>
-                  <span class="muted">—</span>
+              <td>
+                <span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span>
+                <?php if ($method === 'gcash' && !empty($receipt)): ?>
+                  <br><span class="badge badge--gold" style="cursor:pointer;margin-top:4px;display:inline-block" data-receipt="<?= e(image_display_src($receipt, 'user/bookings')) ?>">View receipt</span>
                 <?php endif; ?>
               </td>
+              <td class="muted"><?= e($placed) ?></td>
             </tr>
           <?php endforeach; ?>
         </tbody>
@@ -151,6 +147,7 @@ require_once __DIR__ . '/../includes/header.php';
             $shortId   = strtoupper(substr((string)$id, 0, 6));
             $canCancel = in_array((string)($b['status'] ?? ''), ['pending', 'accepted'], true);
             $receipt   = $b['receipt'] ?? null;
+            $method    = (string)($b['payment_method'] ?? '');
           ?>
             <tr>
               <td><code class="kbd"><?= e($shortId) ?></code></td>
@@ -158,16 +155,15 @@ require_once __DIR__ . '/../includes/header.php';
               <td class="muted"><?= e(fmt_time($b['appointment_time'] ?? null)) ?></td>
               <td class="muted"><?= e(fmt_time($b['return_time'] ?? null)) ?></td>
               <td class="num"><?= money($b['total'] ?? 0) ?></td>
-              <td><span class="badge <?= e($sCls) ?>"><?= e($sLabel) ?></span></td>
+              <td>
+                <span class="badge <?= e($sCls) ?>"><?= e($sLabel) ?></span>
+                <?php if ($method === 'gcash' && !empty($receipt)): ?>
+                  <br><span class="badge badge--gold" style="cursor:pointer;margin-top:4px;display:inline-block" data-receipt="<?= e(image_display_src($receipt, 'user/bookings')) ?>">View receipt</span>
+                <?php endif; ?>
+              </td>
               <td class="t-right">
                 <?php if ($canCancel): ?>
                   <a class="btn btn--ghost btn--sm" href="/user/booking.php?cancel=<?= e($id) ?>" data-confirm="Cancel this booking? Reserved stock will be returned.">Cancel</a>
-                <?php elseif (!empty($receipt)): ?>
-                  <a class="thumb--link" href="<?= e(image_display_src($receipt, 'user/bookings')) ?>" target="_blank" rel="noopener" title="View receipt">
-                    <img class="thumb" src="<?= e(image_display_src($receipt, 'user/bookings')) ?>" alt="Receipt thumbnail">
-                  </a>
-                <?php else: ?>
-                  <span class="muted">—</span>
                 <?php endif; ?>
               </td>
             </tr>
@@ -177,5 +173,39 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
   <?php endif; ?>
 </section>
+
+<!-- Receipt lightbox modal -->
+<div id="receiptModal" class="receipt-modal" hidden>
+  <div class="receipt-modal__inner">
+    <button class="receipt-modal__close" type="button" aria-label="Close receipt preview">&times;</button>
+    <img id="receiptModalImg" class="receipt-modal__img" alt="GCash receipt preview">
+  </div>
+</div>
+
+<style>
+  .receipt-modal { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.7); }
+  .receipt-modal[hidden] { display:none; }
+  .receipt-modal__inner { position:relative; max-width:90vw; max-height:90vh; }
+  .receipt-modal__img { display:block; max-width:90vw; max-height:90vh; border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,.5); }
+  .receipt-modal__close { position:absolute; top:-36px; right:0; background:rgba(0,0,0,.5); color:#fff; border:0; border-radius:6px; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .receipt-modal__close:hover { background:rgba(0,0,0,.7); }
+</style>
+
+<script>
+(function() {
+  var modal = document.getElementById('receiptModal');
+  if (!modal) return;
+  var modalImg = document.getElementById('receiptModalImg');
+  var closeBtn = modal.querySelector('.receipt-modal__close');
+  function open(src) { modalImg.src = src; modal.removeAttribute('hidden'); }
+  function close() { modal.setAttribute('hidden', ''); modalImg.src = ''; }
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', function(e) { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+  document.querySelectorAll('[data-receipt]').forEach(function(btn) {
+    btn.addEventListener('click', function() { open(btn.getAttribute('data-receipt')); });
+  });
+})();
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('Could not create the order. Please try again.', 'danger');
         } else {
             flash('Walk-in order #' . substr($newId, 0, 6) . ' created for ' . $fullName . ' (Table ' . $tableNumber . ', ' . $numCustomers . ' pax).', 'ok');
-            redirect('/cashier/');
+            redirect('/cashier/receipt.php?id=' . $newId);
         }
     }
 }

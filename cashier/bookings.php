@@ -60,6 +60,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'returned_by'  => $cashierName,
                 ]);
                 flash('Booking #' . $short . ' marked returned. Rental stock restored.', 'ok');
+            } elseif ($action === 'mark_paid' && $booking->get('payment_status') !== 'paid') {
+                $booking->update([
+                    'payment_verified' => true,
+                    'payment_status'   => 'paid',
+                    'verified_at'      => now(),
+                    'verified_by'      => $cashierName,
+                ]);
+                flash('Booking #' . $short . ' marked as paid.', 'ok');
+            } elseif ($action === 'mark_unpaid' && $booking->get('payment_status') === 'paid') {
+                $booking->update([
+                    'payment_verified' => false,
+                    'payment_status'   => 'unpaid',
+                ]);
+                flash('Booking #' . $short . ' reverted to unpaid.', 'warn');
             } else {
                 flash('That action is not valid for this booking\'s current state.', 'danger');
             }
@@ -173,6 +187,8 @@ $itemsCount = static function (array $b): int {
               $total    = (float)($b['total'] ?? 0);
               $count    = $itemsCount($b);
               $created  = (string)($b['created_at'] ?? '');
+              $receipt  = (string)($b['receipt'] ?? '');
+              $isGcash  = ($b['payment_method'] ?? '') === 'gcash';
           ?>
             <tr>
               <td>
@@ -194,7 +210,18 @@ $itemsCount = static function (array $b): int {
               <td class="num"><strong><?= e(money($total)) ?></strong></td>
               <td><small><?= e($appt ?: '—') ?></small></td>
               <td><small><?= e($ret ?: '—') ?></small></td>
-              <td><span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span></td>
+              <td>
+                <span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span>
+                <?php if ($isGcash): ?>
+                  <div class="mt-2">
+                    <?php if ($receipt !== ''): ?>
+                      <button class="btn btn--ghost btn--sm" type="button" data-receipt="<?= e(image_display_src($receipt, 'user/bookings')) ?>">View receipt</button>
+                    <?php else: ?>
+                      <span class="muted" style="font-size:12px">No receipt</span>
+                    <?php endif; ?>
+                  </div>
+                <?php endif; ?>
+              </td>
               <td><span class="badge <?= e($sCls) ?>"><?= e($sLabel) ?></span></td>
               <td class="t-right">
                 <div class="row" style="justify-content:flex-end;gap:6px">
@@ -224,6 +251,25 @@ $itemsCount = static function (array $b): int {
                   <?php else: ?>
                     <span class="muted" style="font-size:12px">No actions</span>
                   <?php endif; ?>
+                  <?php if ($st !== 'rejected' && $st !== 'cancelled' && $st !== 'returned'): ?>
+                    <?php if ($ps !== 'paid'): ?>
+                      <form method="post" action="/cashier/bookings.php<?= $statusFilter !== '' ? '?status=' . rawurlencode($statusFilter) : '' ?>">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="mark_paid">
+                        <input type="hidden" name="booking_id" value="<?= e($id) ?>">
+                        <input type="hidden" name="back_query" value="<?= e($statusFilter !== '' ? 'status=' . rawurlencode($statusFilter) : '') ?>">
+                        <button class="btn btn--gold btn--sm" type="submit">Mark paid</button>
+                      </form>
+                    <?php else: ?>
+                      <form method="post" action="/cashier/bookings.php<?= $statusFilter !== '' ? '?status=' . rawurlencode($statusFilter) : '' ?>" data-confirm="Revert this payment to unpaid?">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="mark_unpaid">
+                        <input type="hidden" name="booking_id" value="<?= e($id) ?>">
+                        <input type="hidden" name="back_query" value="<?= e($statusFilter !== '' ? 'status=' . rawurlencode($statusFilter) : '') ?>">
+                        <button class="btn btn--outline btn--sm" type="submit">Mark unpaid</button>
+                      </form>
+                    <?php endif; ?>
+                  <?php endif; ?>
                 </div>
               </td>
             </tr>
@@ -234,4 +280,39 @@ $itemsCount = static function (array $b): int {
     <?php endif; ?>
   </div>
 </section>
+
+<!-- Receipt lightbox modal -->
+<div id="receiptModal" class="receipt-modal" hidden>
+  <div class="receipt-modal__inner">
+    <button class="receipt-modal__close" type="button" aria-label="Close receipt preview">&times;</button>
+    <img id="receiptModalImg" class="receipt-modal__img" alt="GCash receipt preview">
+  </div>
+</div>
+
+<style>
+  .receipt-modal { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.7); }
+  .receipt-modal[hidden] { display:none; }
+  .receipt-modal__inner { position:relative; max-width:90vw; max-height:90vh; }
+  .receipt-modal__img { display:block; max-width:90vw; max-height:90vh; border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,.5); }
+  .receipt-modal__close { position:absolute; top:-36px; right:0; background:rgba(0,0,0,.5); color:#fff; border:0; border-radius:6px; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .receipt-modal__close:hover { background:rgba(0,0,0,.7); }
+</style>
+
+<script>
+(function() {
+  var modal = document.getElementById('receiptModal');
+  if (!modal) return;
+  var modalImg = document.getElementById('receiptModalImg');
+  var closeBtn = modal.querySelector('.receipt-modal__close');
+  function open(src) { modalImg.src = src; modal.removeAttribute('hidden'); }
+  function close() { modal.setAttribute('hidden', ''); modalImg.src = ''; }
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', function(e) { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+  document.querySelectorAll('[data-receipt]').forEach(function(btn) {
+    btn.addEventListener('click', function() { open(btn.getAttribute('data-receipt')); });
+  });
+})();
+</script>
+
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

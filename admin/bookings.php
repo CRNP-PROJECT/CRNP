@@ -119,7 +119,11 @@ require_once __DIR__ . '/../includes/header.php';
                     <dt>Booking ID</dt><dd><code><?= e((string) $bid) ?></code></dd>
                     <dt>Contact</dt><dd><?= e($b['contact'] ?? '—') ?></dd>
                     <dt>Address</dt><dd><?= e($b['address'] ?? '—') ?></dd>
-                    <dt>Payment</dt><dd><span class="badge <?= e($pc) ?>"><?= e($pl) ?></span> · <?php [$pmLabel, $pmCls] = payment_method_label((string) ($b['payment_method'] ?? 'counter')); ?><span class="badge <?= e($pmCls) ?>"><?= e($pmLabel) ?></span></dd>
+                    <dt>Payment</dt><dd><span class="badge <?= e($pc) ?>"><?= e($pl) ?></span> · <?php [$pmLabel, $pmCls] = payment_method_label((string) ($b['payment_method'] ?? 'counter')); ?><span class="badge <?= e($pmCls) ?>"><?= e($pmLabel) ?></span>
+                      <?php $receipt = (string) ($b['receipt'] ?? ''); if (($b['payment_method'] ?? '') === 'gcash' && $receipt !== ''): ?>
+                        <br><span class="badge badge--gold" style="cursor:pointer;margin-top:4px;display:inline-block" data-receipt="<?= e(image_display_src($receipt, 'user/bookings')) ?>">View receipt</span>
+                      <?php endif; ?>
+                    </dd>
                     <dt>Created by</dt><dd><?= e(ucfirst((string) ($b['created_by'] ?? '—'))) ?></dd>
                     <dt>Created</dt><dd><?= e((string) ($b['created_at'] ?? '—')) ?></dd>
                   </dl>
@@ -143,4 +147,39 @@ require_once __DIR__ . '/../includes/header.php';
       </table>
     </div>
   </div>
+
+<!-- Receipt lightbox modal -->
+<div id="receiptModal" class="receipt-modal" hidden>
+  <div class="receipt-modal__inner">
+    <button class="receipt-modal__close" type="button" aria-label="Close receipt preview">&times;</button>
+    <img id="receiptModalImg" class="receipt-modal__img" alt="GCash receipt preview">
+  </div>
+</div>
+
+<style>
+  .receipt-modal { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.7); }
+  .receipt-modal[hidden] { display:none; }
+  .receipt-modal__inner { position:relative; max-width:90vw; max-height:90vh; }
+  .receipt-modal__img { display:block; max-width:90vw; max-height:90vh; border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,.5); }
+  .receipt-modal__close { position:absolute; top:-36px; right:0; background:rgba(0,0,0,.5); color:#fff; border:0; border-radius:6px; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .receipt-modal__close:hover { background:rgba(0,0,0,.7); }
+</style>
+
+<script>
+(function() {
+  var modal = document.getElementById('receiptModal');
+  if (!modal) return;
+  var modalImg = document.getElementById('receiptModalImg');
+  var closeBtn = modal.querySelector('.receipt-modal__close');
+  function open(src) { modalImg.src = src; modal.removeAttribute('hidden'); }
+  function close() { modal.setAttribute('hidden', ''); modalImg.src = ''; }
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', function(e) { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+  document.querySelectorAll('[data-receipt]').forEach(function(btn) {
+    btn.addEventListener('click', function() { open(btn.getAttribute('data-receipt')); });
+  });
+})();
+</script>
+
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
