@@ -225,6 +225,7 @@ $itemsCount = static function (array $b): int {
               <td><span class="badge <?= e($sCls) ?>"><?= e($sLabel) ?></span></td>
               <td class="t-right">
                 <div class="row" style="justify-content:flex-end;gap:6px">
+                  <a class="btn btn--ghost btn--sm" href="/cashier/booking_receipt.php?id=<?= e($id) ?>" title="Print receipt">Print</a>
                   <?php if ($st === 'pending'): ?>
                     <form method="post" action="/cashier/bookings.php<?= $statusFilter !== '' ? '?status=' . rawurlencode($statusFilter) : '' ?>">
                       <?= csrf_field() ?>

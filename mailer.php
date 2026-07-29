@@ -220,3 +220,126 @@ HTML;
 
     return sendMail($email, $subject, $html, $alt);
 }
+
+/**
+ * Send a booking confirmation / receipt email.
+ *
+ * $booking keys: id, items (map of {name,qty,price,subtotal}), total,
+ * full_name, payment_method ('gcash' | 'counter'), payment_status,
+ * appointment_time, return_time, created_at, contact, address.
+ */
+function sendBookingReceipt(string $email, array $booking): bool {
+    $brand   = BRAND_NAME;
+    $tagline = BRAND_TAGLINE;
+
+    $bookingId = (string) ($booking['id'] ?? '');
+    $shortId   = $bookingId !== '' ? substr($bookingId, 0, 8) : '—';
+    $fullName  = (string) ($booking['full_name'] ?? $booking['user_name'] ?? '');
+    $total     = (float)  ($booking['total'] ?? 0);
+    $method    = (string) ($booking['payment_method'] ?? 'counter');
+    $payStatus = (string) ($booking['payment_status'] ?? '');
+    $apptTime  = (string) ($booking['appointment_time'] ?? '');
+    $retTime   = (string) ($booking['return_time'] ?? '');
+    $contact   = (string) ($booking['contact'] ?? '');
+    $address   = (string) ($booking['address'] ?? '');
+    $createdAt = (string) ($booking['created_at'] ?? '');
+    $items     = is_array($booking['items'] ?? null) ? $booking['items'] : [];
+
+    if ($method === 'gcash') {
+        $payLine = 'GCash — ' . ($payStatus === 'paid' ? 'paid' : 'verifying');
+    } else {
+        $payLine = 'Pay at counter';
+    }
+
+    $rowsHtml = '';
+    foreach ($items as $row) {
+        if (!is_array($row)) continue;
+        $name      = htmlspecialchars((string) ($row['name'] ?? 'Item'), ENT_QUOTES, 'UTF-8');
+        $qty       = (int)    ($row['qty'] ?? 1);
+        $price     = (float)  ($row['price'] ?? 0);
+        $subtotal  = (float)  ($row['subtotal'] ?? ($price * $qty));
+        $priceTxt    = "\u{20B1}" . number_format($price, 2);
+        $subtotalTxt = "\u{20B1}" . number_format($subtotal, 2);
+        $rowsHtml .= <<<HTML
+          <tr>
+            <td style="padding:10px 12px;border-bottom:1px solid #efe8da;color:#211b14;">{$name}</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #efe8da;text-align:center;color:#211b14;">{$qty}</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #efe8da;text-align:right;color:#211b14;">{$priceTxt}</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #efe8da;text-align:right;color:#211b14;font-weight:600;">{$subtotalTxt}</td>
+          </tr>
+HTML;
+    }
+    if ($rowsHtml === '') {
+        $rowsHtml = '<tr><td colspan="4" style="padding:14px 12px;color:#8a7f70;text-align:center;">No items recorded.</td></tr>';
+    }
+
+    $totalTxt   = "\u{20B1}" . number_format($total, 2);
+    $placedTxt  = $createdAt !== '' ? date('M j, Y g:i A', strtotime($createdAt)) : '';
+    $apptLine   = $apptTime !== '' ? 'Appointment: <strong style="color:#211b14;">' . htmlspecialchars($apptTime, ENT_QUOTES, 'UTF-8') . '</strong><br>' : '';
+    $returnLine = $retTime !== '' ? 'Return by: <strong style="color:#211b14;">' . htmlspecialchars($retTime, ENT_QUOTES, 'UTF-8') . '</strong><br>' : '';
+    $greeting   = $fullName !== '' ? 'Hi ' . htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') . ',' : 'Hi there,';
+
+    $subject = 'Your ' . $brand . ' booking #' . $shortId;
+
+    $html = <<<HTML
+<!doctype html><html><body style="margin:0;background:#f6f2ea;font-family:Georgia,'Times New Roman',serif;">
+  <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e6dfd1;border-radius:14px;overflow:hidden;">
+    <div style="background:#211b14;color:#f6f2ea;padding:28px 32px;">
+      <div style="font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#c8a45c;">{$brand}</div>
+      <div style="font-size:22px;margin-top:6px;">Booking confirmation</div>
+    </div>
+    <div style="padding:32px;color:#211b14;">
+      <p style="margin:0 0 6px;">{$greeting}</p>
+      <p style="margin:0 0 18px;color:#5a4f42;">Thanks for your rental booking! Here's your receipt.</p>
+
+      <div style="background:#fbf8f2;border:1px solid #efe8da;border-radius:10px;padding:14px 16px;margin-bottom:22px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#8a7f70;margin-bottom:4px;">
+          <span>Booking number</span><span style="color:#211b14;font-weight:600;">#{$shortId}</span>
+        </div>
+        {$apptLine}
+        {$returnLine}
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#8a7f70;">
+          <span>Booked</span><span style="color:#211b14;">{$placedTxt}</span>
+        </div>
+      </div>
+
+      <table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="background:#211b14;color:#f6f2ea;">
+            <th style="padding:12px;text-align:left;font-weight:600;letter-spacing:.04em;">Item</th>
+            <th style="padding:12px;text-align:center;font-weight:600;letter-spacing:.04em;">Qty</th>
+            <th style="padding:12px;text-align:right;font-weight:600;letter-spacing:.04em;">Unit</th>
+            <th style="padding:12px;text-align:right;font-weight:600;letter-spacing:.04em;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {$rowsHtml}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="padding:14px 12px;text-align:right;text-transform:uppercase;font-size:12px;letter-spacing:.08em;color:#8a7f70;">Total</td>
+            <td style="padding:14px 12px;text-align:right;font-size:18px;font-weight:700;color:#211b14;">{$totalTxt}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div style="margin-top:18px;padding:14px 16px;background:#fbf8f2;border-left:3px solid #c8a45c;border-radius:8px;font-size:14px;color:#211b14;">
+        <strong>Payment:</strong> {$payLine}
+      </div>
+
+      <p style="margin:18px 0 6px;color:#211b14;">Please present this confirmation when picking up your rental items.</p>
+      <p style="margin:0;color:#8a7f70;font-size:13px;">We will confirm your booking shortly.</p>
+    </div>
+    <div style="background:#fbf8f2;color:#8a7f70;font-size:12px;padding:16px 32px;text-align:center;">&copy; {$brand} &middot; {$tagline}</div>
+  </div>
+</body></html>
+HTML;
+
+    $alt = "Your " . $brand . " booking #" . $shortId . "\n"
+         . "Total: " . $totalTxt . "\n"
+         . "Payment: " . $payLine . "\n\n"
+         . "Please present this confirmation when picking up your rental items.\n"
+         . "We will confirm your booking shortly.";
+
+    return sendMail($email, $subject, $html, $alt);
+}

@@ -161,6 +161,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($items as $itemId => $row) {
                 RentItem::decrementStock((string)$itemId, (int)$row['qty']);
             }
+            /* Send booking receipt email. */
+            try {
+                $bookingData = $booking;
+                $bookingData['id'] = $newId;
+                $customerEmail = $booking['user_email'] ?: user_email();
+                if ($customerEmail !== '') {
+                    sendBookingReceipt($customerEmail, $bookingData);
+                }
+            } catch (Throwable $ex) {
+                /* Email failure must not break the booking; log silently. */
+            }
             flash('Booking request submitted! We will confirm shortly.', 'ok');
             redirect('/user/your_orders.php');
         } catch (Throwable $ex) {
