@@ -30,8 +30,8 @@ foreach ($orders as $o) {
         $totalSales += (float) ($o['total'] ?? 0);
     }
 }
-$totalBookings = count($bookings);
-$activeRent    = 0;
+$totalBookings     = count($bookings);
+$activeRent        = 0;
 foreach ($rentItems as $r) {
     if (is_array($r) && (int) ($r['quantity'] ?? 0) > 0) $activeRent++;
 }
@@ -51,10 +51,26 @@ foreach ($orders as $o) {
         }
     }
 }
+$todayBookingSales = 0.0;
 foreach ($bookings as $b) {
     if (!is_array($b)) continue;
     $d = substr((string) ($b['created_at'] ?? ''), 0, 10);
-    if ($d === $today) $todayBookings++;
+    if ($d === $today) {
+        $todayBookings++;
+        if ((string) ($b['payment_status'] ?? '') === 'paid') {
+            $todayBookingSales += (float) ($b['total'] ?? 0);
+        }
+    }
+}
+$thisMonth = date('Y-m');
+$monthBookingSales = 0.0;
+foreach ($bookings as $b) {
+    if (!is_array($b)) continue;
+    if ((string) ($b['payment_status'] ?? '') !== 'paid') continue;
+    $vd = substr((string) ($b['verified_at'] ?? $b['created_at'] ?? ''), 0, 7);
+    if ($vd === $thisMonth) {
+        $monthBookingSales += (float) ($b['total'] ?? 0);
+    }
 }
 
 /* ---------- Heavy chart data: file-cached for 120s to keep dashboard fast ----- */
@@ -216,8 +232,9 @@ require_once __DIR__ . '/../includes/header.php';
   .pie-legend { list-style:none; padding:0; margin:0; }
   .pie-legend li { display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:6px; color:#F5F1E8; }
   .pie-legend__dot { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
-  .today-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-  @media (max-width:640px) { .today-grid { grid-template-columns:1fr; } }
+  .today-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  @media (max-width:780px) { .today-grid { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:480px) { .today-grid { grid-template-columns:1fr; } }
   .today-card { padding:18px 20px; border:1px solid #3A2F24; border-radius:12px; background:#241D16; }
   .today-card__label { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:#A8A29E; margin-bottom:4px; }
   .today-card__value { font-family:var(--sans); font-size:1.6rem; font-weight:700; color:#F5F1E8; }
@@ -258,6 +275,11 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="stat__hint">Rent reservations</div>
   </div>
   <div class="stat">
+    <div class="stat__label">Booking revenue</div>
+    <div class="stat__value"><?= e(money($monthBookingSales)) ?></div>
+    <div class="stat__hint"><?= e(date('F Y')) ?> paid reservations</div>
+  </div>
+  <div class="stat">
     <div class="stat__label">Active rent items</div>
     <div class="stat__value"><?= $activeRent ?></div>
     <div class="stat__hint">With stock on hand</div>
@@ -281,6 +303,11 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="today-card__label">Today&rsquo;s bookings</div>
       <div class="today-card__value"><?= $todayBookings ?></div>
       <div class="today-card__hint">New reservations today</div>
+    </div>
+    <div class="today-card">
+      <div class="today-card__label">Booking sales today</div>
+      <div class="today-card__value"><?= e(money($todayBookingSales)) ?></div>
+      <div class="today-card__hint">From paid reservations today</div>
     </div>
   </div>
 </section>

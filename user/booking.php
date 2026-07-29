@@ -29,7 +29,7 @@ if ($cancelId) {
         redirect('/user/your_orders.php');
     }
     $status = (string)($booking->status ?? '');
-    if (!in_array($status, ['pending', 'accepted'], true)) {
+    if ($status !== 'pending') {
         flash('That booking can no longer be cancelled.', 'warn');
         redirect('/user/your_orders.php');
     }

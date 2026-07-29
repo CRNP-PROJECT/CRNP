@@ -77,6 +77,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'verified_by'      => $cashierName,
                 ]);
                 flash('Booking #' . $short . ' marked as paid.', 'ok');
+                $email = $booking->get('user_email') ?? '';
+                if ($email !== '' && $email !== 'walk-in') {
+                    $name  = htmlspecialchars($booking->get('full_name') ?: $booking->get('customer_name') ?: 'Valued Customer');
+                    $s     = htmlspecialchars($short);
+                    $brand = htmlspecialchars(BRAND_NAME);
+                    $html  = '<p>Hi ' . $name . ',</p>'
+                           . '<p>Your booking #' . $s . ' has been <strong>marked as paid</strong>. Thank you!</p>'
+                           . '<p style="color:#8a7f70;">— ' . $brand . '</p>';
+                    $plain = "Hi {$name},\n\nYour booking #{$s} has been marked as paid. Thank you!\n\n— {$brand}";
+                    sendMail($email, 'Booking #' . $s . ' — Payment received', $html, $plain);
+                }
             } elseif ($action === 'mark_unpaid' && $booking->get('payment_status') === 'paid') {
                 $booking->update([
                     'payment_verified' => false,
@@ -194,14 +205,17 @@ $itemsCount = static function (array $b): int {
               $created  = (string)($b['created_at'] ?? '');
               $receipt  = (string)($b['receipt'] ?? '');
               $isGcash  = $pm === 'gcash';
+              $fmtAppt  = $appt ? date('M j, Y \a\t g:i A', strtotime($appt)) : '';
+              $fmtRet   = $ret  ? date('M j, Y \a\t g:i A', strtotime($ret))  : '';
+              $fmtCreated = $created ? date('M j, Y', strtotime($created)) : '';
           ?>
             <tr>
               <td><strong>#<?= e(substr((string)$id, 0, 6)) ?></strong>
                 <?php if (($b['user_email'] ?? '') === 'walk-in'): ?>
                   <br><span class="badge badge--gold" style="font-size:10px">Walk-in</span>
                 <?php endif; ?>
-                <?php if ($created !== ''): ?>
-                  <br><small class="muted"><?= e($created) ?></small>
+                <?php if ($fmtCreated !== ''): ?>
+                  <br><small class="muted"><?= e($fmtCreated) ?></small>
                 <?php endif; ?>
               </td>
               <td>
@@ -212,8 +226,8 @@ $itemsCount = static function (array $b): int {
               </td>
               <td><?= items_html($b['items'] ?? []) ?></td>
               <td class="num"><strong><?= e(money($total)) ?></strong></td>
-              <td><small><?= e($appt ?: '—') ?></small></td>
-              <td><small><?= e($ret ?: '—') ?></small></td>
+              <td><small><?= e($fmtAppt ?: '—') ?></small></td>
+              <td><small><?= e($fmtRet ?: '—') ?></small></td>
               <td>
                 <span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span>
                 <?php if ($isGcash): ?>
@@ -226,7 +240,7 @@ $itemsCount = static function (array $b): int {
                   </div>
                 <?php endif; ?>
               </td>
-              <td><small class="muted"><?= e($created ?: '—') ?></small></td>
+              <td><small class="muted"><?= e($fmtCreated ?: '—') ?></small></td>
               <td class="t-right">
                 <div class="row" style="justify-content:flex-end;gap:6px">
                   <form method="post" action="/cashier/bookings.php">
@@ -300,11 +314,13 @@ $itemsCount = static function (array $b): int {
               $receipt  = (string)($b['receipt'] ?? '');
               $isGcash  = $pm === 'gcash';
               $canPrint = in_array($st, ['accepted', 'returned'], true);
+              $fmtAppt  = $appt ? date('M j, Y \a\t g:i A', strtotime($appt)) : '';
+              $fmtRet   = $ret  ? date('M j, Y \a\t g:i A', strtotime($ret))  : '';
           ?>
             <tr>
               <td><strong>#<?= e(substr((string)$id, 0, 6)) ?></strong>
                 <?php if ($created !== ''): ?>
-                  <br><small class="muted"><?= e($created) ?></small>
+                  <br><small class="muted"><?= e(date('M j, Y', strtotime($created))) ?></small>
                 <?php endif; ?>
               </td>
               <td>
@@ -315,8 +331,8 @@ $itemsCount = static function (array $b): int {
               </td>
               <td><?= items_html($b['items'] ?? []) ?></td>
               <td class="num"><strong><?= e(money($total)) ?></strong></td>
-              <td><small><?= e($appt ?: '—') ?></small></td>
-              <td><small><?= e($ret ?: '—') ?></small></td>
+              <td><small><?= e($fmtAppt ?: '—') ?></small></td>
+              <td><small><?= e($fmtRet ?: '—') ?></small></td>
               <td>
                 <span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span>
                 <?php if ($isGcash && $receipt !== ''): ?>

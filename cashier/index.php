@@ -106,10 +106,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('Order #' . $short . ' marked as paid.', 'ok');
                 $email = $order->get('user_email') ?? '';
                 if ($email !== '' && $email !== 'walk-in') {
-                    $orderData = $order->raw() ?? [];
-                    $orderData['id'] = $orderId;
-                    $orderData['full_name'] = $orderData['full_name'] ?? $orderData['customer_name'] ?? '';
-                    sendOrderReceipt($email, $orderData);
+                    $name  = htmlspecialchars($order->get('full_name') ?: $order->get('customer_name') ?: 'Valued Customer');
+                    $short = htmlspecialchars($short);
+                    $brand = htmlspecialchars(BRAND_NAME);
+                    $html  = '<p>Hi ' . $name . ',</p>'
+                           . '<p>Your order #' . $short . ' has been <strong>marked as paid</strong>. Thank you!</p>'
+                           . '<p style="color:#8a7f70;">— ' . $brand . '</p>';
+                    $plain = "Hi {$name},\n\nYour order #{$short} has been marked as paid. Thank you!\n\n— {$brand}";
+                    sendMail($email, 'Order #' . $short . ' — Payment received', $html, $plain);
                 }
             } elseif ($action === 'mark_unpaid' && $order->get('payment_status') === 'paid') {
                 $order->update([
@@ -299,7 +303,8 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
               [$pLabel,$pCls] = payment_status_label($ps);
               $custName = (string)($o['customer_name'] ?? $o['user_name'] ?? '');
               $contact  = (string)($o['contact'] ?? $o['phone'] ?? $o['customer_contact'] ?? '');
-              $placed   = (string)($o['created_at'] ?? $o['placed_at'] ?? '');
+              $rawPlaced = $o['created_at'] ?? $o['placed_at'] ?? '';
+              $placed    = $rawPlaced ? date('M j, Y \a\t g:i A', strtotime($rawPlaced)) : '';
               $total    = (float)($o['total'] ?? 0);
               $count    = $itemsCount($o);
               $receipt  = (string)($o['receipt'] ?? $o['gcash_receipt'] ?? '');
@@ -431,7 +436,8 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
               $ps       = (string)($o['payment_status'] ?? '');
               [$pLabel,$pCls] = payment_status_label($ps);
               $total    = (float)($o['total'] ?? 0);
-              $placed   = (string)($o['created_at'] ?? $o['placed_at'] ?? '');
+              $rawPlaced = $o['created_at'] ?? $o['placed_at'] ?? '';
+              $placed    = $rawPlaced ? date('M j, Y \a\t g:i A', strtotime($rawPlaced)) : '';
           ?>
             <tr>
               <td><strong>#<?= e(substr((string)$id, 0, 6)) ?></strong></td>

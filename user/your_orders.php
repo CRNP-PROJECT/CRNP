@@ -9,6 +9,34 @@ require_user();
 use App\Models\Order;
 use App\Models\Booking;
 
+/* ---------- Cancel order ---------- */
+$cancelOrder = $_GET['cancel_order'] ?? post('cancel_order');
+if ($cancelOrder) {
+    $order = Order::find($cancelOrder);
+    if (!$order) {
+        flash('Order not found.', 'danger');
+        redirect('/user/your_orders.php');
+    }
+    if (strcasecmp((string)($order->user_email ?? ''), user_email()) !== 0) {
+        flash('You can only cancel your own orders.', 'danger');
+        redirect('/user/your_orders.php');
+    }
+    if ((string)($order->status ?? '') !== 'pending') {
+        flash('That order can no longer be cancelled.', 'warn');
+        redirect('/user/your_orders.php');
+    }
+    try {
+        $order->update([
+            'status'       => 'cancelled',
+            'cancelled_at' => now(),
+        ]);
+        flash('Order cancelled.', 'ok');
+    } catch (Throwable $ex) {
+        flash('Could not cancel order: ' . $ex->getMessage(), 'danger');
+    }
+    redirect('/user/your_orders.php');
+}
+
 $activeNav = 'orders';
 $pageTitle = 'My Orders';
 $layout    = 'wide';
@@ -75,6 +103,7 @@ require_once __DIR__ . '/../includes/header.php';
             <th>Progress</th>
             <th>Payment</th>
             <th>Placed</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -87,7 +116,7 @@ require_once __DIR__ . '/../includes/header.php';
             $method  = (string)($o['payment_method'] ?? '');
           ?>
             <tr>
-              <td><code class="kbd"><?= e($shortId) ?></code><?php if (!empty($o['pickup_time'])): ?><br><small class="muted"><?= e($o['pickup_time']) ?></small><?php endif; ?></td>
+              <td><code class="kbd"><?= e($shortId) ?></code><?php if (!empty($o['pickup_time'])): $pt = date('g:i A', strtotime($o['pickup_time'])); ?><br><small class="muted"><?= e($pt) ?></small><?php endif; ?></td>
               <td><?= items_html($o['items'] ?? []) ?></td>
               <td class="num"><?= money($o['total'] ?? 0) ?></td>
               <td><?= order_tracker_html((string)($o['status'] ?? '')) ?></td>
@@ -98,6 +127,11 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
               </td>
               <td class="muted"><?= e($placed) ?></td>
+              <td class="t-right">
+                <?php if ((string)($o['status'] ?? '') === 'pending'): ?>
+                  <a class="btn btn--ghost btn--sm" href="/user/your_orders.php?cancel_order=<?= e($id) ?>" data-confirm="Cancel this order?">Cancel</a>
+                <?php endif; ?>
+              </td>
             </tr>
           <?php endforeach; ?>
         </tbody>
@@ -145,7 +179,7 @@ require_once __DIR__ . '/../includes/header.php';
           <?php foreach ($bookings as $id => $b):
             [$sLabel, $sCls] = booking_status_label((string)($b['status'] ?? ''));
             $shortId   = strtoupper(substr((string)$id, 0, 6));
-            $canCancel = in_array((string)($b['status'] ?? ''), ['pending', 'accepted'], true);
+            $canCancel = (string)($b['status'] ?? '') === 'pending';
             $receipt   = $b['receipt'] ?? null;
             $method    = (string)($b['payment_method'] ?? '');
           ?>
@@ -165,9 +199,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php if ($canCancel): ?>
                   <a class="btn btn--ghost btn--sm" href="/user/booking.php?cancel=<?= e($id) ?>" data-confirm="Cancel this booking? Reserved stock will be returned.">Cancel</a>
                 <?php endif; ?>
-                <?php $bStatus = (string)($b['status'] ?? ''); if (!$canCancel && !in_array($bStatus, ['rejected', 'cancelled', 'returned'], true)): ?>
-                  <a class="btn btn--ghost btn--sm" href="/user/booking_receipt.php?id=<?= e($id) ?>">Print receipt</a>
-                <?php endif; ?>
+
               </td>
             </tr>
           <?php endforeach; ?>

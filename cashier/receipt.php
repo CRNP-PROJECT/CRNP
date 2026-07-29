@@ -29,7 +29,8 @@ $customerName  = e($order['customer_name'] ?? $order['full_name'] ?? $order['use
 $tableNumber   = e($order['table_number'] ?? '—');
 $numCustomers  = isset($order['num_customers']) ? (int)$order['num_customers'] : null;
 $cashierName   = e($order['accepted_by'] ?? $order['created_by'] ?? '—');
-$createdAt     = e($order['created_at'] ?? $order['placed_at'] ?? '—');
+$createdAt     = $order['created_at'] ?? $order['placed_at'] ?? '';
+$createdAt     = $createdAt ? e(date('M j, Y \a\t g:i A', strtotime($createdAt))) : '—';
 $shortId       = strtoupper(substr($orderId, 0, 6));
 
 $pageTitle = 'Receipt #' . $shortId;
@@ -91,7 +92,7 @@ $pageTitle = 'Receipt #' . $shortId;
 
   <dl class="receipt__meta">
     <dt>Receipt #</dt><dd><?= e($shortId) ?></dd>
-    <dt>Date</dt><dd><?= e($createdAt) ?></dd>
+    <dt>Date</dt><dd><?= $createdAt ?></dd>
     <?php if ($cashierName !== '—'): ?>
     <dt>Cashier</dt><dd><?= e($cashierName) ?></dd>
     <?php endif; ?>

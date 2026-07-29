@@ -99,7 +99,8 @@ require_once __DIR__ . '/../includes/header.php';
               $ps       = (string)($o['payment_status'] ?? '');
               [$pLabel,$pCls] = payment_status_label($ps);
               $custName = (string)($o['customer_name'] ?? $o['user_name'] ?? '');
-              $ts       = (string)($o['cancelled_at'] ?? $o['completed_at'] ?? $o['updated_at'] ?? $o['created_at'] ?? '');
+              $rawTs    = $o['cancelled_at'] ?? $o['completed_at'] ?? $o['updated_at'] ?? $o['created_at'] ?? '';
+              $ts       = $rawTs ? date('M j, Y \a\t g:i A', strtotime($rawTs)) : '';
               $count    = $itemsCount($o);
           ?>
             <tr>
@@ -167,7 +168,8 @@ require_once __DIR__ . '/../includes/header.php';
               $ps       = (string)($b['payment_status'] ?? '');
               [$pLabel,$pCls] = payment_status_label($ps);
               $custName = (string)($b['user_name'] ?? $b['full_name'] ?? '');
-              $ts       = (string)($b['returned_at'] ?? $b['rejected_at'] ?? $b['cancelled_at'] ?? $b['created_at'] ?? '');
+              $rawTs    = $b['returned_at'] ?? $b['rejected_at'] ?? $b['cancelled_at'] ?? $b['created_at'] ?? '';
+              $ts       = $rawTs ? date('M j, Y \a\t g:i A', strtotime($rawTs)) : '';
               $count    = $itemsCount($b);
               $by       = (string)($b['returned_by'] ?? $b['rejected_by'] ?? $b['cancelled_by'] ?? '');
           ?>

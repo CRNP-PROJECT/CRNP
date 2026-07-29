@@ -188,6 +188,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /* Re-fetch cart in case it changed (e.g., empty mid-flow). */
 $cart = get_cart();
+if ($buyNowProductId !== '') {
+    $p = Product::find($buyNowProductId);
+    if ($p && ($p->status ?? 'available') === 'available') {
+        $cart = [
+            $buyNowProductId => [
+                'id'    => $buyNowProductId,
+                'name'  => $p->name ?? 'Item',
+                'price' => (float)($p->price ?? 0),
+                'qty'   => $buyNowQty,
+                'image' => $p->image ?? '',
+            ],
+        ];
+    }
+}
 if (!$cart) {
     flash('Your cart is empty. Add a few dishes first.', 'warn');
     redirect('/user/products.php');
@@ -236,7 +250,7 @@ require_once __DIR__ . '/../includes/header.php';
           <tfoot>
             <tr>
               <td colspan="3" class="t-right muted" style="text-transform:uppercase;font-size:12px;letter-spacing:.08em">Total</td>
-              <td class="num"><strong style="font-family:var(--sans);font-size:1.1rem"><?= money(cart_total()) ?></strong></td>
+              <td class="num"><strong style="font-family:var(--sans);font-size:1.1rem"><?php $t = 0.0; foreach($cart as $it) { $t += (float)($it['price']??0) * (int)($it['qty']??1); } ?><?= money($t) ?></strong></td>
             </tr>
           </tfoot>
         </table>

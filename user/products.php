@@ -35,6 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/user/products.php');
     }
 
+    if ($action === 'buy_now') {
+        redirect('/user/checkout.php?buy_now=1&product_id=' . rawurlencode($pid) . '&qty=' . $qty);
+    }
+
     $cart  = get_cart();
     $cur   = isset($cart[$pid]) ? (int) $cart[$pid]['qty'] : 0;
     $newQty = $cur + $qty;
@@ -47,10 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'image' => $p->image ?? '',
     ];
     set_cart($cart);
-
-    if ($action === 'buy_now') {
-        redirect('/user/checkout.php?buy_now=1&product_id=' . rawurlencode($pid) . '&qty=' . $qty);
-    }
 
     if (is_ajax_request()) {
         header('Content-Type: application/json');

@@ -26,9 +26,9 @@ $paymentMethod = (string)($b['payment_method'] ?? 'counter');
 $customerName  = e($b['customer_name'] ?? $b['full_name'] ?? $b['user_name'] ?? '—');
 $contact       = e($b['contact'] ?? '—');
 $address       = e($b['address'] ?? '—');
-$createdAt     = e($b['created_at'] ?? '—');
-$apptTime      = e($b['appointment_time'] ?? '—');
-$retTime       = e($b['return_time'] ?? '—');
+$createdAt     = $b['created_at'] ? e(date('M j, Y \a\t g:i A', strtotime($b['created_at']))) : '—';
+$apptTime      = $b['appointment_time'] ? e(date('M j, Y \a\t g:i A', strtotime($b['appointment_time']))) : '—';
+$retTime       = $b['return_time']      ? e(date('M j, Y \a\t g:i A', strtotime($b['return_time'])))      : '—';
 $createdBy     = e($b['created_by'] ?? ($b['user_name'] ?? '—'));
 $shortId       = strtoupper(substr($bookingId, 0, 6));
 
@@ -91,15 +91,15 @@ $pageTitle = 'Booking Receipt #' . $shortId;
 
   <dl class="receipt__meta">
     <dt>Booking #</dt><dd><?= e($shortId) ?></dd>
-    <dt>Date</dt><dd><?= e($createdAt) ?></dd>
+    <dt>Date</dt><dd><?= $createdAt ?></dd>
     <dt>Created by</dt><dd><?= e($createdBy) ?></dd>
     <dt>Customer</dt><dd><?= e($customerName) ?></dd>
     <dt>Contact</dt><dd><?= e($contact) ?></dd>
     <?php if ($address !== '—'): ?>
     <dt>Address</dt><dd><?= e($address) ?></dd>
     <?php endif; ?>
-    <dt>Appointment</dt><dd><?= e($apptTime) ?></dd>
-    <dt>Return by</dt><dd><?= e($retTime) ?></dd>
+    <dt>Appointment</dt><dd><?= $apptTime ?></dd>
+    <dt>Return by</dt><dd><?= $retTime ?></dd>
   </dl>
 
   <table class="receipt__items">
