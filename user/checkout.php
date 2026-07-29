@@ -173,23 +173,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             set_cart([]);
 
-            /* P0: send a branded receipt email. Order is already saved, so a
-               mail failure must NOT fail the checkout — warn the customer. */
-            try {
-                $orderData = $order;
-                $orderData['id'] = $newId;
-                $customerEmail = $order['user_email'] ?: user_email();
-                if ($customerEmail !== '') {
-                    $sent = sendOrderReceipt($customerEmail, $orderData);
-                    if (!$sent) {
-                        flash('Order placed, but confirmation email could not be sent.', 'warn');
-                    }
-                }
-            } catch (Throwable $mailEx) {
-                error_log('[checkout] sendOrderReceipt failed for order ' . $newId . ': ' . $mailEx->getMessage());
-                flash('Order placed, but confirmation email could not be sent.', 'warn');
-            }
-
             flash('Reservation placed! We will be in touch shortly.', 'ok');
             redirect('/user/your_orders.php');
         } catch (Throwable $ex) {

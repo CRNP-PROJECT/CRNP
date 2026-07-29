@@ -70,6 +70,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'accepted_at' => now(),
                     'accepted_by' => $cashierName,
                 ]);
+                /* Send order receipt email. */
+                try {
+                    $orderData = $order->toArray();
+                    $orderData['id'] = $orderId;
+                    $customerEmail = $orderData['user_email'] ?? '';
+                    if ($customerEmail !== '' && $customerEmail !== 'walk-in') {
+                        sendOrderReceipt($customerEmail, $orderData);
+                    }
+                } catch (Throwable $ex) {}
                 flash('Order #' . $short . ' accepted.', 'ok');
             } elseif ($action === 'cancel') {
                 $note = trim((string)post('cancel_note', ''));
@@ -323,7 +332,7 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
               <td><small class="muted"><?= e($placed ?: '—') ?></small></td>
               <td class="t-right">
                 <div class="row" style="justify-content:flex-end;gap:6px">
-                  <?php if ($st !== 'cashier_cancelled' && $st !== 'cancelled'): ?>
+                  <?php if ($st !== 'pending' && $st !== 'cashier_cancelled' && $st !== 'cancelled'): ?>
                     <a class="btn btn--ghost btn--sm" href="/cashier/receipt.php?id=<?= e($id) ?>" title="Print receipt">Print</a>
                   <?php endif; ?>
                   <?php if ($st === 'pending'): ?>
