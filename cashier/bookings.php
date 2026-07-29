@@ -37,6 +37,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'approved_at'  => now(),
                     'approved_by'  => $cashierName,
                 ]);
+                /* Send booking receipt email. */
+                try {
+                    $bookingData = $booking->toArray();
+                    $bookingData['id'] = $bookingId;
+                    $customerEmail = $bookingData['user_email'] ?? '';
+                    if ($customerEmail !== '' && $customerEmail !== 'walk-in') {
+                        sendBookingReceipt($customerEmail, $bookingData);
+                    }
+                } catch (Throwable $ex) {}
                 flash('Booking #' . $short . ' approved.', 'ok');
             } elseif ($action === 'reject' && $current === 'pending') {
                 // Restore rent stock by KEY (only on pending → rejected)
@@ -225,7 +234,9 @@ $itemsCount = static function (array $b): int {
               <td><span class="badge <?= e($sCls) ?>"><?= e($sLabel) ?></span></td>
               <td class="t-right">
                 <div class="row" style="justify-content:flex-end;gap:6px">
-                  <a class="btn btn--ghost btn--sm" href="/cashier/booking_receipt.php?id=<?= e($id) ?>" title="Print receipt">Print</a>
+                  <?php if ($st !== 'pending' && $st !== 'rejected' && $st !== 'cancelled'): ?>
+                    <a class="btn btn--ghost btn--sm" href="/cashier/booking_receipt.php?id=<?= e($id) ?>" title="Print receipt">Print</a>
+                  <?php endif; ?>
                   <?php if ($st === 'pending'): ?>
                     <form method="post" action="/cashier/bookings.php<?= $statusFilter !== '' ? '?status=' . rawurlencode($statusFilter) : '' ?>">
                       <?= csrf_field() ?>

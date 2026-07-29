@@ -165,7 +165,9 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php if ($canCancel): ?>
                   <a class="btn btn--ghost btn--sm" href="/user/booking.php?cancel=<?= e($id) ?>" data-confirm="Cancel this booking? Reserved stock will be returned.">Cancel</a>
                 <?php endif; ?>
-                <a class="btn btn--ghost btn--sm" href="/user/booking_receipt.php?id=<?= e($id) ?>">Print receipt</a>
+                <?php $bStatus = (string)($b['status'] ?? ''); if (!$canCancel && !in_array($bStatus, ['rejected', 'cancelled', 'returned'], true)): ?>
+                  <a class="btn btn--ghost btn--sm" href="/user/booking_receipt.php?id=<?= e($id) ?>">Print receipt</a>
+                <?php endif; ?>
               </td>
             </tr>
           <?php endforeach; ?>
