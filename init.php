@@ -1,11 +1,5 @@
 <?php
 /** init.php — single bootstrap included by every page. */
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/firebaseRDB.php';
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/includes/functions.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/mailer.php';
 
 /* ---------- PSR-4 autoloader for App\ namespace ---------- */
 spl_autoload_register(function (string $class): void {
@@ -17,3 +11,10 @@ spl_autoload_register(function (string $class): void {
         require_once $file;
     }
 });
+
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/firebaseRDB.php';
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/mailer.php';

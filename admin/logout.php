@@ -1,18 +1,8 @@
 <?php
 /**
- * admin/logout.php — End the admin session.
+ * admin/logout.php — End the admin session (controller bootstrap).
+ * All logic lives in App\Controllers\Admin\LogoutController.
  */
 require_once __DIR__ . '/../init.php';
-
-// Wipe in-memory state, expire the session cookie, then destroy server-side.
-$_SESSION = [];
-
-if (ini_get('session.use_cookies')) {
-    $p = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 42000,
-        $p['path'], $p['domain'], $p['secure'], $p['httponly']);
-}
-
-session_destroy();
-
-redirect('/admin/login.php');
+use App\Controllers\Admin\LogoutController;
+LogoutController::render();

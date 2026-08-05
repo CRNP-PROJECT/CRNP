@@ -37,7 +37,7 @@ switch ($role) {
             '/admin/'                => ['Dashboard', 'dash'],
             '/admin/products.php'    => ['Products', 'products'],
             '/admin/rent_items.php'  => ['Rent Items', 'rent'],
-            '/admin/bookings.php'    => ['Bookings', 'bookings'],
+            '/admin/history.php'     => ['History', 'history'],
             '/admin/staff.php'       => ['Staff', 'staff'],
             '/admin/reports.php'     => ['Reports', 'reports'],
             '/admin/settings.php'    => ['Settings', 'settings'],
