@@ -119,6 +119,9 @@ require_once __DIR__ . '/../includes/header.php';
                     <dt>Booking ID</dt><dd><code><?= e((string) $bid) ?></code></dd>
                     <dt>Contact</dt><dd><?= e($b['contact'] ?? '—') ?></dd>
                     <dt>Address</dt><dd><?= e($b['address'] ?? '—') ?></dd>
+                    <?php if (!empty($b['notes'])): ?>
+                      <dt>Notes</dt><dd style="background:#fff7e0;border:1px dashed #f0b429;border-radius:6px;padding:6px 10px;color:#8a5a00;"><?= e($b['notes']) ?></dd>
+                    <?php endif; ?>
                     <dt>Payment</dt><dd><span class="badge <?= e($pc) ?>"><?= e($pl) ?></span> · <?php [$pmLabel, $pmCls] = payment_method_label((string) ($b['payment_method'] ?? 'counter')); ?><span class="badge <?= e($pmCls) ?>"><?= e($pmLabel) ?></span>
                       <?php $receipt = (string) ($b['receipt'] ?? ''); if (($b['payment_method'] ?? '') === 'gcash' && $receipt !== ''): ?>
                         <br><span class="badge badge--gold" style="cursor:pointer;margin-top:4px;display:inline-block" data-receipt="<?= e(image_display_src($receipt, 'user/bookings')) ?>">View receipt</span>

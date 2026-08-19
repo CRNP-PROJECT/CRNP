@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address          = trim((string)post('address', ''));
     $appointmentTime  = trim((string)post('appointment_time', ''));
     $returnTime       = trim((string)post('return_time', ''));
+    $notes            = trim((string)post('notes', ''));
     $paymentMethod    = (string)post('payment_method', 'counter');
     if (!in_array($paymentMethod, ['gcash', 'counter'], true)) {
         $paymentMethod = 'counter';
@@ -113,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'address'          => $address,
             'items'            => $items,
             'total'            => $total,
+            'notes'            => $notes,
             'appointment_time' => $appointmentTime,
             'return_time'      => $returnTime,
             'payment_method'   => $paymentMethod,
@@ -252,6 +254,10 @@ require_once __DIR__ . '/../includes/header.php';
       <label for="receipt">GCash receipt</label>
       <input class="input" type="file" id="receipt" name="receipt" accept="image/jpeg,image/png,image/webp">
       <span class="hint">JPG, PNG, or WEBP. Max 5 MB.</span>
+    </div>
+    <div class="field" style="grid-column:1 / -1">
+      <label for="notes">Special instructions</label>
+      <textarea class="textarea" id="notes" name="notes" rows="2" placeholder="e.g. Setup on the second floor, clean pieces"><?= e(post('notes')) ?></textarea>
     </div>
   </div>
 

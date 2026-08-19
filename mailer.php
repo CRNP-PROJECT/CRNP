@@ -118,6 +118,7 @@ function sendOrderReceipt(string $email, array $order): bool {
     $payStatus   = (string) ($order['payment_status'] ?? '');
     $createdAt   = (string) ($order['created_at'] ?? '');
     $pickupTime  = (string) ($order['pickup_time'] ?? '');
+    $notes       = (string) ($order['notes'] ?? '');
     $items       = is_array($order['items'] ?? null) ? $order['items'] : [];
 
     /* Payment line: "Payment: GCash — verifying" or "Payment: Pay at counter". */
@@ -156,6 +157,11 @@ HTML;
         ? 'Pickup time: <strong style="color:#211b14;">' . htmlspecialchars($pickupTime, ENT_QUOTES, 'UTF-8') . '</strong><br>'
         : '';
     $greeting   = $fullName !== '' ? 'Hi ' . htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') . ',' : 'Hi there,';
+    $notesHtml  = $notes !== ''
+        ? '<div style="margin-top:14px;padding:14px 16px;background:#fff7e0;border-left:3px solid #f0b429;border-radius:8px;font-size:14px;color:#8a5a00;">'
+          . '<strong style="color:#8a5a00;">Special instructions:</strong> '
+          . htmlspecialchars($notes, ENT_QUOTES, 'UTF-8') . '</div>'
+        : '';
 
     $subject = 'Your ' . $brand . ' order #' . $shortId;
 
@@ -204,6 +210,7 @@ HTML;
         <strong>Payment:</strong> {$payLine}
       </div>
 
+{$notesHtml}
       <p style="margin:18px 0 6px;color:#211b14;">Please present this confirmation at the counter.</p>
       <p style="margin:0;color:#8a7f70;font-size:13px;">We'll notify you when your order is ready for pickup.</p>
     </div>
@@ -215,6 +222,7 @@ HTML;
     $alt = "Your " . $brand . " order #" . $shortId . "\n"
          . "Total: " . $totalTxt . "\n"
          . "Payment: " . $payLine . "\n\n"
+         . "Special instructions: " . ($notes !== '' ? $notes : "None") . "\n\n"
          . "Please present this confirmation at the counter.\n"
          . "We'll notify you when your order is ready for pickup.";
 
@@ -243,6 +251,7 @@ function sendBookingReceipt(string $email, array $booking): bool {
     $contact   = (string) ($booking['contact'] ?? '');
     $address   = (string) ($booking['address'] ?? '');
     $createdAt = (string) ($booking['created_at'] ?? '');
+    $notes     = (string) ($booking['notes'] ?? '');
     $items     = is_array($booking['items'] ?? null) ? $booking['items'] : [];
 
     if ($method === 'gcash') {
@@ -278,6 +287,11 @@ HTML;
     $apptLine   = $apptTime !== '' ? 'Appointment: <strong style="color:#211b14;">' . htmlspecialchars($apptTime, ENT_QUOTES, 'UTF-8') . '</strong><br>' : '';
     $returnLine = $retTime !== '' ? 'Return by: <strong style="color:#211b14;">' . htmlspecialchars($retTime, ENT_QUOTES, 'UTF-8') . '</strong><br>' : '';
     $greeting   = $fullName !== '' ? 'Hi ' . htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') . ',' : 'Hi there,';
+    $notesHtml  = $notes !== ''
+        ? '<div style="margin-top:14px;padding:14px 16px;background:#fff7e0;border-left:3px solid #f0b429;border-radius:8px;font-size:14px;color:#8a5a00;">'
+          . '<strong style="color:#8a5a00;">Special instructions:</strong> '
+          . htmlspecialchars($notes, ENT_QUOTES, 'UTF-8') . '</div>'
+        : '';
 
     $subject = 'Your ' . $brand . ' booking #' . $shortId;
 
@@ -327,6 +341,7 @@ HTML;
         <strong>Payment:</strong> {$payLine}
       </div>
 
+{$notesHtml}
       <p style="margin:18px 0 6px;color:#211b14;">Please present this confirmation when picking up your rental items.</p>
       <p style="margin:0;color:#8a7f70;font-size:13px;">We will confirm your booking shortly.</p>
     </div>
@@ -338,6 +353,7 @@ HTML;
     $alt = "Your " . $brand . " booking #" . $shortId . "\n"
          . "Total: " . $totalTxt . "\n"
          . "Payment: " . $payLine . "\n\n"
+         . "Special instructions: " . ($notes !== '' ? $notes : "None") . "\n\n"
          . "Please present this confirmation when picking up your rental items.\n"
          . "We will confirm your booking shortly.";
 

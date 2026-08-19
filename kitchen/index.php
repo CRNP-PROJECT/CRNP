@@ -159,6 +159,10 @@ $layout    = 'wide';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
+<style>
+  .k-note { margin-top:8px; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:600; background:#fff7e0; color:#8a5a00; border-left:3px solid #f0b429; white-space:normal; }
+</style>
+
 <div class="page-head">
   <div class="page-head__row">
     <div>
@@ -231,7 +235,12 @@ require_once __DIR__ . '/../includes/header.php';
           <tr>
             <td><span class="kbd">#<?= e(k_short_id((string)$id)) ?></span></td>
             <td><?= e(k_customer_name($o)) ?></td>
-            <td><?= k_items_html($o['items'] ?? []) ?></td>
+            <td>
+              <?= k_items_html($o['items'] ?? []) ?>
+              <?php if (!empty($o['notes'])): ?>
+                <div class="k-note" title="Special instructions"><?= e($o['notes']) ?></div>
+              <?php endif; ?>
+            </td>
             <td><span class="badge <?= e($cls) ?>"><?= e($lbl) ?></span></td>
             <td class="muted"><?= e($elapsed) ?></td>
             <td>

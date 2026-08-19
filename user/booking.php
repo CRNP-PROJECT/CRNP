@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address          = trim(post('address'));
     $appointment_time = trim(post('appointment_time'));
     $return_time      = trim(post('return_time'));
+    $notes            = trim(post('notes', ''));
     $method           = post('payment_method', 'counter');
     if (!in_array($method, ['gcash', 'counter'], true)) $method = 'counter';
 
@@ -140,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'user_name'       => user_name(),
             'items'           => $items,
             'total'           => $total,
+            'notes'           => $notes,
             'appointment_time'=> $appointment_time,
             'return_time'     => $return_time,
             'full_name'       => $full_name,
@@ -292,6 +294,12 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="field">
         <label for="address">Pickup / delivery address</label>
         <textarea class="textarea" id="address" name="address" required autocomplete="street-address" placeholder="House no., street, barangay, city"><?= e(post('address')) ?></textarea>
+      </div>
+
+      <div class="field">
+        <label for="notes">Special instructions <span class="muted">(optional)</span></label>
+        <textarea class="textarea" id="notes" name="notes" rows="3" placeholder="e.g. Clean and sanitized pieces, setup on the second floor"><?= e(post('notes')) ?></textarea>
+        <span class="hint">Tell us anything about your reservation — e.g. setup notes, extra items, specific requests.</span>
       </div>
 
       <div class="field">

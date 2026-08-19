@@ -319,7 +319,12 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
                   <br><small class="muted"><?= e($contact) ?></small>
                 <?php endif; ?>
               </td>
-              <td><?= items_html($o['items'] ?? []) ?></td>
+              <td>
+                <?= items_html($o['items'] ?? []) ?>
+                <?php if (!empty($o['notes'])): ?>
+                  <br><small class="note-badge"><?= e($o['notes']) ?></small>
+                <?php endif; ?>
+              </td>
               <td class="num"><strong><?= e(money($total)) ?></strong></td>
               <td>
                 <span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span>
@@ -442,7 +447,12 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
             <tr>
               <td><strong>#<?= e(substr((string)$id, 0, 6)) ?></strong></td>
               <td><?= e($custName) ?></td>
-              <td><?= items_html($o['items'] ?? []) ?></td>
+              <td>
+                <?= items_html($o['items'] ?? []) ?>
+                <?php if (!empty($o['notes'])): ?>
+                  <br><small class="note-badge"><?= e($o['notes']) ?></small>
+                <?php endif; ?>
+              </td>
               <td class="num"><strong><?= e(money($total)) ?></strong></td>
               <td><span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span></td>
               <td class="muted"><small><?= e($placed) ?></small></td>
@@ -467,6 +477,7 @@ $backAction = '/cashier/' . ($statusFilter !== '' ? '?status=' . rawurlencode($s
 </div>
 
 <style>
+  .note-badge { display:inline-block; margin-top:6px; padding:3px 8px; border-radius:6px; font-size:11px; background:var(--gold-100,#fbf3e0); color:var(--gold-600,#9a6b00); border:1px dashed var(--gold,#b8860b); }
   /* ---- Live polling indicator (green pulsing dot) ---- */
   .live-indicator {
     display: inline-flex;

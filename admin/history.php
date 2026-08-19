@@ -30,7 +30,7 @@ if ($hasFilter) {
         if ($q !== '') {
             $hay = mb_strtolower(implode(' ', [
                 $o['customer_name'] ?? $o['user_name'] ?? '',
-                $o['user_email'] ?? '', $o['contact'] ?? '', $id,
+                $o['user_email'] ?? '', $o['contact'] ?? '', $o['notes'] ?? '', $id,
             ]));
             foreach (($o['items'] ?? []) as $it) {
                 if (is_array($it)) $hay .= ' ' . mb_strtolower((string)($it['name'] ?? ''));
@@ -46,7 +46,7 @@ if ($hasFilter) {
         if ($q !== '') {
             $hay = mb_strtolower(implode(' ', [
                 $b['user_name'] ?? $b['full_name'] ?? '',
-                $b['user_email'] ?? '', $b['contact'] ?? '', $b['address'] ?? '', $id,
+                $b['user_email'] ?? '', $b['contact'] ?? '', $b['address'] ?? '', $b['notes'] ?? '', $id,
             ]));
             foreach (($b['items'] ?? []) as $it) {
                 if (is_array($it)) $hay .= ' ' . mb_strtolower((string)($it['name'] ?? ''));
@@ -82,6 +82,10 @@ $activeNav = 'history';
 $layout    = 'wide';
 require_once __DIR__ . '/../includes/header.php';
 ?>
+
+<style>
+  .note-badge { display:inline-block; margin-top:6px; padding:3px 8px; border-radius:6px; font-size:11px; background:var(--gold-100,#fbf3e0); color:var(--gold-600,#9a6b00); border:1px dashed var(--gold,#b8860b); }
+</style>
 
 <div class="page-head">
   <div class="page-head__row">
@@ -156,7 +160,12 @@ require_once __DIR__ . '/../includes/header.php';
               <br><small class="muted"><?= e($o['contact']) ?></small>
             <?php endif; ?>
           </td>
-          <td><?= (int)$count ?> item<?= (int)$count === 1 ? '' : 's' ?></td>
+          <td>
+            <?= (int)$count ?> item<?= (int)$count === 1 ? '' : 's' ?>
+            <?php if (!empty($o['notes'])): ?>
+              <br><small class="note-badge"><?= e($o['notes']) ?></small>
+            <?php endif; ?>
+          </td>
           <td class="num"><strong><?= e(money((float)($o['total'] ?? 0))) ?></strong></td>
           <td><span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span></td>
           <td><span class="badge <?= e($sCls) ?>"><?= e($sLabel) ?></span></td>
@@ -211,7 +220,12 @@ require_once __DIR__ . '/../includes/header.php';
               <br><small class="muted"><?= e($b['contact']) ?></small>
             <?php endif; ?>
           </td>
-          <td><?= (int)$count ?> item<?= (int)$count === 1 ? '' : 's' ?></td>
+          <td>
+            <?= (int)$count ?> item<?= (int)$count === 1 ? '' : 's' ?>
+            <?php if (!empty($b['notes'])): ?>
+              <br><small class="note-badge"><?= e($b['notes']) ?></small>
+            <?php endif; ?>
+          </td>
           <td class="num"><strong><?= e(money((float)($b['total'] ?? 0))) ?></strong></td>
           <td><span class="badge <?= e($pCls) ?>"><?= e($pLabel) ?></span></td>
           <td><span class="badge <?= e($sCls) ?>"><?= e($sLabel) ?></span></td>

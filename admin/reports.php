@@ -198,6 +198,7 @@ require_once __DIR__ . '/../includes/header.php';
   .chart-svg { width:100%; height:auto; display:block; }
   .chart-svg .bar { transition:opacity .15s ease; cursor:pointer; }
   .chart-svg .bar:hover { opacity:.82; }
+  .note-badge { display:inline-block; margin-top:6px; padding:3px 8px; border-radius:6px; font-size:11px; background:var(--gold-100,#fbf3e0); color:var(--gold-600,#9a6b00); border:1px dashed var(--gold,#b8860b); }
   .totals-row td { background:var(--surface-2); font-weight:700; color:var(--ink); border-top:2px solid var(--line); }
   .scroll-x { overflow-x:auto; }
   .grid--charts { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
@@ -351,7 +352,12 @@ require_once __DIR__ . '/../includes/header.php';
                 <strong><?= e($o['user_name'] ?? 'Guest') ?></strong><br>
                 <small class="micro"><?= e($o['user_email'] ?? '—') ?></small>
               </td>
-              <td><?= items_html($o['items'] ?? []) ?></td>
+              <td>
+                <?= items_html($o['items'] ?? []) ?>
+                <?php if (!empty($o['notes'])): ?>
+                  <br><small class="note-badge"><?= e($o['notes']) ?></small>
+                <?php endif; ?>
+              </td>
               <td class="num"><?= e(money((float) ($o['total'] ?? 0))) ?></td>
               <td><span class="badge <?= e($pc) ?>"><?= e($pl) ?></span></td>
               <td><span class="badge <?= e($oc) ?>"><?= e($ol) ?></span></td>
@@ -397,7 +403,12 @@ require_once __DIR__ . '/../includes/header.php';
                 <strong><?= e($b['user_name'] ?? 'Guest') ?></strong><br>
                 <small class="micro"><?= e($b['user_email'] ?? '—') ?></small>
               </td>
-              <td><?= items_html($b['items'] ?? []) ?></td>
+              <td>
+                <?= items_html($b['items'] ?? []) ?>
+                <?php if (!empty($b['notes'])): ?>
+                  <br><small class="note-badge"><?= e($b['notes']) ?></small>
+                <?php endif; ?>
+              </td>
               <td class="num"><?= e(money((float) ($b['total'] ?? 0))) ?></td>
               <td><span class="badge <?= e($pc) ?>"><?= e($pl) ?></span></td>
               <td><span class="badge <?= e($bc) ?>"><?= e($bl) ?></span></td>

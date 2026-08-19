@@ -13,7 +13,7 @@ class Order extends Model
     protected static array $fillable = [
         'user_id', 'user_name', 'user_email',
         'customer_name', 'contact', 'phone',
-        'items', 'total',
+        'items', 'total', 'notes',
         'payment_method', 'payment_status', 'receipt', 'gcash_receipt',
         'status', 'table_number', 'num_customers',
         'cash_tendered', 'change',

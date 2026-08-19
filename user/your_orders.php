@@ -117,7 +117,12 @@ require_once __DIR__ . '/../includes/header.php';
           ?>
             <tr>
               <td><code class="kbd"><?= e($shortId) ?></code><?php if (!empty($o['pickup_time'])): $pt = date('g:i A', strtotime($o['pickup_time'])); ?><br><small class="muted"><?= e($pt) ?></small><?php endif; ?></td>
-              <td><?= items_html($o['items'] ?? []) ?></td>
+              <td>
+                <?= items_html($o['items'] ?? []) ?>
+                <?php if (!empty($o['notes'])): ?>
+                  <br><small class="note-badge"><?= e($o['notes']) ?></small>
+                <?php endif; ?>
+              </td>
               <td class="num"><?= money($o['total'] ?? 0) ?></td>
               <td><?= order_tracker_html((string)($o['status'] ?? '')) ?></td>
               <td>
@@ -185,7 +190,12 @@ require_once __DIR__ . '/../includes/header.php';
           ?>
             <tr>
               <td><code class="kbd"><?= e($shortId) ?></code></td>
-              <td><?= items_html($b['items'] ?? []) ?></td>
+              <td>
+                <?= items_html($b['items'] ?? []) ?>
+                <?php if (!empty($b['notes'])): ?>
+                  <br><small class="note-badge"><?= e($b['notes']) ?></small>
+                <?php endif; ?>
+              </td>
               <td class="muted"><?= e(fmt_time($b['appointment_time'] ?? null)) ?></td>
               <td class="muted"><?= e(fmt_time($b['return_time'] ?? null)) ?></td>
               <td class="num"><?= money($b['total'] ?? 0) ?></td>
@@ -218,6 +228,7 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <style>
+  .note-badge { display:inline-block; margin-top:6px; padding:3px 8px; border-radius:6px; font-size:11px; background:var(--gold-100,#fbf3e0); color:var(--gold-600,#9a6b00); border:1px dashed var(--gold,#b8860b); }
   .receipt-modal { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.7); }
   .receipt-modal[hidden] { display:none; }
   .receipt-modal__inner { position:relative; max-width:90vw; max-height:90vh; }

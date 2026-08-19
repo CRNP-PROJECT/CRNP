@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tableNumber   = trim((string)post('table_number', ''));
     $numCustomers  = max(1, (int)post('num_customers', 1));
     $cashTendered  = (float)post('cash_tendered', 0);
+    $notes         = trim((string)post('notes', ''));
     $paymentMethod = (string)post('payment_method', 'counter');
     if (!in_array($paymentMethod, ['gcash', 'counter'], true)) {
         $paymentMethod = 'counter';
@@ -105,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'num_customers'    => $numCustomers,
             'items'            => $items,
             'total'            => $total,
+            'notes'            => $notes,
             'cash_tendered'    => $cashTendered,
             'change'           => $change,
             'payment_method'   => $paymentMethod,
@@ -347,6 +349,10 @@ foreach ($products as $pid => $p) {
             <label for="receipt">GCash receipt</label>
             <input class="input" type="file" id="receipt" name="receipt" accept="image/jpeg,image/png,image/webp">
             <span class="hint">JPG, PNG, or WEBP. Max 5 MB.</span>
+          </div>
+          <div class="field">
+            <label for="notes">Special instructions</label>
+            <textarea class="textarea" id="notes" name="notes" rows="2" placeholder="e.g. No lettuce, extra rice"><?= e(post('notes')) ?></textarea>
           </div>
 
           <div class="form-actions mt-4">

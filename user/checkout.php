@@ -76,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $full_name = trim(post('full_name'));
     $contact   = trim(post('contact'));
     $pickup    = trim(post('pickup_time', ''));
+    $notes     = trim(post('notes', ''));
     $method    = post('payment_method', 'counter');
     if (!in_array($method, ['gcash', 'counter'], true)) {
         $method = 'counter';
@@ -155,6 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'user_name'        => user_name(),
             'items'            => $items,
             'total'            => $total,
+            'notes'            => $notes,
             'full_name'        => $full_name,
             'contact'          => $contact,
             'reservation_date' => $reservationDate,
@@ -291,6 +293,12 @@ require_once __DIR__ . '/../includes/header.php';
           <?php endforeach; ?>
         </select>
         <span class="hint">Pick up at our Iloilo City counter. Open Tue–Sun, 11:00 AM – 10:00 PM.</span>
+      </div>
+
+      <div class="field">
+        <label for="notes">Special instructions <span class="muted">(optional)</span></label>
+        <textarea class="textarea" id="notes" name="notes" rows="3" placeholder="e.g. No lettuce on my burger, extra spicy please"><?= e(post('notes')) ?></textarea>
+        <span class="hint">Tell the kitchen anything about your order — e.g. remove an ingredient, add extra sauce.</span>
       </div>
 
       <div class="field">
