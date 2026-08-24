@@ -71,9 +71,22 @@ There is no build step and no database migration — data lives directly in Fire
 | `SMTP_PASS`         | yes      | 16-character Gmail App Password |
 | `MAIL_FROM`         | no       | Outgoing "from" address (defaults to `SMTP_USER`) |
 | `GOOGLE_CLIENT_ID`  | no       | OAuth client ID enabling Google sign-in for customers |
+| `FIREBASE_CREDENTIALS` | prod     | Full service-account JSON (secret). Signs every RTDB request; required once database rules require `auth != null` |
 | `DEV_MODE`          | no       | `1`/`true` surfaces the OTP on screen when SMTP is down (dev only) |
 
 `config.php` loads these from `.env` at the project root via `getenv()`; you may also export them directly on your PHP host.
+
+**Production database rules.** With `FIREBASE_CREDENTIALS` set, publish Realtime
+Database rules that deny anonymous access (Firebase Console → Realtime Database
+→ Rules):
+```json
+{ "rules": { ".read": "auth != null", ".write": "auth != null" } }
+```
+One-time credential setup: Google Cloud Console → IAM & Admin → Service
+Accounts → Create (no IAM roles needed) → Keys → Add key → JSON. Paste the
+file's contents into the `FIREBASE_CREDENTIALS` env var on your host/Render.
+For a local `.env`, put the JSON on a single line — the loader parses
+line-by-line, so pretty-printed JSON would truncate at the first newline.
 
 ## User Roles & Permissions
 

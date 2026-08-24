@@ -19,5 +19,7 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
+      - key: FIREBASE_CREDENTIALS   # full service-account JSON — secret; signs all RTDB requests
+        sync: false
       - key: DEV_MODE
         value: "0"           # never leak OTPs in production
