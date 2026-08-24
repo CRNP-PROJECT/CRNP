@@ -1,0 +1,23 @@
+# Render Blueprint — CRATES N' PLATES
+# Deploy: Render Dashboard -> New -> Blueprint -> point at this repo,
+# then fill the `sync: false` values when prompted.
+services:
+  - type: web
+    name: crnp-web
+    runtime: docker          # builds from ./Dockerfile (php:8.2-apache, EXPOSE 80)
+    plan: free               # spins down after ~15 min idle (slow first hit); uploads/ is ephemeral
+    healthCheckPath: /health.php
+    autoDeploy: true         # redeploy on every push to the tracked branch
+    envVars:
+      - key: FIREBASE_URL    # https://<project>-default-rtdb.firebaseio.com
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS       # Gmail App Password — entered as a secret
+        sync: false
+      - key: MAIL_FROM       # optional; defaults to SMTP_USER if left blank
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: DEV_MODE
+        value: "0"           # never leak OTPs in production
