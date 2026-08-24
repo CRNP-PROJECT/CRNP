@@ -10,6 +10,12 @@
   <img src="https://img.shields.io/badge/Hosting-Render-46E3B7" alt="Render">
 </p>
 
+<p align="center">
+  <a href="https://render.com/deploy?repo=https://github.com/S1NXIAN/CRNP">
+    <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="32">
+  </a>
+</p>
+
 One web application that runs **Crates N' Plates Diner** online and in-store: customers order food ahead or book rental items from their phones, cashiers run the counter and verify GCash payments, kitchen staff work from a live order display, and the owner manages the menu, inventory, staff accounts, business settings, and sales reports — all from a browser, on any device.
 
 There is nothing to install for end users. Everyone uses the same responsive web app through a link.
@@ -161,7 +167,7 @@ On Render these live in the service's **Environment** tab. For local development
 Requirements: PHP 8.0+ with `curl` and `fileinfo` extensions, Apache (e.g. XAMPP), a Firebase project, a Gmail account.
 
 1. Point Apache's DocumentRoot **at this folder** — internal links assume the app is served from `/`.
-2. Create `.env` at the project root:
+2. Create `.env` from the template (`cp .env.example .env`) and fill in real values:
    ```ini
    FIREBASE_URL="https://your-db-default-rtdb.asia-southeast1.firebasedatabase.app"
    SMTP_USER="your@gmail.com"
