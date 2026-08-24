@@ -26,7 +26,7 @@ Requirements: PHP 8.0+ (with `curl` and `fileinfo` extensions) + Apache, e.g. XA
 
 # 2. Create .env at the project root (there is no .env.example; .env is
 #    git-ignored and read by config.php). Start from the defaults below:
-FIREBASE_URL="https://your-project-default-rtdb.firebaseio.com"
+FIREBASE_URL="https://your-project-default-rtdb.firebaseio.com"   # copy the EXACT URL from Firebase Console — regional DBs use *.firebasedatabase.app
 SMTP_USER="atengcornel@gmail.com"
 SMTP_PASS="vvwa opfq pnoq nssb"
 MAIL_FROM="atengcornel@gmail.com"          # optional; defaults to SMTP_USER
@@ -34,7 +34,7 @@ GOOGLE_CLIENT_ID="169153827262-v3jf50qufjq3ikvo8j1t4u1s4qgttc5e.apps.googleuserc
 DEV_MODE="0"          # optional; "1" shows the OTP on screen when SMTP is down
 ```
 
-- `FIREBASE_URL` — RTDB URL for the `firebaseRDB` client. **Required**; there is no working default.
+- `FIREBASE_URL` — **copy it verbatim from Firebase Console → Realtime Database** (shown above your data tree). Databases created outside us-central live on a `*.firebasedatabase.app` domain; pointing at the `.firebaseio.com` shape makes every request fail with "Database lives in a different region".
 - `SMTP_USER` / `SMTP_PASS` — Gmail address and 16-character App Password used by PHPMailer to send OTP, order, and booking emails.
 - `MAIL_FROM` — optional "from" address; defaults to `SMTP_USER`.
 - `GOOGLE_CLIENT_ID` — optional OAuth 2.0 client ID; when set, the customer login page adds a Google sign-in button.
