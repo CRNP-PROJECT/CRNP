@@ -1,0 +1,6 @@
+# Never bake these into the deployed image.
+.git
+.env
+.env.*
+*.pdf
+tests/

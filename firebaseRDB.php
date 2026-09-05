@@ -9,6 +9,10 @@
  *
  * insert/update/delete throw on {"error": ...} responses.
  * On cURL failure the error is logged and retrieve() returns [].
+ *
+ * Auth: when FIREBASE_CREDENTIALS holds a service-account JSON, every request
+ * is signed with a cached OAuth2 access token (see accessToken()). Without it,
+ * requests go out unauthenticated — pair with locked-down RTDB rules in prod.
  */
 class firebaseRDB {
     public const EQUAL = 'EQUAL';
@@ -111,7 +115,106 @@ class firebaseRDB {
         return true;
     }
 
+    /**
+     * Short-lived Google OAuth2 access token minted from the FIREBASE_CREDENTIALS
+     * service-account JSON via an RS256 JWT bearer grant. Returns null when the
+     * variable is unset/invalid so callers fall back to unauthenticated REST
+     * (local dev against open rules). Valid tokens are memoized per-request and
+     * cached on disk until a minute before expiry.
+     */
+    private function accessToken(): ?string
+    {
+        static $memo = null;
+        if ($memo !== null && $memo['exp'] > time() + 60) {
+            return $memo['token'];
+        }
+
+        static $warnedUnset = false;
+        $raw = getenv('FIREBASE_CREDENTIALS');
+        if ($raw === false || trim($raw) === '') {
+            if (!$warnedUnset) {
+                $warnedUnset = true;
+                error_log('[firebaseRDB] FIREBASE_CREDENTIALS is not set; RTDB requests go out unsigned.');
+            }
+            return null;
+        }
+        $sa = json_decode($raw, true);
+        if (!is_array($sa) || empty($sa['client_email']) || empty($sa['private_key'])) {
+            error_log('[firebaseRDB] FIREBASE_CREDENTIALS is set but is not a valid service-account JSON.');
+            return null;
+        }
+
+        $cacheFile = sys_get_temp_dir() . '/crnp_fb_token_' . md5($sa['client_email']) . '.json';
+        if (is_readable($cacheFile)) {
+            $cached = json_decode((string) file_get_contents($cacheFile), true);
+            if (is_array($cached)
+                && ($cached['email'] ?? '') === $sa['client_email']
+                && ($cached['exp'] ?? 0) > time() + 60) {
+                $memo = $cached;
+                return $cached['token'];
+            }
+        }
+
+        $now   = time();
+        $input = $this->_b64url(json_encode(['alg' => 'RS256', 'typ' => 'JWT']))
+               . '.' . $this->_b64url(json_encode([
+                     'iss'   => $sa['client_email'],
+                     'scope' => 'https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email',
+                     'aud'   => 'https://oauth2.googleapis.com/token',
+                     'iat'   => $now,
+                     'exp'   => $now + 3600,
+                 ]));
+        $pkey = openssl_pkey_get_private($sa['private_key']);
+        if ($pkey === false || !openssl_sign($input, $sig, $pkey, OPENSSL_ALGO_SHA256)) {
+            error_log('[firebaseRDB] Failed to sign the service-account JWT.');
+            return null;
+        }
+        $jwt = $input . '.' . $this->_b64url($sig);
+
+        $ch = curl_init('https://oauth2.googleapis.com/token');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => http_build_query([
+                'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                'assertion'  => $jwt,
+            ]),
+            CURLOPT_TIMEOUT        => 15,
+        ]);
+        $resp = curl_exec($ch);
+        if (curl_errno($ch)) {
+            error_log('[firebaseRDB] Token exchange cURL error: ' . curl_error($ch));
+            return null;
+        }
+        $tok = json_decode((string) $resp, true);
+        if (empty($tok['access_token'])) {
+            error_log('[firebaseRDB] Token exchange failed: ' . substr((string) $resp, 0, 300));
+            return null;
+        }
+
+        $entry = [
+            'token' => $tok['access_token'],
+            'exp'   => time() + (int) ($tok['expires_in'] ?? 3600),
+            'email' => $sa['client_email'],
+        ];
+        if (file_put_contents($cacheFile, json_encode($entry)) === false) {
+            error_log('[firebaseRDB] Could not write token cache file; will re-authenticate next request.');
+        }
+        $memo = $entry;
+        return $entry['token'];
+    }
+
+    /** URL-safe base64 without padding. */
+    private function _b64url(string $bytes): string
+    {
+        return rtrim(strtr(base64_encode($bytes), '+/', '-_'), '=');
+    }
+
     private function _exec(string $url, string $method, ?string $body = null): ?string {
+        $token = $this->accessToken();
+        if ($token !== null) {
+            $url .= (str_contains($url, '?') ? '&' : '?') . 'access_token=' . rawurlencode($token);
+        }
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
@@ -128,7 +231,9 @@ class firebaseRDB {
         $resp = curl_exec($ch);
         if (curl_errno($ch)) {
             $this->lastError = curl_error($ch);
-            error_log('[firebaseRDB] cURL error: ' . $this->lastError . ' | ' . $url);
+            // Never let the bearer token reach persistent logs via the URL.
+            $safeUrl = preg_replace('/([?&])access_token=[^&]+/', '$1access_token=<redacted>', $url);
+            error_log('[firebaseRDB] cURL error: ' . $this->lastError . ' | ' . $safeUrl);
             return null;
         }
         return $resp === false ? null : $resp;
