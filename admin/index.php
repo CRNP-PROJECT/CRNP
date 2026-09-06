@@ -104,6 +104,15 @@ $maxProdQty  = max($productSales) ?: 1;
 $maxBookingStatus = max($bookingStatuses) ?: 1;
 $maxRentQty = max($rentItemSales) ?: 1;
 
+$orderStatusColors = [
+    'Accepted'   => '#2E8B57',
+    'Pending'    => '#8B2E2E',
+    'Ready'      => '#D4A937',
+    'Cancelled'  => '#6B7280',
+    'Preparing'  => '#D97706',
+    'Completed'  => '#2E8B57',
+];
+
 /* ---------- Recent activity ---------- */
 $recentOrders    = Order::recentLimited('created_at', 8);
 $recentBookings  = Booking::recentLimited('created_at', 5);
@@ -155,45 +164,7 @@ $gap      = 26;
 $days     = array_keys($dayTotals);
 $chartW   = count($days) * ($barW + $gap) + $gap;
 
-/* ---------- Payment method breakdown (pie) ---------- */
-$paymentMethods = Order::paymentMethodBreakdown();
 
-/* ---------- Order status distribution (pie) ---------- */
-$orderStatuses = [];
-$orderStatusColors = [
-    'Accepted'   => '#2E8B57',
-    'Pending'    => '#8B2E2E',
-    'Ready'      => '#D4A937',
-    'Cancelled'  => '#6B7280',
-    'Preparing'  => '#D97706',
-    'Completed'  => '#2E8B57',
-];
-foreach (Order::raw() as $o) {
-    if (!is_array($o)) continue;
-    $st = (string) ($o['status'] ?? 'unknown');
-    [$label] = order_status_label($st);
-    $orderStatuses[$label] = ($orderStatuses[$label] ?? 0) + 1;
-}
-arsort($orderStatuses);
-
-/* ---------- Peak hours bar chart ---------- */
-$peakHours = Order::peakHours();
-$maxPeak = max($peakHours) ?: 1;
-
-/* ---------- Top 10 products (horizontal bar) ---------- */
-$productSalesRaw = Order::topProducts(10);
-$productSales = [];
-foreach ($productSalesRaw as $pid => $qty) {
-    $name = (string) ($products[$pid]['name'] ?? 'Item');
-    $productSales[$name] = $qty;
-}
-$maxProdQty  = max($productSales) ?: 1;
-
-/* ---------- Recent orders (last 8 by created_at desc) ---------- */
-$recentOrders = Order::recent(8);
-
-/* ---------- Recent bookings (last 5) ---------- */
-$recentBookings = Booking::recent(5);
 
 $pageTitle = 'Dashboard';
 $activeNav = 'dash';

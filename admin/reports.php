@@ -44,116 +44,88 @@ $monthTo   = date('Y-m-d', mktime(23, 59, 59, $calMonth, $daysInMonth, $calYear)
 $allOrders   = Order::byDateRange($monthFrom, $monthTo);
 $allBookings = Booking::byDateRange($monthFrom, $monthTo);
 
-/* ---------- Per-day aggregates (for calendar pips) ---------- */
+/* ---------- Per-day aggregates (for calendar pips, charts, KPIs, detail) ---------- */
 $dayData = [];
-for ($d = 1; $d <= $daysInMonth; $d++) {
-    $key = sprintf('%04d-%02d-%02d', $calYear, $calMonth, $d);
-    $dayData[$key] = ['orders' => 0, 'bookings' => 0, 'orderRev' => 0.0, 'bookingRev' => 0.0];
-}
-foreach ($allOrders as $o) {
-    $day = substr((string) ($o['created_at'] ?? ''), 0, 10);
-    if (isset($dayData[$day])) {
-        $dayData[$day]['orders']++;
-        if ((string) ($o['payment_status'] ?? '') === 'paid') {
-            $dayData[$day]['orderRev'] += (float) ($o['total'] ?? 0);
-        }
-    }
-}
-foreach ($allBookings as $b) {
-    $day = substr((string) ($b['created_at'] ?? ''), 0, 10);
-    if (isset($dayData[$day])) {
-        $dayData[$day]['bookings']++;
-        $dayData[$day]['bookingRev'] += (float) ($b['total'] ?? 0);
-    }
-}
-
-/* ---------- Month totals ---------- */
-$totalOrders   = count($allOrders);
-$totalBookings = count($allBookings);
-$totalOrderRev   = 0.0;
-$totalBookingRev = 0.0;
-foreach ($dayData as $dd) {
-    $totalOrderRev   += $dd['orderRev'];
-    $totalBookingRev += $dd['bookingRev'];
-}
-
-/* ---------- Selected day detail ---------- */
-$dayOrders   = [];
-$dayBookings = [];
-$dayOrderTotal   = 0.0;
-$dayBookingTotal = 0.0;
-$selDayOrderCount   = 0;
-$selDayBookingCount = 0;
-if ($selectedDay !== null && isset($dayData[$selectedDay])) {
-    foreach ($allOrders as $id => $o) {
-        if (substr((string) ($o['created_at'] ?? ''), 0, 10) === $selectedDay) {
-            $dayOrders[$id] = $o;
-            $selDayOrderCount++;
-            if ((string) ($o['payment_status'] ?? '') === 'paid') {
-                $dayOrderTotal += (float) ($o['total'] ?? 0);
-            }
-        }
-    }
-    foreach ($allBookings as $id => $b) {
-        if (substr((string) ($b['created_at'] ?? ''), 0, 10) === $selectedDay) {
-            $dayBookings[$id] = $b;
-            $selDayBookingCount++;
-            $dayBookingTotal += (float) ($b['total'] ?? 0);
-        }
-    }
-}
-
-/* ---------- Charts: per-day totals across the full month ---------- */
 $dayTotals = [];
 $dayLabels = [];
 $cursor = $monthStart;
 $monthEndTs = mktime(23, 59, 59, $calMonth, $daysInMonth, $calYear);
 while ($cursor <= $monthEndTs) {
     $key = date('Y-m-d', $cursor);
+    $dayData[$key] = ['orders' => 0, 'bookings' => 0, 'orderRev' => 0.0, 'bookingRev' => 0.0];
     $dayTotals[$key] = 0.0;
     $dayLabels[$key] = date('M j', $cursor);
     $cursor = strtotime('+1 day', $cursor);
 }
-foreach ($allOrders as $o) {
-    if ((string) ($o['payment_status'] ?? '') !== 'paid') continue;
+
+$dayOrders = [];
+$dayBookings = [];
+$dayOrderTotal   = 0.0;
+$dayBookingTotal = 0.0;
+$selDayOrderCount   = 0;
+$selDayBookingCount = 0;
+
+$paidCount     = 0;
+$verifyingCount = 0;
+$totalSales     = 0.0;
+
+foreach ($allOrders as $id => $o) {
     $day = substr((string) ($o['created_at'] ?? ''), 0, 10);
-    if (isset($dayTotals[$day])) {
+    $ps = (string) ($o['payment_status'] ?? '');
+
+    if (isset($dayData[$day])) {
+        $dayData[$day]['orders']++;
+        if ($ps === 'paid') {
+            $dayData[$day]['orderRev'] += (float) ($o['total'] ?? 0);
+        }
+    }
+    if (isset($dayTotals[$day]) && $ps === 'paid') {
         $dayTotals[$day] += (float) ($o['total'] ?? 0);
     }
+    if ($ps === 'paid') {
+        $paidCount++;
+        $totalSales += (float) ($o['total'] ?? 0);
+    } elseif ($ps === 'pending_verification') {
+        $verifyingCount++;
+    }
+    if ($selectedDay !== null && $day === $selectedDay) {
+        $dayOrders[$id] = $o;
+        $selDayOrderCount++;
+        if ($ps === 'paid') {
+            $dayOrderTotal += (float) ($o['total'] ?? 0);
+        }
+    }
 }
+
+foreach ($allBookings as $id => $b) {
+    $day = substr((string) ($b['created_at'] ?? ''), 0, 10);
+    $ps = (string) ($b['payment_status'] ?? '');
+
+    if (isset($dayData[$day])) {
+        $dayData[$day]['bookings']++;
+        $dayData[$day]['bookingRev'] += (float) ($b['total'] ?? 0);
+    }
+    if ($selectedDay !== null && $day === $selectedDay) {
+        $dayBookings[$id] = $b;
+        $selDayBookingCount++;
+        if ($ps === 'paid') {
+            $dayBookingTotal += (float) ($b['total'] ?? 0);
+        }
+    }
+}
+
 $maxDay = max($dayTotals) ?: 1.0;
 
-/* ---------- Per-day order vs booking revenue ---------- */
+/* ---------- Per-day order vs booking revenue (derived from dayData) ---------- */
 $dayOrderRevenue   = [];
 $dayBookingRevenue = [];
 $dayOrderCount     = [];
 $dayBookingCount   = [];
-$cursor = $monthStart;
-while ($cursor <= $monthEndTs) {
-    $key = date('Y-m-d', $cursor);
-    $dayOrderRevenue[$key]   = 0.0;
-    $dayBookingRevenue[$key] = 0.0;
-    $dayOrderCount[$key]     = 0;
-    $dayBookingCount[$key]   = 0;
-    $cursor = strtotime('+1 day', $cursor);
-}
-foreach ($allOrders as $o) {
-    $day = substr((string) ($o['created_at'] ?? ''), 0, 10);
-    if (isset($dayOrderCount[$day])) {
-        $dayOrderCount[$day]++;
-    }
-    if ((string) ($o['payment_status'] ?? '') === 'paid' && isset($dayOrderRevenue[$day])) {
-        $dayOrderRevenue[$day] += (float) ($o['total'] ?? 0);
-    }
-}
-foreach ($allBookings as $b) {
-    $day = substr((string) ($b['created_at'] ?? ''), 0, 10);
-    if (isset($dayBookingCount[$day])) {
-        $dayBookingCount[$day]++;
-    }
-    if (isset($dayBookingRevenue[$day])) {
-        $dayBookingRevenue[$day] += (float) ($b['total'] ?? 0);
-    }
+foreach ($dayData as $day => $dd) {
+    $dayOrderRevenue[$day]   = $dd['orderRev'];
+    $dayBookingRevenue[$day] = $dd['bookingRev'];
+    $dayOrderCount[$day]     = $dd['orders'];
+    $dayBookingCount[$day]   = $dd['bookings'];
 }
 $maxOrderRev   = max($dayOrderRevenue) ?: 1.0;
 $maxBookingRev = max($dayBookingRevenue) ?: 1.0;
@@ -171,19 +143,8 @@ $gap      = $dayCount <= 14 ? 22 : ($dayCount <= 30 ? 12 : 6);
 $chartW   = max(360, $dayCount * ($barW + $gap) + $gap);
 
 /* ---------- Breakdown KPIs ---------- */
-$orderCount    = $totalOrders;
-$paidCount     = 0;
-$verifyingCount = 0;
-$totalSales     = 0.0;
-foreach ($allOrders as $o) {
-    $ps = (string) ($o['payment_status'] ?? '');
-    if ($ps === 'paid') {
-        $paidCount++;
-        $totalSales += (float) ($o['total'] ?? 0);
-    } elseif ($ps === 'pending_verification') {
-        $verifyingCount++;
-    }
-}
+$orderCount    = count($allOrders);
+$totalBookings = count($allBookings);
 
 $pageTitle = 'Reports';
 $activeNav = 'reports';

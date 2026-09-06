@@ -138,26 +138,27 @@ $statusFilter = trim((string)($_GET['status'] ?? ''));
 
 $allOrders = Order::raw();
 
-// Stats via model
-$pendingCount = Order::pendingCount();
-$unpaidCount  = Order::unpaidCount();
-$todaySales   = Order::todaySales();
-
-/* Lightweight polling endpoint consumed by the inline JS below.
-   Returns just the current pending count as JSON so the page can poll
-   cheaply every 20s without re-fetching the whole table. */
-if (isset($_GET['check'])) {
-    header('Content-Type: application/json');
-    echo json_encode(['pending' => (int)$pendingCount]);
-    exit;
-}
-
-// Split active vs completed
+// Stats + split in a single pass to avoid iterating orders 4 times
+$pendingCount = 0;
+$unpaidCount  = 0;
+$todaySales   = 0.0;
 $activeOrders = [];
 $doneOrders   = [];
+$today        = date('Y-m-d');
+
 foreach ($allOrders as $oid => $o) {
     if (!is_array($o)) continue;
     $st = (string)($o['status'] ?? '');
+    $ps = (string)($o['payment_status'] ?? '');
+
+    if ($st === 'pending') $pendingCount++;
+    if ($ps !== 'paid' && $st !== 'cashier_cancelled' && $st !== 'cancelled') $unpaidCount++;
+
+    $d = substr((string)($o['created_at'] ?? ''), 0, 10);
+    if ($d === $today && $ps === 'paid') {
+        $todaySales += (float)($o['total'] ?? 0);
+    }
+
     if ($st === 'done') {
         $doneOrders[$oid] = $o;
     } else {
@@ -182,6 +183,15 @@ uasort($doneOrders, function ($a, $b) {
     $tb = strtotime((string)($b['created_at'] ?? $b['placed_at'] ?? 'now'));
     return $tb <=> $ta;
 });
+
+/* Lightweight polling endpoint consumed by the inline JS below.
+   Returns just the current pending count as JSON so the page can poll
+   cheaply every 20s without re-fetching the whole table. */
+if (isset($_GET['check'])) {
+    header('Content-Type: application/json');
+    echo json_encode(['pending' => (int)$pendingCount]);
+    exit;
+}
 
 $statusOptions = [
     ''                   => 'All statuses',

@@ -29,6 +29,9 @@ abstract class Model
     /** Per-request cache for raw() to avoid duplicate cURL calls. */
     private static array $rawCache = [];
 
+    /** Per-request cache for derived sorted/filtered data. */
+    protected static array $derivedCache = [];
+
     /* ------------------------------------------------------------------ */
     /*  Construction                                                       */
     /* ------------------------------------------------------------------ */
@@ -90,30 +93,37 @@ abstract class Model
     /** Return the latest $limit rows by a date field, newest first (raw arrays). */
     public static function recentLimited(string $dateField, int $limit = 50): array
     {
-        $all = static::raw();
-        if (count($all) <= $limit) {
-            uasort($all, function ($a, $b) use ($dateField) {
-                $ta = strtotime((string)($a[$dateField] ?? ''));
-                $tb = strtotime((string)($b[$dateField] ?? ''));
-                if ($ta === false && $tb === false) return 0;
-                if ($ta === false) return 1;
-                if ($tb === false) return -1;
-                return $tb <=> $ta;
-            });
-            return $all;
+        $table = static::$table;
+        $key = $table . ':recent:' . $dateField . ':' . $limit;
+        if (!isset(self::$derivedCache[$key])) {
+            $all = static::raw();
+            $total = count($all);
+            if ($total <= $limit) {
+                uasort($all, function ($a, $b) use ($dateField) {
+                    $ta = strtotime((string)($a[$dateField] ?? ''));
+                    $tb = strtotime((string)($b[$dateField] ?? ''));
+                    if ($ta === false && $tb === false) return 0;
+                    if ($ta === false) return 1;
+                    if ($tb === false) return -1;
+                    return $tb <=> $ta;
+                });
+                self::$derivedCache[$key] = $all;
+            } else {
+                $timestamps = [];
+                foreach ($all as $k => $v) {
+                    $t = strtotime((string)($v[$dateField] ?? ''));
+                    $timestamps[$k] = $t === false ? 0 : $t;
+                }
+                arsort($timestamps);
+                $keys = array_slice(array_keys($timestamps), 0, $limit, true);
+                $out = [];
+                foreach ($keys as $k) {
+                    $out[$k] = $all[$k];
+                }
+                self::$derivedCache[$key] = $out;
+            }
         }
-        $timestamps = [];
-        foreach ($all as $k => $v) {
-            $t = strtotime((string)($v[$dateField] ?? ''));
-            $timestamps[$k] = $t === false ? 0 : $t;
-        }
-        arsort($timestamps);
-        $keys = array_slice(array_keys($timestamps), 0, $limit, true);
-        $out = [];
-        foreach ($keys as $k) {
-            $out[$k] = $all[$k];
-        }
-        return $out;
+        return self::$derivedCache[$key];
     }
 
     /** Paginate raw rows: returns ['data' => ..., 'page' => ..., 'perPage' => ..., 'total' => ...]. */
@@ -179,6 +189,7 @@ abstract class Model
     {
         $table = static::$table;
         unset(self::$rawCache[$table]);
+        self::$derivedCache = [];
         cache_file_forget('model_raw_' . $table);
     }
 

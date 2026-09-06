@@ -30,13 +30,17 @@ class Order extends Model
     /** All orders sorted newest-first. Returns raw arrays. */
     public static function allNewest(): array
     {
-        $all = static::raw();
-        uasort($all, function ($a, $b) {
-            $ta = strtotime((string)($a['created_at'] ?? $a['placed_at'] ?? 'now'));
-            $tb = strtotime((string)($b['created_at'] ?? $b['placed_at'] ?? 'now'));
-            return $tb <=> $ta;
-        });
-        return $all;
+        $table = static::$table;
+        if (!isset(self::$derivedCache[$table . ':newest'])) {
+            $all = static::raw();
+            uasort($all, function ($a, $b) {
+                $ta = strtotime((string)($a['created_at'] ?? $a['placed_at'] ?? 'now'));
+                $tb = strtotime((string)($b['created_at'] ?? $b['placed_at'] ?? 'now'));
+                return $tb <=> $ta;
+            });
+            self::$derivedCache[$table . ':newest'] = $all;
+        }
+        return self::$derivedCache[$table . ':newest'];
     }
 
     /** Count orders by status. */
