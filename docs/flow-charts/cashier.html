@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cashier — online pickup queue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1440px; width: 100%; min-width: 0; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.75rem;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 62ch;
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 1400px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+
+    .spec { margin-top: 2.5rem; border-top: 1px solid rgba(45,49,66,0.12); padding-top: 1.5rem; }
+    .spec h2 {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 1rem;
+    }
+    .spec dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.25rem; }
+    .spec dt { font-weight: 600; font-size: 0.8125rem; white-space: nowrap; }
+    .spec dd { font-size: 0.8125rem; line-height: 1.5; color: var(--color-muted); }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Cashier · Flowchart</p>
+    <h1>Cashier — online pickup queue</h1>
+    <p class="subtitle">One tap per online order on the happy path: <strong>Mark served</strong>. Proof auto-verifies; only an amount/ref mismatch flags. Every tap is status-guarded — a stale or duplicate tap is a friendly no-op. Counter tasks are in <em>cashier-counter.html</em>.</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1400 860" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cashier-title cashier-desc">
+        <title id="cashier-title">Cashier — online pickup queue</title>
+        <desc id="cashier-desc">Flowchart of the cashier online pickup queue: proof verification, approve or reject, ready-for handover, dismissal and restore, and the single Mark served tap.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ================= arrows (behind nodes) ================= -->
+        <line x1="700" y1="96" x2="700" y2="140" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="700" y1="236" x2="700" y2="300" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="708" y="248" width="66" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="741" y="257" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MISMATCH</text>
+
+        <path d="M560,188 H440 Q432,188 432,196 V328 Q432,336 424,336 H400" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="410" y="172" width="74" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="447" y="181" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SPOT-CHECK</text>
+
+        <path d="M800,344 H1192 Q1200,344 1200,336 V160" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="876" y="324" width="48" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="900" y="333" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REJECT</text>
+
+        <line x1="700" y1="388" x2="700" y2="560" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="708" y="462" width="52" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="734" y="471" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">APPROVE</text>
+
+        <line x1="1140" y1="224" x2="1140" y2="280" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="1148" y="240" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1164" y="249" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VOID</text>
+
+        <path d="M1280,192 H1322 Q1330,192 1330,200 V424 Q1330,432 1322,432 H1280" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="1338" y="300" width="34" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1355" y="309" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UNDO</text>
+
+        <path d="M840,204 H1352 Q1360,204 1360,212 V604 Q1360,612 1352,612 H1280" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="1292" y="400" width="60" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1322" y="409" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CLEARS</text>
+
+        <path d="M1000,612 H920 Q912,612 912,604 V600 Q912,592 904,592 H850" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="890" y="572" width="74" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="927" y="581" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MARK SERVED</text>
+
+        <line x1="1140" y1="644" x2="1140" y2="700" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="1148" y="662" width="72" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1184" y="671" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CLOSE SWEEP</text>
+
+        <path d="M1000,728 H880 Q872,728 872,720 V624 Q872,616 864,616 H850" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="900" y="708" width="72" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="936" y="717" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">COLLECT LATE</text>
+
+        <path d="M120,496 H68 Q60,496 60,488 V212 Q60,204 68,204 H560" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="24" y="330" width="52" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="50" y="339" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RESTORE</text>
+
+        <path d="M560,220 H480 Q472,220 472,228 V488 Q472,496 464,496 H400" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="440" y="360" width="64" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="472" y="369" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO PROOF</text>
+
+        <path d="M260,532 V792 Q260,800 268,800 H972 Q980,800 980,792 V316 Q980,308 988,308 H1000" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="948" y="600" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="964" y="609" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VOID</text>
+
+        <line x1="700" y1="624" x2="700" y2="700" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+        <!-- ================= nodes ================= -->
+        <rect x="560" y="40" width="280" height="56" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="700" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Sign in — staff account</text>
+        <text x="700" y="80" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">/cashier · role read per request</text>
+
+        <rect x="560" y="140" width="280" height="96" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="700" y="166" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Online pickup queue</text>
+        <text x="700" y="182" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">prepaid · no tender to settle</text>
+        <text x="700" y="196" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">screenshot auto-verified</text>
+        <text x="700" y="210" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">flag = amount/ref mismatch</text>
+        <text x="700" y="224" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">awaiting-proof row: in-window</text>
+
+        <polygon points="700,300 800,344 700,388 600,344" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="700" y="340" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Approve or</text>
+        <text x="700" y="354" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Reject?</text>
+
+        <rect x="120" y="300" width="280" height="72" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="260" y="326" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Recently-verified list</text>
+        <text x="260" y="342" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">at-leisure spot-check · no quota</text>
+        <text x="260" y="356" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Reject reachable until served</text>
+
+        <rect x="120" y="460" width="280" height="72" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="260" y="486" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Dismissed list (auto)</text>
+        <text x="260" y="502" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">zero proof at 15:00</text>
+        <text x="260" y="516" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">queue auto-clears</text>
+
+        <rect x="1000" y="160" width="280" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1140" y="184" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Rejected — its own state</text>
+        <text x="1140" y="200" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">refund owed = entered amount</text>
+
+        <rect x="1000" y="280" width="280" height="56" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="1140" y="304" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Voided</text>
+        <text x="1140" y="320" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">until admin Mark refunded</text>
+
+        <rect x="1000" y="400" width="280" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1140" y="424" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Ticket rejoins NOW</text>
+        <text x="1140" y="440" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">by age · timer never restarted</text>
+
+        <rect x="1000" y="580" width="280" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1140" y="604" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Ready — awaiting handover</text>
+        <text x="1140" y="620" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">counter row · zero taps</text>
+
+        <rect x="1000" y="700" width="280" height="56" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="1140" y="724" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Unclaimed — money kept</text>
+        <text x="1140" y="740" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">counts as revenue</text>
+
+        <rect x="550" y="560" width="300" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="550" y="560" width="300" height="64" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <text x="700" y="584" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Mark served</text>
+        <text x="700" y="600" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">writes sale · kitchen clears · tracker READY</text>
+
+        <rect x="550" y="700" width="300" height="56" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="700" y="724" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Customer collects</text>
+        <text x="700" y="740" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">with order code</text>
+
+        <!-- legend -->
+        <line x1="40" y1="820" x2="1360" y2="820" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="836" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+        <line x1="150" y1="833" x2="182" y2="833" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="190" y="836" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">action / transition</text>
+        <line x1="360" y1="833" x2="392" y2="833" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <text x="400" y="836" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">secondary / rare path</text>
+        <line x1="620" y1="833" x2="652" y2="833" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text x="660" y="836" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">happy path (focal)</text>
+      </svg>
+    </div>
+
+    <section class="spec">
+      <h2>Spec</h2>
+      <dl>
+        <dt>Sign in</dt>
+        <dd>Google, own staff account, <code>/cashier</code> role-guarded; role read per request; the header names the cashier on duty; Switch account = sign out → sign in; every tap stamped handledBy.</dd>
+        <dt>Online pickup queue</dt>
+        <dd>Prepaid, no tender to settle. Order code shown; screenshot auto-verified. Flag = amount/ref mismatch → Approve / Reject. Recently-verified list for at-leisure spot-check; awaiting-proof row shows in-window orders with no screenshot.</dd>
+        <dt>Recently-verified list</dt>
+        <dd>At-leisure spot-check, no quota. Reject stays reachable until Mark served (the reject-after-the-fact path).</dd>
+        <dt>Approve or Reject?</dt>
+        <dd>Approve → Mark served. Reject → its own state: rejection record + image kept 7 days; refund owed = entered amount, claimed; ticket leaves NOW; tracker reads “needs checking”.</dd>
+        <dt>Undo / Void</dt>
+        <dd>Approve (undo) → ticket rejoins NOW by age, timer never restarted, no NEW badge. Void → refund owed survives until admin Mark refunded.</dd>
+        <dt>Mark served</dt>
+        <dd>The one happy-path tap: writes the sale to <code>sales/{id}</code>; kitchen ticket clears; tracker flips READY.</dd>
+        <dt>Ready — awaiting handover</dt>
+        <dd>Server clears the ticket off NOW at ready-for + 15 min or at close. Counter row, zero taps. Still uncollected at close → Unclaimed (money kept, manual note, counts as revenue). Customer returns with code → Collect late, no second sale write.</dd>
+        <dt>Dismissed list</dt>
+        <dd>Zero proof at 15:00 → the order is dismissed automatically. Restore re-arms the 15-minute window and writes an audit entry; Void is also available.</dd>
+        <dt>Status guard</dt>
+        <dd>Every tap is status-guarded: a stale or duplicate tap is a friendly no-op.</dd>
+      </dl>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cashier — counter tasks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1300px; width: 100%; min-width: 0; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.75rem;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 62ch;
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 1200px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+
+    .spec { margin-top: 2.5rem; border-top: 1px solid rgba(45,49,66,0.12); padding-top: 1.5rem; }
+    .spec h2 {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 1rem;
+    }
+    .spec dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.25rem; }
+    .spec dt { font-weight: 600; font-size: 0.8125rem; white-space: nowrap; }
+    .spec dd { font-size: 0.8125rem; line-height: 1.5; color: var(--color-muted); }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Cashier · Flowchart</p>
+    <h1>Cashier — counter tasks</h1>
+    <p class="subtitle">Walk-in ring-up, reservations, and rentals. The online pickup queue has its own chart: <em>cashier.html</em>. Every tap is status-guarded: a stale or duplicate tap is a friendly no-op.</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cashier-counter-title cashier-counter-desc">
+        <title id="cashier-counter-title">Cashier — counter tasks</title>
+        <desc id="cashier-counter-desc">Flowchart of cashier counter tasks: walk-in ring-up through settle and receipt to Mark served, new reservations with conflict checks, and rental handover and return.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ================= arrows (behind nodes) ================= -->
+        <!-- A → B -->
+        <line x1="600" y1="96" x2="600" y2="140" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- B → D (walk-in) -->
+        <path d="M520,188 V204 Q520,212 512,212 H188 Q180,212 180,220 V240" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- B → E (reservations) -->
+        <line x1="600" y1="188" x2="600" y2="240" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- B → Y (rentals) -->
+        <path d="M680,188 V204 Q680,212 688,212 H1042 Q1050,212 1050,220 V240" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- D → F -->
+        <line x1="180" y1="328" x2="180" y2="380" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- F → G -->
+        <line x1="180" y1="468" x2="180" y2="520" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- G → K (dashed: ticket appears at settle) -->
+        <line x1="180" y1="584" x2="180" y2="640" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="188" y="596" width="58" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="217" y="605" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AT SETTLE</text>
+        <!-- K → H (happy path, accent) -->
+        <line x1="300" y1="676" x2="600" y2="676" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <rect x="396" y="656" width="74" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="433" y="665" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MARK SERVED</text>
+        <!-- E → J -->
+        <line x1="600" y1="328" x2="600" y2="400" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- J → L2 (no) -->
+        <line x1="700" y1="460" x2="780" y2="460" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="724" y="440" width="24" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="736" y="449" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+        <!-- J → L (yes) -->
+        <path d="M600,520 V592 Q600,600 608,600 H780" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="656" y="580" width="28" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="670" y="589" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+        <!-- L2 → J (dashed: confirm re-checks) -->
+        <path d="M860,400 V384 Q860,376 852,376 H648 Q640,376 640,384 V400" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="688" y="358" width="116" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="746" y="367" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CONFIRM · RE-CHECK</text>
+
+        <!-- ================= nodes ================= -->
+        <rect x="460" y="40" width="280" height="56" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="600" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Sign in — staff account</text>
+        <text x="600" y="80" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">/cashier · role read per request</text>
+
+        <rect x="480" y="140" width="240" height="48" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="161" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Task?</text>
+        <text x="600" y="177" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">walk-in · reservation · rental</text>
+
+        <rect x="60" y="240" width="240" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="180" y="266" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Walk-in ring-up</text>
+        <text x="180" y="282" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tap tiles · promo price</text>
+        <text x="180" y="296" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order code drawn at ring-up</text>
+        <text x="180" y="310" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">optional table name on receipt</text>
+
+        <rect x="450" y="240" width="300" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="266" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">New reservation — type phone</text>
+        <text x="600" y="282" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">typeahead prefills name / party / type</text>
+        <text x="600" y="296" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">returning: phone → date/time → confirm</text>
+        <text x="600" y="310" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">new: 2 steps · dine-in / function / catering</text>
+
+        <rect x="900" y="240" width="300" height="88" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="1050" y="266" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Rentals — handover / return</text>
+        <text x="1050" y="282" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Hand over → stock falls</text>
+        <text x="1050" y="296" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Confirm return → stock rises</text>
+        <text x="1050" y="310" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">flagged proof → one-tap Confirm / Cancel</text>
+
+        <rect x="60" y="380" width="240" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="180" y="406" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Settle — type cash handed</text>
+        <text x="180" y="422" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">one number · cash ≥ total → change</text>
+        <text x="180" y="436" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cash &lt; total → GCash + ref#</text>
+        <text x="180" y="450" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Σ(payments) = total asserted</text>
+
+        <polygon points="600,400 700,460 600,520 500,460" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="456" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Date-time conflict</text>
+        <text x="600" y="470" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">or duplicate?</text>
+
+        <rect x="780" y="400" width="280" height="80" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="920" y="426" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Stored pending → calendar</text>
+        <text x="920" y="442" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">confirmed · cancelled statuses shown</text>
+
+        <rect x="780" y="560" width="280" height="80" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="920" y="586" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Blocked with a reason</text>
+        <text x="920" y="602" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">nothing written</text>
+
+        <rect x="60" y="520" width="240" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="180" y="544" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Receipt — one button</text>
+        <text x="180" y="560" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order code printed</text>
+
+        <rect x="60" y="640" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="180" y="666" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Kitchen ticket — NOW</text>
+        <text x="180" y="682" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order code · age timer</text>
+
+        <rect x="600" y="644" width="280" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="600" y="644" width="280" height="64" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <text x="740" y="668" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Mark served</text>
+        <text x="740" y="684" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">writes sale · ticket clears</text>
+
+        <!-- legend -->
+        <line x1="40" y1="760" x2="1160" y2="760" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="776" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+        <line x1="150" y1="773" x2="182" y2="773" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="190" y="776" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">action / transition</text>
+        <line x1="360" y1="773" x2="392" y2="773" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <text x="400" y="776" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">secondary / rare path</text>
+        <line x1="620" y1="773" x2="652" y2="773" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text x="660" y="776" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">happy path (focal)</text>
+      </svg>
+    </div>
+
+    <section class="spec">
+      <h2>Spec</h2>
+      <dl>
+        <dt>Walk-in ring-up</dt>
+        <dd>Tap tiles; promo price + totals compute; order code drawn at ring-up (on the receipt); optional table name printed on the receipt.</dd>
+        <dt>Settle</dt>
+        <dd>Type the cash handed — one number. cash ≥ total → all-cash + change computes; cash &lt; total → GCash = total − cash, ref# required. Σ(payments) = total asserted.</dd>
+        <dt>Receipt</dt>
+        <dd>One button; the order code is printed.</dd>
+        <dt>Kitchen ticket</dt>
+        <dd>The ticket appears at settle in the NOW lane with its order code and age timer.</dd>
+        <dt>Mark served</dt>
+        <dd>Writes the sale, clears the kitchen ticket, flips the tracker READY. The one happy-path tap.</dd>
+        <dt>New reservation</dt>
+        <dd>Type the phone; typeahead prefills name / party / preferred type. Returning: phone → date/time → confirm (≤3 inputs); new customer: 2 steps (≤3 + ≤2). Dine-in / function room / catering.</dd>
+        <dt>Conflict check</dt>
+        <dd>Date-time conflict or duplicate → Blocked with a reason, nothing written. Otherwise stored pending → calendar/list, with confirmed · cancelled statuses shown. Confirm re-checks against fresh data on the server.</dd>
+        <dt>Rentals</dt>
+        <dd>Hand over → stock falls; Confirm return → stock rises. Flagged proof: one-tap Confirm / Cancel (stock untouched). Overdue = quiet staff row, no auto-penalty.</dd>
+        <dt>Status guard</dt>
+        <dd>Every tap is status-guarded: a stale or duplicate tap is a friendly no-op.</dd>
+      </dl>
+    </section>
+  </div>
+</body>
+</html>

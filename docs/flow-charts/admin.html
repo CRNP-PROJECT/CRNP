@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin console</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1400px; width: 100%; min-width: 0; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.75rem;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 62ch;
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 1360px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+
+    .spec { margin-top: 2.5rem; border-top: 1px solid rgba(45,49,66,0.12); padding-top: 1.5rem; }
+    .spec h2 {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 1rem;
+    }
+    .spec dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.25rem; }
+    .spec dt { font-weight: 600; font-size: 0.8125rem; white-space: nowrap; }
+    .spec dd { font-size: 0.8125rem; line-height: 1.5; color: var(--color-muted); }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Admin · Flowchart</p>
+    <h1>Admin console</h1>
+    <p class="subtitle">One role-guarded account branches into five areas: dashboard, catalog, staff, settings, and reports. Everything reads the one RTDB stream.</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1360 780" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="admin-title admin-desc">
+        <title id="admin-title">Admin console</title>
+        <desc id="admin-desc">Flowchart of the admin console: sign-in routes to five areas — dashboard, products and inventory, staff accounts, settings, and reports — with the dashboard reading one RTDB stream.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ================= arrows ================= -->
+        <!-- A → B -->
+        <line x1="680" y1="96" x2="680" y2="120" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- B → Dashboard -->
+        <path d="M600,168 V170 Q600,178 592,178 H168 Q160,178 160,186 V240" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- B → Products -->
+        <path d="M640,168 V182 Q640,190 632,190 H428 Q420,190 420,198 V240" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- B → Staff -->
+        <line x1="680" y1="168" x2="680" y2="240" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- B → Settings -->
+        <path d="M720,168 V206 Q720,214 728,214 H932 Q940,214 940,222 V240" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- B → Reports -->
+        <path d="M760,168 V192 Q760,200 768,200 H1192 Q1200,200 1200,208 V240" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- dashboard → stream (accent: the shared read) -->
+        <line x1="160" y1="312" x2="160" y2="336" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <!-- products chain -->
+        <line x1="420" y1="312" x2="420" y2="336" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="420" y1="408" x2="420" y2="432" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="420" y1="504" x2="420" y2="528" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="420" y1="600" x2="420" y2="624" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- settings chain -->
+        <line x1="940" y1="312" x2="940" y2="336" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="940" y1="408" x2="940" y2="432" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="940" y1="504" x2="940" y2="528" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- reports chain -->
+        <line x1="1200" y1="312" x2="1200" y2="336" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- ================= nodes ================= -->
+        <!-- A: sign in (oval) -->
+        <rect x="540" y="40" width="280" height="56" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="680" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Sign in — admin account</text>
+        <text x="680" y="80" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">/admin · role-guarded</text>
+
+        <!-- B: router -->
+        <rect x="560" y="120" width="240" height="48" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="680" y="141" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Area?</text>
+        <text x="680" y="157" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">five areas</text>
+
+        <!-- row 1 -->
+        <rect x="40" y="240" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="160" y="266" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Dashboard</text>
+        <text x="160" y="282" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">KPIs · 7-day trend</text>
+        <text x="160" y="294" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">best-sellers · peak hours</text>
+        <text x="160" y="306" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">backup + refunds badges</text>
+
+        <rect x="300" y="240" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="420" y="266" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Products + inventory</text>
+        <text x="420" y="282" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">catalog · categories · add-ons</text>
+        <text x="420" y="294" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">rental units · stock</text>
+
+        <rect x="560" y="240" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="680" y="266" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Staff accounts</text>
+        <text x="680" y="282" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">create / demote / delete</text>
+        <text x="680" y="294" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Google-only · no passwords</text>
+        <text x="680" y="306" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">each evicts cached role</text>
+
+        <rect x="820" y="240" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="940" y="266" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Settings</text>
+        <text x="940" y="282" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">hours · payment · announcements</text>
+
+        <rect x="1080" y="240" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1200" y="266" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Reports</text>
+        <text x="1200" y="282" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sales · payments · reservations · rentals</text>
+
+        <!-- row 2 -->
+        <rect x="40" y="336" width="240" height="72" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <text x="160" y="362" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">One RTDB stream</text>
+        <text x="160" y="378" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">online + counter orders</text>
+        <text x="160" y="390" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">the single read</text>
+
+        <rect x="300" y="336" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="420" y="362" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Add / edit product</text>
+        <text x="420" y="378" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">image → server resize</text>
+        <text x="420" y="390" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">base64 in RTDB</text>
+
+        <rect x="820" y="336" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="940" y="362" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Hours + closures</text>
+        <text x="940" y="378" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">per weekday + force-close</text>
+        <text x="940" y="390" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">date ranges → open/closed badge</text>
+
+        <rect x="1080" y="336" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1200" y="362" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Reports detail</text>
+        <text x="1200" y="378" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">date filters · payments · refunds</text>
+        <text x="1200" y="390" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">→ Mark refunded</text>
+
+        <!-- row 3 -->
+        <rect x="300" y="432" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="420" y="458" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Categories + add-ons</text>
+        <text x="420" y="474" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">one-click promo: % or ₱</text>
+        <text x="420" y="486" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">hide toggle = 86</text>
+
+        <rect x="820" y="432" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="940" y="458" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Payment + announcements</text>
+        <text x="940" y="474" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">GCash number + QR upload</text>
+        <text x="940" y="486" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">rotate kitchen secret</text>
+
+        <!-- row 4 -->
+        <rect x="300" y="528" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="420" y="554" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Inventory = rental units</text>
+        <text x="420" y="570" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">− / + steppers · Add stock</text>
+        <text x="420" y="582" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">low-stock flags · restock</text>
+
+        <rect x="820" y="528" width="240" height="72" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="940" y="554" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Complete setup banner</text>
+        <text x="940" y="570" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">until the payment block exists</text>
+
+        <!-- row 5 -->
+        <rect x="300" y="624" width="240" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="420" y="650" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Rental items CRUD</text>
+        <text x="420" y="666" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">name · image · price/day · units</text>
+
+        <!-- legend -->
+        <line x1="40" y1="720" x2="1320" y2="720" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="736" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+        <rect x="150" y="727" width="24" height="12" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="182" y="736" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">start / terminal</text>
+        <rect x="360" y="727" width="24" height="12" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="392" y="736" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">step</text>
+        <line x1="530" y1="733" x2="562" y2="733" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="570" y="736" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">flow</text>
+        <line x1="700" y1="733" x2="732" y2="733" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text x="740" y="736" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">shared read (focal)</text>
+      </svg>
+    </div>
+
+    <section class="spec">
+      <h2>Spec</h2>
+      <dl>
+        <dt>Sign in</dt>
+        <dd>Admin account at <code>/admin</code>, role-guarded.</dd>
+        <dt>Dashboard</dt>
+        <dd>KPIs, monthly GCash/cash mix, 7-day trend, best-sellers, peak hours, refunds-owed badge.</dd>
+        <dt>Products + inventory</dt>
+        <dd>Add/edit product + image (server resize → base64 in RTDB); categories + per-product add-ons; one-click promo (% or ₱ → computed label); hide toggle = 86 (no food stock); inventory = rental units with −/+ steppers and Add stock (supplier · qty · date), low-stock flags, restock button; rental items CRUD (name · image · price/day · units).</dd>
+        <dt>Staff accounts</dt>
+        <dd>Create / demote / delete (name + Google email · Google-only, no passwords). Each evicts the cached role. No public signup.</dd>
+        <dt>Settings</dt>
+        <dd>Hours per weekday + force-close + scheduled date-range closures → public open/closed badge; announcement banner; GCash number + QR upload (both required before ordering opens); rotate kitchen secret; reservation capacities (smart default); Complete setup banner until the payment block exists.</dd>
+        <dt>Reports</dt>
+        <dd>Sales · payments (GCash vs cash) · reservations · rental bookings with date filters; refunds owed → Mark refunded; Activity (time · who · action · order code); per-cashier totals (handledBy); scheduled incremental export (by updatedAt).</dd>
+        <dt>One RTDB stream</dt>
+        <dd>The dashboard reads the one RTDB stream (online + counter orders).</dd>
+      </dl>
+    </section>
+  </div>
+</body>
+</html>

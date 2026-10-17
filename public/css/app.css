@@ -1,0 +1,3550 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Playfair+Display:wght@600..700&display=swap");
+
+@layer reset, tokens, base, components, utilities;
+
+@layer reset {
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    body,
+    h1,
+    h2,
+    h3,
+    p,
+    figure {
+        margin: 0;
+    }
+
+    img {
+        display: block;
+        max-width: 100%;
+    }
+}
+
+@layer tokens {
+    :root {
+        color-scheme: dark;
+
+        /* Brand — the one accent (golden amber), a brighter hover twin, its
+           ink for text on accent fills, and its 14% tint. */
+        --color-brand: #f3c47d;
+        --color-brand-strong: #ffd79b;
+        --color-brand-ink: #38251a;
+        --color-brand-soft: rgb(243 196 125 / 14%);
+
+        /* Danger — the functional red, reserved for exceptions (failed proof,
+           late ticket, flagged hold). Not the accent and never decoration. */
+        --color-danger: #c8102e;
+        --color-danger-ink: #ffffff;
+
+        /* Surfaces — the warm espresso → board tonal stack. */
+        --color-surface: #121010;
+        --color-surface-raised: #1f1a18;
+        --color-surface-overlay: #262019;
+        --color-surface-hover: #2a221e;
+        --color-chrome: rgb(18 16 16 / 88%);
+
+        /* Glass — the translucent product card floating over the shop photo. */
+        --color-glass: rgb(23 18 15 / 82%);
+        --color-glass-border: rgb(243 196 125 / 40%);
+
+        /* Ink — warm cream to muted warm grey. */
+        --color-text: #f5eedc;
+        --color-text-muted: #a39e9b;
+        --color-text-faint: #8a817c;
+
+        /* Lines — warm hairlines. */
+        --color-border: #282220;
+        --color-border-strong: #3a322e;
+
+        /* Status — one functional green, one warning; exceptions use danger
+           red, emphasis uses the accent. */
+        --color-open: #2f9e44;
+        --color-open-soft: rgb(47 158 68 / 16%);
+        --color-warning: #e8a33d;
+        --color-warning-soft: rgb(232 163 61 / 16%);
+
+        /* Radii — four soft steps plus a pill. */
+        --radius-sm: 6px;
+        --radius-md: 12px;
+        --radius-lg: 20px;
+        --radius-xl: 26px;
+        --radius-pill: 999px;
+
+        /* Spacing rhythm — 4 / 8 / 16 / 24 / 40. */
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 16px;
+        --space-4: 24px;
+        --space-5: 40px;
+
+        /* Type — Inter for the UI, Playfair Display for display titles. Both
+           come from the one Google Fonts import above; the system fallbacks
+           in each stack paint instantly if the network is unavailable. */
+        --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+
+        /* Elevation — reserved for hover lift and floating chrome, never at rest. */
+        --shadow-sm: 0 1px 2px rgb(10 8 8 / 24%), 0 1px 3px rgb(10 8 8 / 16%);
+        --shadow-md: 0 10px 24px -14px rgb(10 8 8 / 60%), 0 3px 10px -6px rgb(10 8 8 / 30%);
+        --shadow-lg: 0 28px 60px -24px rgb(10 8 8 / 66%), 0 10px 24px -12px rgb(10 8 8 / 40%);
+        --ring: 0 0 0 3px var(--color-brand-soft);
+
+        /* Page scrim — diagonal espresso overlay over the shop photo, warming
+           to a golden amber glow toward the bottom-right corner. */
+        --page-scrim: linear-gradient(
+            135deg,
+            rgb(18 16 16 / 92%) 0%,
+            rgb(26 20 18 / 85%) 50%,
+            rgb(160 100 20 / 65%) 100%
+        );
+
+        /* Motion — short and smooth. */
+        --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+        --dur-fast: 120ms;
+        --dur: 180ms;
+        --dur-slow: 260ms;
+        --tap-target: 24px;
+        --tap-target-touch: 44px;
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            color-scheme: light;
+
+            --color-surface: #f6f2ee;
+            --color-surface-raised: #fffdfb;
+            --color-surface-overlay: #fffdfb;
+            --color-surface-hover: #efe8e2;
+            --color-chrome: rgb(255 253 251 / 88%);
+
+            /* On cream the accent deepens to bronze so accent-as-text keeps its
+               contrast; accent fills take the cream ink in return. */
+            --color-brand: #8a5a1b;
+            --color-brand-strong: #744a13;
+            --color-brand-ink: #fffdfb;
+            --color-brand-soft: rgb(138 90 27 / 14%);
+            --color-danger: #b3122b;
+            --color-glass: rgb(255 253 251 / 88%);
+            --color-glass-border: rgb(138 90 27 / 45%);
+            --color-text: #1c1714;
+            --color-text-muted: #5c5450;
+            --color-text-faint: #6f6761;
+            --color-border: #e4dcd5;
+            --color-border-strong: #cdc2ba;
+            --color-open-soft: rgb(47 158 68 / 12%);
+            --color-warning-soft: rgb(232 163 61 / 14%);
+            --shadow-sm: 0 1px 2px rgb(28 23 20 / 8%), 0 1px 3px rgb(28 23 20 / 8%);
+            --shadow-md: 0 12px 28px -16px rgb(28 23 20 / 24%), 0 4px 10px -6px rgb(28 23 20 / 12%);
+            --shadow-lg: 0 28px 60px -24px rgb(28 23 20 / 30%), 0 10px 24px -12px rgb(28 23 20 / 16%);
+            --page-scrim: linear-gradient(rgb(246 242 238 / 72%), rgb(246 242 238 / 90%));
+        }
+    }
+}
+
+@layer base {
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background: var(--color-surface);
+        background-image: var(--page-scrim), url("../images/shop-bg.png");
+        background-position: center;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: var(--color-text);
+        font-family: var(--font-body);
+        line-height: 1.5;
+    }
+
+    h1,
+    h2,
+    h3 {
+        font-weight: 650;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+        text-wrap: balance;
+    }
+
+    p {
+        text-wrap: pretty;
+    }
+
+    a {
+        color: var(--color-brand);
+        text-underline-offset: 3px;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+        font: inherit;
+        color: inherit;
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+        accent-color: var(--color-brand);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-brand);
+        outline-offset: 2px;
+    }
+
+    ::selection {
+        background: var(--color-brand);
+        color: var(--color-brand-ink);
+    }
+}
+
+@layer components {
+    /* App chrome — sticky, translucent headers shared by the public site, the
+       cashier register, and the admin back office. */
+    .site-header,
+    .register-header {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-2) var(--space-4);
+        background: var(--color-chrome);
+        border-bottom: 1px solid var(--color-border);
+        backdrop-filter: saturate(140%) blur(12px);
+    }
+
+    /* The mobile-menu control: a visually hidden checkbox (still focusable)
+       with a labelled icon button beside it — no JavaScript. Hidden entirely
+       on desktop, where the nav sits inline. */
+    .site-nav-toggle {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .site-nav-toggle__button {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: var(--tap-target-touch);
+        height: var(--tap-target-touch);
+        margin-left: auto;
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        color: var(--color-text);
+        cursor: pointer;
+        transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+    }
+
+    .site-nav-toggle__button:hover {
+        border-color: var(--color-brand);
+        color: var(--color-brand);
+    }
+
+    .site-nav-toggle:focus-visible + .site-nav-toggle__button {
+        outline: 2px solid var(--color-brand);
+        outline-offset: 2px;
+    }
+
+    /* The nav and the account travel together: inline on desktop, one stacked
+       drawer behind the toggle on mobile. */
+    .site-menu {
+        display: flex;
+        flex: 1 1 auto;
+        align-items: center;
+        gap: var(--space-3);
+        min-width: 0;
+    }
+
+    /* The logo artwork is white-on-transparent: it sits on a dark chip so it
+       never disappears against a light background. Served as-is. */
+    .logo-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-2);
+        background: #1f1a18;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .logo-chip img {
+        width: 36px;
+        height: auto;
+    }
+
+    .site-title {
+        font-family: var(--font-display);
+        font-size: 1.375rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+
+    .site-account {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        margin-left: auto;
+        padding-left: var(--space-3);
+        border-left: 1px solid var(--color-border);
+    }
+
+    .site-account__name {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        color: var(--color-text);
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-1);
+        margin-left: var(--space-2);
+    }
+
+    .site-nav__link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.5rem;
+        padding: var(--space-1) var(--space-3);
+        border-radius: var(--radius-pill);
+        color: var(--color-text-muted);
+        text-decoration: none;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    }
+
+    .site-nav__link:hover {
+        color: var(--color-brand);
+        background: var(--color-surface-hover);
+    }
+
+    /* Active = golden text on a thin gold underline — no fill. */
+    .site-nav__link[aria-current="page"] {
+        color: var(--color-brand);
+        background: transparent;
+        border-radius: 0;
+        box-shadow: inset 0 -2px 0 var(--color-brand);
+    }
+
+    .site-account form {
+        display: inline-flex;
+    }
+
+    .site-account__switch {
+        display: inline-flex;
+        margin-left: auto;
+    }
+
+    /* The one sign-in control: a single button, reused on every gated action. */
+    .google-button {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-height: var(--tap-target-touch);
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        color: var(--color-text);
+        font-weight: 600;
+        text-decoration: none;
+        transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+    }
+
+    .google-button:hover,
+    .google-button:focus-visible {
+        border-color: var(--color-brand);
+        background: var(--color-surface-hover);
+    }
+
+    .google-button:active {
+        transform: translateY(1px);
+    }
+
+    .google-button__mark {
+        display: inline-flex;
+    }
+
+    .link-button {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        min-height: var(--tap-target);
+        padding: 0;
+        background: none;
+        border: 0;
+        color: var(--color-brand);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color var(--dur) var(--ease);
+    }
+
+    .link-button:hover {
+        color: var(--color-brand-strong);
+        text-decoration: underline;
+    }
+
+    .sign-in {
+        display: grid;
+        gap: var(--space-3);
+        justify-items: start;
+        max-width: 32rem;
+        padding: var(--space-5);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .sign-in__title {
+        font-size: 1.5rem;
+    }
+
+    .sign-in__copy {
+        color: var(--color-text-muted);
+    }
+
+    .site-main {
+        display: grid;
+        flex: 1;
+        gap: var(--space-4);
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: var(--space-5) var(--space-4);
+        animation: fade-up var(--dur-slow) var(--ease) both;
+    }
+
+    /* The product page carries the wide café card, so its column widens. */
+    .site-main--product {
+        max-width: 1200px;
+    }
+
+    @keyframes fade-up {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    .site-main__copy {
+        max-width: 60ch;
+        color: var(--color-text-muted);
+    }
+
+    .notice {
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .notice--error {
+        border-color: var(--color-brand);
+        color: var(--color-brand);
+    }
+
+    /* Empty states: a dashed, centered panel with a quiet tray glyph, so "no
+       data" reads as a deliberate state rather than a missing screen. */
+    .empty-state {
+        display: grid;
+        gap: var(--space-2);
+        justify-items: center;
+        padding: var(--space-5) var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px dashed var(--color-border);
+        border-radius: var(--radius-lg);
+        text-align: center;
+        color: var(--color-text-muted);
+        font-size: 0.9375rem;
+    }
+
+    .empty-state::before {
+        content: "";
+        width: 2.25rem;
+        height: 2.25rem;
+        background-color: var(--color-text-faint);
+        opacity: 0.6;
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z'/%3E%3Cpath d='M4 12h4l1.5 2.5h5L16 12h4'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+
+    .empty-state__title {
+        color: var(--color-text);
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+
+    /* Register header — names the cashier on duty; Switch account is the only
+       other command. */
+    .register-header__brand {
+        font-weight: 650;
+    }
+
+    .register-header__nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-1);
+        margin-left: var(--space-2);
+    }
+
+    .register-header__link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.5rem;
+        padding: var(--space-1) var(--space-3);
+        border-radius: var(--radius-pill);
+        color: var(--color-text-muted);
+        text-decoration: none;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    }
+
+    .register-header__link:hover {
+        color: var(--color-text);
+        background: var(--color-surface-hover);
+    }
+
+    .register-header__link[aria-current="page"] {
+        color: var(--color-brand);
+        background: var(--color-brand-soft);
+    }
+
+    .register-header__duty {
+        display: flex;
+        align-items: baseline;
+        gap: var(--space-2);
+        margin-left: auto;
+    }
+
+    .register-header__duty-label {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .register-header__duty-name {
+        font-weight: 650;
+    }
+
+    /* Fields and controls. */
+    .field {
+        display: grid;
+        gap: var(--space-1);
+    }
+
+    /* A field that sits in a row with a button instead of stacking. */
+    .field--inline {
+        display: inline-flex;
+        align-items: end;
+    }
+
+    .field__label {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .field__input {
+        min-height: var(--tap-target-touch);
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        color: var(--color-text);
+        font: inherit;
+        transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    }
+
+    .field__input::placeholder {
+        color: var(--color-text-faint);
+    }
+
+    select.field__input {
+        appearance: none;
+        padding-right: calc(var(--space-3) + 1.25rem);
+        background: var(--color-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%238a8f99' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E") right var(--space-3) center / 1rem 1rem no-repeat;
+        cursor: pointer;
+    }
+
+    .field__input::file-selector-button {
+        margin-right: var(--space-3);
+        padding: var(--space-1) var(--space-3);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        color: var(--color-text);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .field__input:hover {
+        border-color: var(--color-border-strong);
+    }
+
+    .field__input:focus {
+        border-color: var(--color-brand);
+        box-shadow: var(--ring);
+        outline: none;
+    }
+
+    .field__error {
+        color: var(--color-brand);
+        font-size: 0.875rem;
+    }
+
+    .field__hint {
+        color: var(--color-text-muted);
+        font-size: 0.8125rem;
+    }
+
+    .field__input--narrow {
+        max-width: 5rem;
+    }
+
+    /* Buttons. */
+    .primary-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        min-height: var(--tap-target-touch);
+        padding: var(--space-2) var(--space-4);
+        background: var(--color-brand);
+        border: 1px solid var(--color-brand);
+        border-radius: var(--radius-md);
+        color: var(--color-brand-ink);
+        font: inherit;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
+    }
+
+    .primary-button:hover,
+    .primary-button:focus-visible {
+        background: var(--color-brand-strong);
+        border-color: var(--color-brand-strong);
+        box-shadow: 0 8px 18px -12px var(--color-brand-soft);
+    }
+
+    .primary-button:active {
+        transform: translateY(1px);
+    }
+
+    .primary-button[disabled] {
+        opacity: 0.55;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    /* An icon inside a button rides at the text's side, never resized by it. */
+    .primary-button svg {
+        width: 18px;
+        height: 18px;
+        flex: none;
+    }
+
+    .toggle-button {
+        min-height: var(--tap-target-touch);
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        color: var(--color-text);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    }
+
+    .toggle-button:hover {
+        border-color: var(--color-border-strong);
+        background: var(--color-surface-hover);
+    }
+
+    .toggle-button[aria-pressed="true"] {
+        border-color: var(--color-brand);
+        background: var(--color-brand-soft);
+        color: var(--color-brand);
+    }
+
+    .inline-form {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-height: var(--tap-target);
+    }
+
+    .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    /* Consent / choice chips: hidden radio or checkbox, styled label. */
+    .segmented {
+        display: inline-flex;
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .segmented__option {
+        min-width: var(--tap-target-touch);
+        text-align: center;
+    }
+
+    .segmented__option input {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .segmented__option span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: var(--tap-target-touch);
+        padding: 0 var(--space-3);
+        cursor: pointer;
+        transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+    }
+
+    .segmented__option input:checked + span {
+        background: var(--color-brand);
+        color: var(--color-brand-ink);
+        font-weight: 600;
+    }
+
+    .chip-set {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+
+    .chip-set legend {
+        width: 100%;
+        margin-bottom: var(--space-1);
+    }
+
+    .chip input {
+        position: absolute;
+        opacity: 0;
+    }
+
+    /* .chip and .segmented__option are unrelated components, so the specificity
+       ordering the linter sees is a false positive — it has no DOM access to
+       know a .chip span is never inside a .segmented__option. */
+    /* stylelint-disable-next-line no-descending-specificity */
+    .chip span {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--tap-target-touch);
+        padding: 0 var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-pill);
+        cursor: pointer;
+        transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+    }
+
+    .chip input:checked + span {
+        background: var(--color-brand);
+        border-color: var(--color-brand);
+        color: var(--color-brand-ink);
+        font-weight: 600;
+    }
+
+    .chip input:focus-visible + span {
+        outline: 2px solid var(--color-brand);
+        outline-offset: 2px;
+    }
+
+    /* Tables — compact, uppercase column heads, quiet row hover. */
+    .staff-table,
+    .settings-table,
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9375rem;
+    }
+
+    .staff-table th,
+    .settings-table th,
+    .admin-table th {
+        padding: var(--space-2) var(--space-3);
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        border-bottom: 1px solid var(--color-border-strong);
+    }
+
+    .staff-table td,
+    .settings-table td,
+    .admin-table td {
+        padding: var(--space-3);
+        text-align: left;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .admin-table td {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .staff-table tbody tr,
+    .settings-table tbody tr,
+    .admin-table tbody tr {
+        transition: background-color var(--dur-fast) var(--ease);
+    }
+
+    .staff-table tbody tr:hover,
+    .settings-table tbody tr:hover,
+    .admin-table tbody tr:hover {
+        background: var(--color-surface-hover);
+    }
+
+    .settings-table .field__input {
+        min-height: var(--tap-target);
+    }
+
+    .product-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .product-thumb {
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+        border-radius: var(--radius-sm);
+    }
+
+    /* Tags / status pills. */
+    .tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem var(--space-2);
+        border-radius: var(--radius-pill);
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.6;
+    }
+
+    .tag--promo {
+        background: var(--color-brand);
+        color: var(--color-brand-ink);
+    }
+
+    .tag--top {
+        background: var(--color-brand-soft);
+        color: var(--color-brand);
+    }
+
+    .status-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem var(--space-2);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-pill);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-tag--pending {
+        border-color: var(--color-warning);
+        background: var(--color-warning-soft);
+        color: var(--color-warning);
+    }
+
+    .status-tag--confirmed {
+        background: var(--color-brand);
+        border-color: var(--color-brand);
+        color: var(--color-brand-ink);
+    }
+
+    .status-tag--cancelled {
+        color: var(--color-text-muted);
+        text-decoration: line-through;
+    }
+
+    /* Forms and panels. */
+    .staff-create,
+    .staff-form {
+        display: grid;
+        gap: var(--space-3);
+    }
+
+    .staff-create {
+        max-width: 32rem;
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .product-form {
+        max-width: 40rem;
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .product-form,
+    .addon-set,
+    .promo-form,
+    .promo-panel {
+        display: grid;
+        gap: var(--space-3);
+    }
+
+    .addon-set {
+        padding: var(--space-3);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .promo-panel {
+        max-width: 40rem;
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .addon-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--space-2);
+    }
+
+    .promo-preview {
+        padding: var(--space-3);
+        background: var(--color-surface);
+        border: 1px dashed var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .qr-preview {
+        max-width: 160px;
+        margin-top: var(--space-2);
+        background: #ffffff;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+    }
+
+    /* The admin Complete-setup banner: shown until the GCash number and QR are
+       both configured, and mirrored on the settings screen. */
+    .setup-banner {
+        display: grid;
+        gap: var(--space-1);
+        padding: var(--space-3) var(--space-4);
+        background: var(--color-brand-soft);
+        border: 1px solid var(--color-brand);
+        border-radius: var(--radius-md);
+        color: var(--color-text);
+    }
+
+    /* Admin dashboard — badges, KPIs, the 7-day trend, and the two ranking
+       tables. Compact density, grouped and whitespaced so it never reads as
+       dense. */
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        gap: var(--space-3);
+    }
+
+    /* The badge row holds a lone badge (refunds owed) now that the last-backup
+       card is gone, so its column is capped rather than stretched full width. */
+    .badge-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 24rem));
+        gap: var(--space-3);
+    }
+
+    .badge-card,
+    .kpi {
+        display: grid;
+        align-content: start;
+        gap: var(--space-1);
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
+    }
+
+    .badge-card--refunds {
+        border-color: var(--color-brand);
+    }
+
+    .badge-card:hover,
+    .kpi:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .badge-card__label,
+    .kpi__label {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .badge-card__value,
+    .kpi__value {
+        font-size: 1.5rem;
+        font-weight: 650;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .badge-card__detail {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+    }
+
+    .badge-card__action {
+        justify-self: start;
+        color: var(--color-brand);
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    /* The month stepper over the monthly payment cards: the month names are the
+       whole control, so it carries no button chrome. */
+    .month-nav {
+        display: flex;
+        align-items: baseline;
+        justify-self: start;
+        gap: var(--space-4);
+    }
+
+    .month-nav__link {
+        color: var(--color-brand);
+        font-size: 0.9375rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color var(--dur) var(--ease);
+    }
+
+    .month-nav__link:hover {
+        text-decoration: underline;
+    }
+
+    .month-nav__current {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .dashboard-panel {
+        display: grid;
+        align-content: start;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .dashboard-columns {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+        gap: var(--space-3);
+        align-items: start;
+    }
+
+    /* The trend bars animate only transform/opacity; the figure is always
+       readable as text too. */
+    .trend {
+        display: flex;
+        align-items: flex-end;
+        gap: var(--space-2);
+        height: 12rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .trend__day {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--space-1);
+        height: 100%;
+    }
+
+    .trend__bar-wrap {
+        display: flex;
+        flex: 1;
+        align-items: flex-end;
+        width: 100%;
+    }
+
+    .trend__bar {
+        width: 100%;
+        min-height: 2px;
+        background: var(--color-brand);
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        transition: filter var(--dur) var(--ease);
+    }
+
+    .trend__bar:hover {
+        filter: brightness(1.15);
+    }
+
+    .trend__value,
+    .trend__date {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    /* Admin reports — a segmented tab row, a one-click date filter, and compact
+       tables. */
+    .report-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        justify-self: start;
+        gap: var(--space-1);
+        padding: var(--space-1);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .report-tabs__link {
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-muted);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    }
+
+    .report-tabs__link:hover {
+        color: var(--color-text);
+        background: var(--color-surface-hover);
+    }
+
+    .report-tabs__link[aria-current="page"] {
+        color: var(--color-brand-ink);
+        background: var(--color-brand);
+    }
+
+    .report-filter {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: var(--space-3);
+    }
+
+    .settings-panel {
+        display: grid;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .settings-panel__copy,
+    .settings-panel__status {
+        max-width: 60ch;
+        color: var(--color-text-muted);
+    }
+
+    .settings-form {
+        display: grid;
+        gap: var(--space-3);
+        justify-items: start;
+    }
+
+    .settings-form__row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+    }
+
+    .closure-list {
+        display: grid;
+        gap: var(--space-2);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .closure-list__item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    /* Public site — the menu and product pages. Comfortable density, mobile
+       first, one primary action per view. */
+    .site-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .announcement-banner {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-3) var(--space-4);
+        background: var(--color-brand);
+        color: var(--color-brand-ink);
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        box-shadow: 0 12px 26px -20px var(--color-brand-soft);
+    }
+
+    .menu-hero {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .menu-hero__intro {
+        display: grid;
+        flex: 1 1 20rem;
+        gap: var(--space-1);
+    }
+
+    .store-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-1) var(--space-3);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-pill);
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .store-badge--open {
+        border-color: var(--color-open);
+        background: var(--color-open-soft);
+    }
+
+    .store-badge--closed {
+        border-color: var(--color-brand);
+    }
+
+    .store-badge__dot {
+        width: 0.625rem;
+        height: 0.625rem;
+        background: var(--color-text-muted);
+        border-radius: var(--radius-pill);
+    }
+
+    .store-badge__detail {
+        color: var(--color-text-muted);
+        font-weight: 400;
+    }
+
+    .store-badge--open .store-badge__dot {
+        background: var(--color-open);
+        box-shadow: 0 0 0 3px var(--color-open-soft);
+    }
+
+    .store-badge--closed .store-badge__dot {
+        background: var(--color-warning);
+    }
+
+    .order-gate {
+        display: grid;
+        gap: var(--space-1);
+        justify-items: start;
+    }
+
+    .order-gate__reason {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        max-width: 40ch;
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+    }
+
+    .order-gate__icon {
+        display: inline-flex;
+        flex: none;
+    }
+
+    .order-gate__icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .category-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .category-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--tap-target-touch);
+        padding: var(--space-1) var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-pill);
+        color: var(--color-text-muted);
+        text-decoration: none;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+
+    .category-chip--active {
+        background: var(--color-brand);
+        border-color: var(--color-brand);
+        color: var(--color-brand-ink);
+    }
+
+    .category-chip:hover {
+        color: var(--color-text);
+        background: var(--color-surface-hover);
+        border-color: var(--color-border-strong);
+    }
+
+    .category-chip--active:hover {
+        background: var(--color-brand-strong);
+        border-color: var(--color-brand-strong);
+        color: var(--color-brand-ink);
+    }
+
+    .menu-group {
+        display: grid;
+        gap: var(--space-3);
+    }
+
+    .menu-group__title {
+        font-size: 1.25rem;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: var(--space-3);
+    }
+
+    .product-card {
+        position: relative;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        overflow: hidden;
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+
+    .product-card__media {
+        display: block;
+        overflow: hidden;
+        aspect-ratio: 4 / 3;
+        background: var(--color-surface);
+    }
+
+    .product-card__image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform var(--dur-slow) var(--ease);
+    }
+
+    .product-card__placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        color: var(--color-text-muted);
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .product-card__body {
+        display: grid;
+        gap: var(--space-1);
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .product-card__name {
+        font-size: 1rem;
+    }
+
+    .product-card__name a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .product-card__name a:hover {
+        color: var(--color-brand);
+    }
+
+    .product-card__price {
+        display: flex;
+        align-items: baseline;
+        gap: var(--space-2);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .product-card__price s,
+    .product-detail__price s {
+        color: var(--color-text-muted);
+    }
+
+    .product-card__price-now,
+    .product-detail__price-now {
+        font-weight: 700;
+    }
+
+    .product-card__tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-1);
+        min-height: 1.5rem;
+    }
+
+    .product-card__favorite {
+        position: absolute;
+        top: var(--space-2);
+        right: var(--space-2);
+    }
+
+    .product-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--color-border-strong);
+        box-shadow: var(--shadow-md);
+    }
+
+    .product-card:hover .product-card__image {
+        transform: scale(1.04);
+    }
+
+    .favorite-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-1);
+        min-width: var(--tap-target-touch);
+        min-height: var(--tap-target-touch);
+        padding: 0 var(--space-2);
+        background: rgb(22 18 15 / 55%);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-pill);
+        color: var(--color-text);
+        font: inherit;
+        font-size: 1.25rem;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    }
+
+    .favorite-toggle:hover {
+        background: rgb(22 18 15 / 78%);
+    }
+
+    .favorite-toggle[aria-pressed="true"] {
+        color: var(--color-brand);
+        border-color: var(--color-brand);
+        background: rgb(22 18 15 / 78%);
+    }
+
+    .breadcrumb {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb__link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        color: var(--color-text);
+        text-decoration: none;
+        transition: color var(--dur) var(--ease);
+    }
+
+    .breadcrumb__link:hover {
+        color: var(--color-brand);
+    }
+
+    .breadcrumb__link--current {
+        color: var(--color-brand);
+        font-weight: 600;
+    }
+
+    .breadcrumb__icon {
+        display: inline-flex;
+    }
+
+    .breadcrumb__icon svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .breadcrumb__sep {
+        color: var(--color-text-faint);
+    }
+
+    /* The product card: a translucent espresso panel floating over the café
+       photo — gold hairline, soft shadow, two columns from 720px up. */
+    .product-detail {
+        position: relative;
+        display: grid;
+        gap: var(--space-4);
+        padding: var(--space-4);
+        background: var(--color-glass);
+        border: 1px solid var(--color-glass-border);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        backdrop-filter: blur(12px) saturate(120%);
+        transition: border-color 200ms var(--ease), background-color 200ms var(--ease), box-shadow 200ms var(--ease);
+    }
+
+    .product-detail[data-product-theme] {
+        --product-accent: var(--color-brand);
+        --product-accent-soft: var(--color-brand-soft);
+        --product-card-tint: transparent;
+        --product-button-text: var(--color-brand-ink);
+    }
+
+    .product-detail[data-theme="matcha"],
+    .product-detail[data-theme="green"],
+    .product-detail[data-theme="matcha-green"] {
+        --product-accent: #7f9b6d;
+        --product-accent-soft: rgb(127 155 109 / 16%);
+        --product-card-tint: rgb(127 155 109 / 8%);
+        --product-button-text: #f7f9f5;
+    }
+
+    .product-detail[data-theme="caramel"],
+    .product-detail[data-theme="caramel-macchiato"],
+    .product-detail[data-theme="caramel-gold"] {
+        --product-accent: #d9a67e;
+        --product-accent-soft: rgb(217 166 126 / 16%);
+        --product-card-tint: rgb(217 166 126 / 10%);
+        --product-button-text: #2a1f19;
+    }
+
+    .product-detail[data-theme="spanish-latte"],
+    .product-detail[data-theme="cream-coffee"],
+    .product-detail[data-theme="coffee"] {
+        --product-accent: #a98c71;
+        --product-accent-soft: rgb(169 140 113 / 16%);
+        --product-card-tint: rgb(169 140 113 / 10%);
+        --product-button-text: #f9f6f2;
+    }
+
+    .product-detail[data-theme="mocha"],
+    .product-detail[data-theme="chocolate"],
+    .product-detail[data-theme="cocoa"] {
+        --product-accent: #8c6653;
+        --product-accent-soft: rgb(140 102 83 / 16%);
+        --product-card-tint: rgb(140 102 83 / 12%);
+        --product-button-text: #f9f6f4;
+    }
+
+    .product-detail[data-theme="strawberry"],
+    .product-detail[data-theme="strawberry-drink"],
+    .product-detail[data-theme="rose"],
+    .product-detail[data-theme="pink"] {
+        --product-accent: #d8a6b3;
+        --product-accent-soft: rgb(216 166 179 / 16%);
+        --product-card-tint: rgb(216 166 179 / 10%);
+        --product-button-text: #2d1c20;
+    }
+
+    .product-detail[data-theme="food"],
+    .product-detail[data-theme="amber"],
+    .product-detail[data-theme="golden-orange"] {
+        --product-accent: #f0a85f;
+        --product-accent-soft: rgb(240 168 95 / 16%);
+        --product-card-tint: rgb(240 168 95 / 10%);
+        --product-button-text: #2a1d12;
+    }
+
+    .product-detail.product-detail--themed {
+        background-image: linear-gradient(180deg, var(--product-card-tint) 0%, transparent 60%);
+        border-color: var(--product-accent);
+        box-shadow: 0 28px 60px -24px var(--product-accent-soft), var(--shadow-lg);
+    }
+
+    .product-detail__media {
+        overflow: hidden;
+        aspect-ratio: 4 / 3;
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .product-detail__image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .product-detail__placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        color: var(--color-text-muted);
+        font-size: 3rem;
+        font-weight: 700;
+    }
+
+    .product-detail__body {
+        display: grid;
+        gap: var(--space-3);
+        align-content: start;
+    }
+
+    .product-detail__head {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .product-detail__category {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid var(--product-accent, var(--color-brand));
+        border-radius: var(--radius-pill);
+        color: var(--product-accent, var(--color-brand));
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .product-detail__favorite {
+        margin-left: auto;
+    }
+
+    .product-detail__name {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .product-detail__description {
+        max-width: 60ch;
+        color: var(--color-text);
+    }
+
+    .product-detail__price {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--space-2);
+        color: var(--product-accent, var(--color-brand));
+        font-size: 1.5rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Both product-page actions are pills; Start an order is the primary one. */
+    .product-detail .primary-button {
+        padding: var(--space-3) var(--space-5);
+        border-radius: var(--radius-pill);
+        background: var(--product-accent, var(--color-brand));
+        border-color: var(--product-accent, var(--color-brand));
+        color: var(--product-button-text, var(--color-brand-ink));
+    }
+
+    .product-detail .primary-button:hover,
+    .product-detail .primary-button:focus-visible {
+        background: color-mix(in srgb, var(--product-accent, var(--color-brand)) 90%, white 10%);
+        border-color: color-mix(in srgb, var(--product-accent, var(--color-brand)) 90%, white 10%);
+        box-shadow: 0 10px 26px -14px var(--product-accent-soft, var(--color-brand-soft));
+    }
+
+    .add-to-cart {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: var(--space-3);
+    }
+
+    .addon-picker {
+        display: grid;
+        gap: var(--space-2);
+        justify-items: start;
+    }
+
+    .addon-picker__set {
+        display: grid;
+        gap: var(--space-1);
+        min-width: 16rem;
+        margin: 0;
+        padding: var(--space-3);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .addon-picker__legend {
+        padding: 0 var(--space-1);
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+    }
+
+    .addon-picker__option {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-height: var(--tap-target-touch);
+    }
+
+    .addon-picker__price {
+        margin-left: auto;
+        color: var(--color-text-muted);
+    }
+
+    /* ---- About page ----
+       A warm, readable restaurant information page. Its olive/espresso palette
+       is scoped here so the tones stay local to About and the shared site
+       tokens are left untouched. The page is wide (1100px) so the cards fill
+       the column instead of leaving the background exposed. */
+    .about-page {
+        --about-card: #221f15;
+        --about-surface: #2c281c;
+        --about-text: #f3eedc;
+        --about-text-soft: #d6ccb0;
+        --about-text-muted: #b3a78a;
+        --about-border: #6a5d40;
+        --about-gold: #d8b878;
+        --about-facebook: #3f74c4;
+        --about-facebook-hover: #3568b2;
+
+        max-width: 1100px;
+        gap: var(--space-4);
+    }
+
+    /* Page title, at the top of the content area. */
+    .about-page__title {
+        margin: 0;
+        color: var(--about-text);
+        font-family: var(--font-display);
+        font-size: 2.25rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .about-page__intro {
+        margin: var(--space-2) 0 0;
+        max-width: 62ch;
+        color: var(--about-text-soft);
+        font-size: 1rem;
+    }
+
+    /* Prominent section title that opens a block of related cards. */
+    .about-page__heading {
+        margin: 0;
+        color: var(--about-text);
+        font-size: 0.9375rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    /* Section 1 — three equal info cards. */
+    .about-cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-3);
+    }
+
+    .about-card {
+        display: grid;
+        gap: var(--space-2);
+        align-content: start;
+        padding: var(--space-4);
+        background: var(--about-card);
+        border: 1px solid var(--about-border);
+        border-radius: 14px;
+    }
+
+    .about-card__icons {
+        display: inline-flex;
+        gap: var(--space-2);
+        color: var(--about-gold);
+    }
+
+    .about-card__title {
+        margin: 0;
+        color: var(--about-text);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .about-card__row {
+        display: flex;
+        gap: var(--space-2);
+        margin: 0;
+        color: var(--about-text-soft);
+        font-size: 0.9375rem;
+        overflow-wrap: anywhere;
+    }
+
+    .about-card__term {
+        flex: none;
+        color: var(--about-text-muted);
+    }
+
+    .about-card__link {
+        color: var(--about-gold);
+        text-decoration: none;
+    }
+
+    .about-card__link:hover {
+        text-decoration: underline;
+    }
+
+    .about-card__lead {
+        margin: 0;
+        color: var(--about-text);
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .about-card__note {
+        margin: 0;
+        color: var(--about-text-muted);
+        font-size: 0.875rem;
+    }
+
+    /* Section 2 — Connect With Us. */
+    .about-connect {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: var(--space-4);
+        align-items: center;
+        padding: var(--space-4);
+        background: var(--about-card);
+        border: 1px solid var(--about-border);
+        border-radius: 14px;
+    }
+
+    .about-connect__intro {
+        display: grid;
+        gap: var(--space-2);
+    }
+
+    .about-connect__copy {
+        display: flex;
+        gap: var(--space-3);
+        margin: 0;
+        color: var(--about-text-soft);
+        font-size: 0.9375rem;
+    }
+
+    .about-connect__icon {
+        display: inline-flex;
+        flex: none;
+        color: var(--about-facebook);
+    }
+
+    .facebook-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        width: 100%;
+        padding: var(--space-3) var(--space-4);
+        background: var(--about-facebook);
+        border-radius: 999px;
+        color: #f8f7f2;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .facebook-button:hover {
+        background: var(--about-facebook-hover);
+    }
+
+    /* Section 3 — customer reviews. */
+    .about-reviews {
+        display: grid;
+        gap: var(--space-3);
+    }
+
+    .about-reviews__grid {
+        display: grid;
+        grid-template-columns: 1.2fr repeat(3, minmax(0, 1fr));
+        gap: var(--space-4);
+    }
+
+    .rating-summary {
+        display: grid;
+        gap: var(--space-2);
+        align-content: start;
+    }
+
+    .rating-summary__score {
+        margin: 0;
+        color: var(--about-text);
+        font-size: 2.75rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .rating-summary__stars {
+        display: inline-flex;
+        gap: 3px;
+        color: var(--about-gold);
+    }
+
+    .rating-summary__caption {
+        margin: 0;
+        color: var(--about-text-soft);
+        font-size: 0.9375rem;
+    }
+
+    .rating-summary__note {
+        margin: 0;
+        color: var(--about-text-muted);
+        font-size: 0.875rem;
+    }
+
+    .review-item {
+        display: flex;
+        gap: var(--space-3);
+        align-items: flex-start;
+        margin: 0;
+        min-width: 0;
+    }
+
+    .review-item__avatar {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        background: var(--about-surface);
+        border: 1px solid var(--about-border);
+        border-radius: 50%;
+        color: var(--about-gold);
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+
+    .review-item__body {
+        display: grid;
+        gap: var(--space-1);
+        min-width: 0;
+    }
+
+    .review-item__name {
+        color: var(--about-text);
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .review-item__text {
+        margin: 0;
+        color: var(--about-text-soft);
+        font-size: 0.875rem;
+    }
+
+    /* Section 4 — a prominent left title over a balanced map + landmarks row. */
+    .about-location {
+        display: grid;
+        gap: var(--space-3);
+    }
+
+    .about-location__title {
+        margin: 0;
+        color: var(--about-text);
+        font-family: var(--font-display);
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .about-location__grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: var(--space-3);
+        align-items: stretch;
+    }
+
+    .about-map {
+        overflow: hidden;
+        background: var(--about-card);
+        border: 1px solid var(--about-border);
+        border-radius: 14px;
+    }
+
+    .about-map__frame {
+        display: block;
+        width: 100%;
+        height: 100%;
+        min-height: 280px;
+        border: 0;
+    }
+
+    .about-landmarks {
+        display: grid;
+        gap: var(--space-3);
+        align-content: start;
+    }
+
+    .about-landmarks__list {
+        display: grid;
+        gap: var(--space-3);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .about-landmarks__item {
+        display: flex;
+        gap: var(--space-2);
+        align-items: center;
+        color: var(--about-text-soft);
+        font-size: 0.9375rem;
+    }
+
+    .about-pin {
+        display: inline-flex;
+        flex: none;
+        color: var(--about-gold);
+    }
+
+    @media (max-width: 1023px) {
+        .about-reviews__grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .about-location__grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .about-cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .about-connect {
+            grid-template-columns: 1fr;
+        }
+
+        .about-reviews__grid {
+            grid-template-columns: 1fr;
+        }
+
+        .about-page__title {
+            font-size: 1.875rem;
+        }
+    }
+
+    @media (max-width: 479px) {
+        .about-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Global site footer — brand + quick links + visit details on a raised
+       band, then a copyright bar. Full-bleed so it reads as the page floor. */
+    .site-footer {
+        display: grid;
+        gap: var(--space-4);
+        width: 100%;
+        padding: var(--space-5) var(--space-4) var(--space-4);
+        background: var(--color-surface-raised);
+        border-top: 1px solid var(--color-border);
+    }
+
+    .site-footer__grid {
+        display: grid;
+        grid-template-columns: 1.7fr 1fr 1fr 1.5fr;
+        gap: var(--space-4);
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .site-footer__brand {
+        display: grid;
+        gap: var(--space-3);
+        align-content: start;
+    }
+
+    .site-footer__brand-link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        width: fit-content;
+        text-decoration: none;
+    }
+
+    .site-footer__name {
+        color: var(--color-text);
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .site-footer__tagline {
+        margin: 0;
+        max-width: 34ch;
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    .site-footer__social {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        width: fit-content;
+        color: var(--color-brand);
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .site-footer__social:hover {
+        color: var(--color-text);
+    }
+
+    .site-footer__nav,
+    .site-footer__visit {
+        display: grid;
+        gap: var(--space-3);
+        align-content: start;
+    }
+
+    .site-footer__heading {
+        margin: 0;
+        color: var(--color-text);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .site-footer__list {
+        display: grid;
+        gap: var(--space-2);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .site-footer__link {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+        text-decoration: none;
+    }
+
+    .site-footer__link:hover {
+        color: var(--color-text);
+        text-decoration: underline;
+    }
+
+    .site-footer__detail {
+        display: flex;
+        gap: var(--space-2);
+        align-items: flex-start;
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+        overflow-wrap: anywhere;
+    }
+
+    .site-footer__detail-icon {
+        display: inline-flex;
+        flex: none;
+        margin-top: 2px;
+        color: var(--color-brand);
+    }
+
+    .site-footer__bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--color-border);
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+    }
+
+    .site-footer__copy,
+    .site-footer__note {
+        margin: 0;
+    }
+
+    @media (max-width: 900px) {
+        .site-footer__grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 559px) {
+        .site-footer__grid {
+            grid-template-columns: 1fr;
+        }
+
+        .site-footer__bar {
+            justify-content: flex-start;
+        }
+    }
+
+    /* Cashier walk-in ring-up: tap tiles on the left, the running order and the
+       one-number settle on the right. Touch targets stay at 44px. */
+    .register-actions {
+        display: grid;
+        gap: var(--space-3);
+        justify-items: start;
+        max-width: 40rem;
+        padding: var(--space-5);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .register-actions__title {
+        font-size: 1.5rem;
+    }
+
+    .walkin-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .walkin-head__label {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .walkin-head__code {
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+    }
+
+    .walkin-grid {
+        display: grid;
+        gap: var(--space-4);
+    }
+
+    @media (min-width: 800px) {
+        .walkin-grid {
+            grid-template-columns: minmax(0, 3fr) minmax(20rem, 2fr);
+            align-items: start;
+        }
+    }
+
+    .walkin-menu,
+    .walkin-cart {
+        display: grid;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .walkin-panel__title {
+        font-size: 1.125rem;
+    }
+
+    .tile-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+        gap: var(--space-2);
+    }
+
+    .tile {
+        display: grid;
+        gap: var(--space-1);
+        width: 100%;
+        min-height: var(--tap-target-touch);
+        padding: var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        color: var(--color-text);
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+
+    .tile:hover,
+    .tile:focus-visible {
+        border-color: var(--color-brand);
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-2px);
+    }
+
+    .tile:disabled {
+        opacity: 0.5;
+        cursor: default;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .tile__name {
+        font-weight: 600;
+    }
+
+    .tile__price {
+        color: var(--color-text-muted);
+        font-size: 0.9375rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .walkin-total {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--color-border);
+        font-weight: 600;
+    }
+
+    .walkin-total__amount {
+        font-size: 1.5rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .settle-form {
+        display: grid;
+        gap: var(--space-3);
+    }
+
+    /* The online pickup queue: grouped sections, each a list of scalar rows with
+       the one happy-path tap. */
+    .queue {
+        display: grid;
+        gap: var(--space-4);
+    }
+
+    .queue__title {
+        font-size: 1.5rem;
+    }
+
+    .queue-section {
+        display: grid;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .queue-section__title {
+        font-size: 1.125rem;
+    }
+
+    .queue-section__hint {
+        color: var(--color-text-muted);
+        font-size: 0.9375rem;
+    }
+
+    .queue-list {
+        display: grid;
+        gap: var(--space-2);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .queue-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    }
+
+    .queue-row:hover {
+        border-color: var(--color-border-strong);
+        background: var(--color-surface-hover);
+    }
+
+    .queue-row__code {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+    }
+
+    .queue-row__total {
+        color: var(--color-text-muted);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .queue-row__figures {
+        display: flex;
+        gap: var(--space-3);
+    }
+
+    .queue-row__figure {
+        display: grid;
+        gap: 0.125rem;
+    }
+
+    .queue-row__figure-label {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .queue-row__figure-value {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .queue-row__action {
+        margin-left: auto;
+    }
+
+    .queue-row__action--group {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .queue-row__actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-left: auto;
+    }
+
+    .queue-row__actions .queue-row__action {
+        margin-left: 0;
+    }
+
+    /* The receipt: server-rendered, printable, with the order code and the
+       tender breakdown. */
+    .receipt {
+        display: grid;
+        gap: var(--space-3);
+        max-width: 24rem;
+        margin: 0 auto;
+        padding: var(--space-5) var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .receipt__head {
+        display: grid;
+        gap: var(--space-2);
+        justify-items: center;
+        text-align: center;
+    }
+
+    .receipt__title {
+        font-size: 1.25rem;
+    }
+
+    .receipt__code-label {
+        display: block;
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .receipt__code-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+    }
+
+    .receipt__lines,
+    .receipt__payments {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .receipt__lines td,
+    .receipt__payments td {
+        padding: var(--space-1) 0;
+    }
+
+    .receipt__amount {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .receipt__total {
+        display: flex;
+        justify-content: space-between;
+        padding-top: var(--space-2);
+        border-top: 1px solid var(--color-border);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .receipt__payments {
+        padding-top: var(--space-2);
+        border-top: 1px dashed var(--color-border);
+        color: var(--color-text-muted);
+    }
+
+    .receipt__foot {
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--color-border);
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+        text-align: center;
+    }
+
+    .receipt-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-3);
+        margin-top: var(--space-4);
+    }
+
+    @media print {
+        .register-header,
+        .site-header,
+        .receipt-actions {
+            display: none;
+        }
+
+        .receipt {
+            border: 0;
+            box-shadow: none;
+        }
+    }
+
+    @media (min-width: 720px) {
+        .product-detail {
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+            gap: var(--space-5);
+            align-items: start;
+            padding: var(--space-5);
+        }
+    }
+
+    /* Reservation entry — the guided two-step screens and the calendar/list. */
+    .guided-screen {
+        display: grid;
+        gap: var(--space-3);
+        max-width: 32rem;
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+    }
+
+    .guided-screen__step {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .guided-screen__copy {
+        color: var(--color-text-muted);
+    }
+
+    .guided-form {
+        display: grid;
+        gap: var(--space-3);
+        justify-items: start;
+    }
+
+    /* Typeahead: the phone prefills a returning customer; a new customer is
+       captured with tap-only type chips, so no screen exceeds the input budget. */
+    .reservation-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+    }
+
+    .reservation-list {
+        display: grid;
+        gap: var(--space-4);
+    }
+
+    .reservation-day {
+        display: grid;
+        gap: var(--space-2);
+    }
+
+    .reservation-day__title {
+        font-size: 1.125rem;
+    }
+
+    .reservation-phone {
+        display: block;
+        color: var(--color-text-muted);
+        font-size: 0.8125rem;
+    }
+
+    /* The public occupancy view — aggregate only: seats taken vs capacity per
+       slot for the week ahead, no names, no booking form. */
+    .occupancy-hero {
+        display: grid;
+        gap: var(--space-2);
+    }
+
+    .occupancy-week {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+        gap: var(--space-3);
+    }
+
+    .occupancy-day {
+        display: grid;
+        gap: var(--space-2);
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+
+    .occupancy-day:hover {
+        border-color: var(--color-border-strong);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .occupancy-day__title {
+        font-size: 1rem;
+    }
+
+    .occupancy-day__empty {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+    }
+
+    .occupancy-slot {
+        display: grid;
+        gap: var(--space-1);
+    }
+
+    .occupancy-slot__time {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+    }
+
+    .occupancy-slot__counts {
+        display: grid;
+        gap: var(--space-1);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .occupancy-count {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding: var(--space-1) var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .occupancy-count__seats {
+        font-weight: 600;
+    }
+
+    .occupancy-count--full {
+        border-color: var(--color-brand);
+        background: var(--color-brand-soft);
+    }
+
+    .occupancy-count--full .occupancy-count__seats {
+        color: var(--color-brand);
+    }
+
+    /* Cart: inline steppers and add-on picks with computed totals. */
+    .cart-heading {
+        font-size: 1.5rem;
+    }
+
+    .cart-list {
+        display: grid;
+        gap: var(--space-3);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .cart-list--summary {
+        gap: var(--space-1);
+    }
+
+    .cart-line {
+        display: grid;
+        gap: var(--space-2);
+        padding: var(--space-3) var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .cart-line__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-2);
+    }
+
+    .cart-line__name {
+        font-weight: 600;
+    }
+
+    .cart-line__price {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .cart-line__form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .stepper {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-pill);
+    }
+
+    .stepper__button {
+        width: var(--tap-target-touch);
+        height: var(--tap-target-touch);
+        background: transparent;
+        border: none;
+        color: var(--color-text);
+        font-size: 1.25rem;
+        cursor: pointer;
+        transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    }
+
+    .stepper__button:hover,
+    .stepper__button:focus-visible {
+        color: var(--color-brand);
+    }
+
+    .stepper__value {
+        min-width: 2ch;
+        text-align: center;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .stepper__input {
+        width: 3.5rem;
+        min-height: var(--tap-target-touch);
+        padding: var(--space-1) var(--space-2);
+        background: transparent;
+        border: none;
+        color: var(--color-text);
+        font: inherit;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .cart-total {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-2);
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+
+    .cart-total__amount {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .checkout-summary,
+    .checkout-form {
+        display: grid;
+        gap: var(--space-3);
+    }
+
+    /* Order tracker: a live status screen with the branded GCash frame. */
+    .tracker {
+        display: grid;
+        gap: var(--space-3);
+        max-width: 34rem;
+        margin-inline: auto;
+    }
+
+    .tracker__head {
+        display: grid;
+        gap: var(--space-1);
+        text-align: center;
+    }
+
+    .tracker__code-label {
+        color: var(--color-text-muted);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .tracker__code {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+    }
+
+    .tracker__status {
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        text-align: center;
+        font-weight: 600;
+    }
+
+    .tracker__pickup {
+        color: var(--color-text-muted);
+        text-align: center;
+    }
+
+    .payment-frame {
+        display: grid;
+        gap: var(--space-2);
+        justify-items: center;
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 2px solid var(--color-brand);
+        border-radius: var(--radius-lg);
+    }
+
+    .payment-frame__title {
+        font-size: 1.125rem;
+    }
+
+    .payment-frame__qr {
+        width: min(20rem, 100%);
+        height: auto;
+        background: #ffffff;
+        border-radius: var(--radius-sm);
+    }
+
+    .payment-frame__number {
+        display: grid;
+        gap: var(--space-1);
+        text-align: center;
+    }
+
+    .payment-frame__number-label {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .payment-frame__number-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .payment-frame__deadline {
+        color: var(--color-text-muted);
+    }
+
+    .payment-frame__deadline-value {
+        color: var(--color-text);
+        font-weight: 600;
+    }
+
+    .tracker__total {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .tracker__hint {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+    }
+
+    /* A flagged hold: the entered amount beside the order total so the customer
+       self-corrects at the counter — no blame, no reason codes. */
+    .tracker__hold {
+        display: grid;
+        gap: var(--space-2);
+        padding: var(--space-3);
+        background: var(--color-surface-raised);
+        border: 2px solid var(--color-danger);
+        border-radius: var(--radius-md);
+    }
+
+    .tracker__hold-title {
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    .tracker__hold-numbers {
+        display: flex;
+        justify-content: space-around;
+        gap: var(--space-3);
+        text-align: center;
+    }
+
+    .tracker__hold-figure {
+        display: grid;
+        gap: var(--space-1);
+    }
+
+    .tracker__hold-label {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .tracker__hold-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Proof of payment: one Attach button, an auto-upload status line, and the
+       two fields that follow (amount prefilled, ref# typed). */
+    .proof {
+        display: grid;
+        gap: var(--space-3);
+        padding: var(--space-3);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .proof__title {
+        font-size: 1rem;
+    }
+
+    .proof__attach {
+        width: 100%;
+    }
+
+    .proof__feedback {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+        min-height: 1.25rem;
+        text-align: center;
+        color: var(--color-text-muted);
+    }
+
+    .proof__field {
+        display: grid;
+        gap: var(--space-1);
+    }
+
+    /* A spinner is motion: it animates only transform, and is toned down to a
+       steady ring under prefers-reduced-motion (WCAG 2.2 SC 2.3.1). */
+    .proof__spinner {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid var(--color-border);
+        border-top-color: var(--color-brand);
+        border-radius: 50%;
+        animation: proof-spin 0.8s linear infinite;
+    }
+
+    @keyframes proof-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .proof__feedback[data-state='failed'] {
+        color: var(--color-danger);
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .proof__feedback[data-state='uploading'] {
+        font-weight: 600;
+    }
+
+    /* The kitchen board: read-only by design. NOW is oldest-first with age
+       timers (red at 12 min) and a NEW badge; LATER holds dimmed scheduled
+       pickups with live countdowns. Only transform/opacity animate, and the
+       NEW flash is skipped under prefers-reduced-motion. */
+    .kitchen {
+        display: grid;
+        gap: var(--space-4);
+        padding: var(--space-4);
+        animation: fade-up var(--dur-slow) var(--ease) both;
+    }
+
+    .kitchen__head {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .kitchen__title {
+        font-size: 1.5rem;
+    }
+
+    .kitchen__reconnect {
+        margin-left: auto;
+        padding: var(--space-1) var(--space-3);
+        color: var(--color-brand-ink);
+        font-weight: 700;
+        background: var(--color-brand);
+        border-radius: var(--radius-sm);
+    }
+
+    .kitchen__lanes {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+        align-items: start;
+    }
+
+    @media (min-width: 60rem) {
+        .kitchen__lanes {
+            grid-template-columns: 2fr 1fr;
+        }
+    }
+
+    .kitchen-lane {
+        display: grid;
+        gap: var(--space-3);
+    }
+
+    .kitchen-lane__title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: 1.25rem;
+        letter-spacing: 0.08em;
+    }
+
+    .kitchen-lane__count {
+        padding: 0 var(--space-2);
+        color: var(--color-text-muted);
+        font-size: 1rem;
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+    }
+
+    .kitchen-list {
+        display: grid;
+        gap: var(--space-3);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .kitchen-card {
+        display: grid;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: var(--color-surface-raised);
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* LATER: full-size but dimmed, so the cook sees what is coming without
+       mistaking it for cookable. */
+    .kitchen-card--later {
+        opacity: 0.55;
+        box-shadow: none;
+    }
+
+    /* A scheduled ticket that has just joined NOW is highlighted, so the cook
+       sees the promotion — the NEW flash is not reused for it. */
+    .kitchen-card--promoted {
+        outline: 2px solid var(--color-brand);
+        outline-offset: 2px;
+    }
+
+    .kitchen-card--red {
+        border-color: var(--color-brand);
+    }
+
+    .kitchen-card--late {
+        border-color: var(--color-brand);
+        box-shadow: inset 0 0 0 1px var(--color-brand);
+    }
+
+    .kitchen-card__head {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .kitchen-card__code {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+    }
+
+    .kitchen-badge {
+        padding: var(--space-1) var(--space-2);
+        font-size: 0.875rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        border-radius: var(--radius-sm);
+    }
+
+    .kitchen-badge--new {
+        color: var(--color-brand-ink);
+        background: var(--color-brand);
+    }
+
+    /* The NEW flash: opacity only, once per badge, well under three flashes a
+       second; the class is dropped after ~5 s and the badge stays steady. */
+    .kitchen-badge--new.is-flashing {
+        animation: kitchen-new-flash 1s ease-in-out 5;
+    }
+
+    @keyframes kitchen-new-flash {
+        50% {
+            opacity: 0.35;
+        }
+    }
+
+    .kitchen-badge--late {
+        color: var(--color-danger-ink);
+        background: var(--color-danger);
+    }
+
+    .kitchen-card__lines {
+        display: grid;
+        gap: var(--space-1);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .kitchen-card__line {
+        display: flex;
+        gap: var(--space-2);
+        font-size: 1.25rem;
+    }
+
+    .kitchen-card__qty {
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .kitchen-card__clocks {
+        display: flex;
+        gap: var(--space-4);
+    }
+
+    .kitchen-card__clock {
+        display: grid;
+        gap: 2px;
+    }
+
+    .kitchen-card__clock-label {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .kitchen-card__clock-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .kitchen-card__clock--age.is-red .kitchen-card__clock-value {
+        color: var(--color-danger);
+    }
+
+    .kitchen-allday {
+        display: grid;
+        gap: var(--space-2);
+        padding: var(--space-3);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .kitchen-allday__title {
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .kitchen-allday__list {
+        display: grid;
+        gap: var(--space-1);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .kitchen-allday__row {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-3);
+    }
+
+    .kitchen-allday__qty {
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Rentals: public catalog with price/day and computed per-date availability. */
+    .rentals-hero {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .rentals-hero__intro {
+        display: grid;
+        flex: 1 1 20rem;
+        gap: var(--space-1);
+    }
+
+    .rental-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+        gap: var(--space-4);
+    }
+
+    .rental-card {
+        display: grid;
+        gap: var(--space-3);
+        padding: var(--space-3);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+
+    .rental-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--color-border-strong);
+        box-shadow: var(--shadow-md);
+    }
+
+    .rental-card__image,
+    .rental-detail__image {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+    }
+
+    .rental-card__name {
+        font-size: 1.125rem;
+    }
+
+    .rental-card__price {
+        display: flex;
+        align-items: baseline;
+        gap: var(--space-2);
+    }
+
+    .rental-card__rate {
+        font-size: 1.25rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .rental-card__unit {
+        color: var(--color-text-muted);
+    }
+
+    .rental-days {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .rental-days--detail {
+        margin-block: var(--space-3);
+    }
+
+    .rental-day {
+        display: grid;
+        gap: 2px;
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        font-size: 0.8125rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .rental-day--full {
+        border-color: var(--color-brand);
+        background: var(--color-brand-soft);
+    }
+
+    .rental-day--full .rental-day__count {
+        color: var(--color-brand);
+    }
+
+    .rental-day__date {
+        color: var(--color-text-muted);
+    }
+
+    .rental-detail {
+        display: grid;
+        grid-template-columns: minmax(0, 20rem) 1fr;
+        gap: var(--space-4);
+        align-items: start;
+    }
+
+    .rental-detail__body {
+        display: grid;
+        gap: var(--space-2);
+    }
+
+    .rental-book-form {
+        display: grid;
+        gap: var(--space-3);
+        max-width: 32rem;
+    }
+
+    .stock-stepper {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-pill);
+    }
+
+    .stock-stepper .inline-form {
+        display: inline-flex;
+    }
+
+    .add-stock-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    /* Motion is opt-in: a single reduce block switches every transition and
+       animation off, keeping feedback but removing movement (WCAG 2.2). */
+    @media (prefers-reduced-motion: reduce) {
+        .site-main,
+        .kitchen,
+        .kitchen-badge--new.is-flashing,
+        .proof__spinner {
+            animation: none;
+        }
+
+        *,
+        *::before,
+        *::after {
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* Mobile header — the menu control appears and the nav + account fold into
+       one full-width drawer that the checkbox reveals. Desktop stays inline. */
+    @media (max-width: 719px) {
+        .site-nav-toggle__button {
+            display: inline-flex;
+        }
+
+        .site-menu {
+            display: none;
+            order: 3;
+            flex-basis: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--space-1);
+            padding-top: var(--space-2);
+            border-top: 1px solid var(--color-border);
+        }
+
+        .site-nav-toggle:checked ~ .site-menu {
+            display: flex;
+        }
+
+        .site-nav {
+            flex-direction: column;
+            align-items: stretch;
+            margin-left: 0;
+        }
+
+        .site-nav__link {
+            min-height: var(--tap-target-touch);
+            border-radius: var(--radius-md);
+        }
+
+        .site-nav__link[aria-current="page"] {
+            border-radius: var(--radius-md);
+            box-shadow: none;
+            background: var(--color-brand-soft);
+        }
+
+        .site-account {
+            flex-direction: column;
+            align-items: stretch;
+            margin-left: 0;
+            padding-left: 0;
+            border-left: 0;
+        }
+
+        .site-account__switch {
+            margin-left: 0;
+        }
+
+        /* A long, fixed photo background is expensive to repaint under mobile
+           scroll, so it releases its attachment on small screens. */
+        body {
+            background-attachment: scroll;
+        }
+    }
+
+    /* Tables scroll horizontally on narrow screens instead of overflowing. */
+    @media (max-width: 640px) {
+        .staff-table,
+        .settings-table,
+        .admin-table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    }
+}
+
+@layer utilities {
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}

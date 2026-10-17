@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer — payment to collection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1300px; width: 100%; min-width: 0; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.75rem;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 62ch;
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 1200px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+
+    .spec { margin-top: 2.5rem; border-top: 1px solid rgba(45,49,66,0.12); padding-top: 1.5rem; }
+    .spec h2 {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 1rem;
+    }
+    .spec dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.25rem; }
+    .spec dt { font-weight: 600; font-size: 0.8125rem; white-space: nowrap; }
+    .spec dd { font-size: 0.8125rem; line-height: 1.5; color: var(--color-muted); }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Customer · Flowchart</p>
+    <h1>Customer — payment to collection</h1>
+    <p class="subtitle">GCash proof auto-verifies; only an amount/ref mismatch flags. The tracker is session/account-bound — the order code is shown, never typed. The ordering path is in <em>customer-ordering.html</em>.</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 980" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="customer-payment-title customer-payment-desc">
+        <title id="customer-payment-title">Customer — payment to collection</title>
+        <desc id="customer-payment-desc">Flowchart of the customer payment path: attaching a GCash screenshot, auto-verification, the flagged hold and rejection states, the dismissal and restore paths, and collection of the order.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ================= arrows ================= -->
+        <line x1="600" y1="96" x2="600" y2="140" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="600" y1="212" x2="600" y2="260" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="600" y1="344" x2="600" y2="400" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+        <line x1="740" y1="302" x2="910" y2="302" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="797" y="282" width="56" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="825" y="291" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MISMATCH</text>
+
+        <path d="M1050,352 V404 Q1050,412 1042,412 H740" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="914" y="392" width="52" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="940" y="401" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">APPROVE</text>
+
+        <path d="M950,492 V492 Q950,500 942,500 H708 Q700,500 700,492 V472" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="792" y="480" width="36" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="810" y="489" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UNDO</text>
+
+        <line x1="1050" y1="492" x2="1050" y2="560" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="1056" y="514" width="36" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1074" y="523" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VOID</text>
+
+        <path d="M460,68 H48 Q40,68 40,76 V328 Q40,336 48,336 H60" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="52" y="194" width="56" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="80" y="203" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO PROOF</text>
+
+        <line x1="200" y1="372" x2="200" y2="460" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="210" y="404" width="52" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="236" y="413" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RESTORE</text>
+
+        <path d="M340,496 H752 Q760,496 760,488 V436 Q760,428 752,428 H740" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="766" y="450" width="48" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="790" y="459" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RE-ARM</text>
+
+        <path d="M340,320 H364 Q372,320 372,328 V744 Q372,752 380,752 H992 Q1000,752 1000,744 V616" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="582" y="736" width="36" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="600" y="745" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VOID</text>
+
+        <line x1="600" y1="472" x2="600" y2="520" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="624" y="484" width="76" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="662" y="493" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MARK SERVED</text>
+
+        <line x1="600" y1="592" x2="600" y2="640" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="621" y="600" width="64" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="653" y="609" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UNCLAIMED</text>
+
+        <!-- ================= nodes ================= -->
+        <rect x="460" y="40" width="280" height="56" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="600" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Order tracker</text>
+        <text x="600" y="80" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order code shown · 5–10 s poll</text>
+
+        <rect x="460" y="140" width="280" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="166" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Pay GCash → Attach</text>
+        <text x="600" y="182" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OS screenshot · newest thumbnail</text>
+        <text x="600" y="196" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">failed → tap to retry · amount + ref#</text>
+
+        <polygon points="600,260 740,302 600,344 460,302" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="296" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Auto-verified?</text>
+        <text x="600" y="312" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">amount + ref match</text>
+
+        <rect x="910" y="280" width="280" height="72" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="1050" y="306" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Flagged hold</text>
+        <text x="1050" y="322" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kitchen waits · both numbers side by side</text>
+        <text x="1050" y="336" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cashier one-tap Approve / Reject</text>
+
+        <rect x="460" y="400" width="280" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="460" y="400" width="280" height="72" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <text x="600" y="426" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Kitchen ticket — same instant</text>
+        <text x="600" y="442" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order code + age timer</text>
+        <text x="600" y="456" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">scheduled: dimmed in LATER, promoted at −15 min</text>
+
+        <rect x="910" y="420" width="280" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1050" y="446" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Payment rejected</text>
+        <text x="1050" y="462" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">“Payment needs checking — see the counter”</text>
+        <text x="1050" y="476" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ticket off board · refund owed (claimed)</text>
+
+        <rect x="910" y="560" width="280" height="56" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="1050" y="584" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Voided</text>
+        <text x="1050" y="600" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">refund owed until admin Mark refunded</text>
+
+        <rect x="60" y="300" width="280" height="72" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="200" y="326" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Dismissed — zero proof at 15:00</text>
+        <text x="200" y="342" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tracker: “no payment received”</text>
+        <text x="200" y="356" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">queue auto-clears</text>
+
+        <rect x="60" y="460" width="280" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="200" y="486" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Restored</text>
+        <text x="200" y="502" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">re-arms 15 min · tracker flips back</text>
+        <text x="200" y="516" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">re-attach the same screenshot</text>
+
+        <rect x="460" y="520" width="280" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="546" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Cooked → cashier Mark served</text>
+        <text x="600" y="562" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tracker flips cooking → READY</text>
+        <text x="600" y="576" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">collect with order code · feeds analytics</text>
+
+        <rect x="460" y="640" width="280" height="72" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="600" y="666" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Unclaimed — money kept</text>
+        <text x="600" y="682" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">paid, never collected at close · counts as revenue</text>
+        <text x="600" y="696" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">returns with code → Collect late</text>
+
+        <!-- legend -->
+        <line x1="40" y1="880" x2="1160" y2="880" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="896" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+        <line x1="150" y1="893" x2="182" y2="893" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="190" y="896" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">step</text>
+        <line x1="300" y1="893" x2="332" y2="893" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <text x="340" y="896" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">cashier / server action</text>
+        <line x1="580" y1="893" x2="612" y2="893" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text x="620" y="896" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">auto-verified path (focal)</text>
+      </svg>
+    </div>
+
+    <section class="spec">
+      <h2>Spec</h2>
+      <dl>
+        <dt>Order tracker</dt>
+        <dd>Live status screen, session/account-bound. The order code is shown, never typed; reopen from the account with zero typing. 5–10 s poll: awaiting payment → verifying → cooking → READY.</dd>
+        <dt>Pay GCash → Attach</dt>
+        <dd>OS screenshot, newest thumbnail, auto-uploads. Failed → “Upload failed — tap to retry”; amount (prefilled) + ref#.</dd>
+        <dt>Auto-verified?</dt>
+        <dd>Amount + ref match → the kitchen ticket appears the same instant. Mismatch or blank ref → flagged hold.</dd>
+        <dt>Kitchen ticket</dt>
+        <dd>Order code + age timer. Scheduled pickup: dimmed in LATER, promoted at pickup − 15 min.</dd>
+        <dt>Flagged hold</dt>
+        <dd>The kitchen waits; both numbers shown side by side; the cashier makes a one-tap Approve / Reject.</dd>
+        <dt>Payment rejected</dt>
+        <dd>Tracker: “Payment needs checking — see the counter”; entered amount + order total shown; ticket off the board; refund owed (claimed). Cashier Approve (undo) → the ticket rejoins by age.</dd>
+        <dt>Voided</dt>
+        <dd>Cashier Void → refund owed survives until admin Mark refunded.</dd>
+        <dt>Dismissed</dt>
+        <dd><code>deadlineAt</code> reached with zero proof and not mid-upload → tracker flips: “Order dismissed — no payment received”; queue auto-clears into the Dismissed list.</dd>
+        <dt>Restored</dt>
+        <dd>Cashier Restore re-arms the 15-minute window; the tracker flips back to awaiting payment; the customer re-attaches the same screenshot.</dd>
+        <dt>Cooked → Mark served</dt>
+        <dd>Cashier marks served; the tracker flips cooking → READY the same instant; collect with order code; feeds analytics.</dd>
+        <dt>Unclaimed</dt>
+        <dd>Paid but never collected at close — money kept, counts as revenue. Returns with code → cashier Collect late.</dd>
+        <dt>Void from Dismissed</dt>
+        <dd>Void is also reachable from the Dismissed list — see the cashier chart (<em>cashier.html</em>).</dd>
+      </dl>
+    </section>
+  </div>
+</body>
+</html>

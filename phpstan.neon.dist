@@ -1,0 +1,22 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+
+parameters:
+    paths:
+        - app
+        - routes
+    level: max
+    # The Pest PHPStan plugin (which teaches PHPStan the Pest test API) is not
+    # published for the Pest 3 line Laravel 12 uses, so test files are analysed
+    # by Pest itself rather than PHPStan.
+    #
+    # Larastan's bootstrap and analysis exceed PHP's default 128M limit, so the
+    # bootstrap raises it before analysis starts — including in the worker
+    # process PHPStan forks, which inherits the CLI memory limit.
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+    # Run in a single process: parallel workers inherit the CLI memory limit,
+    # and Larastan's bootstrap exceeds a typical 128M default per worker.
+    parallel:
+        maximumNumberOfProcesses: 1

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer — browse to order</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1300px; width: 100%; min-width: 0; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 0.75rem;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--color-muted);
+      max-width: 62ch;
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 1200px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+
+    .spec { margin-top: 2.5rem; border-top: 1px solid rgba(45,49,66,0.12); padding-top: 1.5rem; }
+    .spec h2 {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 1rem;
+    }
+    .spec dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1.25rem; }
+    .spec dt { font-weight: 600; font-size: 0.8125rem; white-space: nowrap; }
+    .spec dd { font-size: 0.8125rem; line-height: 1.5; color: var(--color-muted); }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Customer · Flowchart</p>
+    <h1>Customer — browse to order</h1>
+    <p class="subtitle">Browse is open to everyone; ordering requires Sign in with Google. Online orders are pickup-only, GCash-only, identified by order code. Payment is in <em>customer-payment.html</em>; rentals and the read-only views are in <em>customer-rentals.html</em>.</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 980" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="customer-order-title customer-order-desc">
+        <title id="customer-order-title">Customer — browse to order</title>
+        <desc id="customer-order-desc">Flowchart of the customer ordering path: arrival, open check, menu, product and cart, sign-in, checkout, and the order POST that opens the 15-minute payment window.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- ================= arrows ================= -->
+        <line x1="600" y1="96" x2="600" y2="140" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="460" y1="176" x2="340" y2="176" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="368" y="156" width="48" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="392" y="165" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CLOSED</text>
+
+        <line x1="600" y1="212" x2="600" y2="260" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="608" y="228" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="624" y="237" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OPEN</text>
+
+        <line x1="600" y1="332" x2="600" y2="380" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="600" y1="436" x2="600" y2="480" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <path d="M740,408 H800 Q808,408 808,416 V508 Q808,516 816,516 H880" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="816" y="450" width="64" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="848" y="459" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FAVORITE</text>
+
+        <path d="M1020,552 V592 Q1020,600 1012,600 H708 Q700,600 700,592 V568" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="860" y="576" width="64" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="892" y="585" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LAST PICK</text>
+
+        <line x1="600" y1="568" x2="600" y2="598" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="480" y1="628" x2="340" y2="628" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="392" y="608" width="24" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="404" y="617" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+        <path d="M200,656 V720 Q200,728 208,728 H460" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="208" y="684" width="56" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="236" y="693" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SIGN IN</text>
+
+        <line x1="600" y1="658" x2="600" y2="700" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="608" y="670" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="624" y="679" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+        <line x1="600" y1="756" x2="600" y2="800" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+        <!-- ================= nodes ================= -->
+        <rect x="480" y="40" width="240" height="56" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="600" y="64" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Arrive at /</text>
+        <text x="600" y="80" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">menu visible · no login wall</text>
+
+        <polygon points="600,140 740,176 600,212 460,176" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="170" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Open?</text>
+        <text x="600" y="186" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">hours · closures · GCash set</text>
+
+        <rect x="60" y="140" width="280" height="72" rx="20" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="200" y="166" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Read-only</text>
+        <text x="200" y="182" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">menu + announcement</text>
+        <text x="200" y="196" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">place-order disabled · reason shown</text>
+
+        <rect x="460" y="260" width="280" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="286" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Menu</text>
+        <text x="600" y="302" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">grouped by category · promo / Top 3 tags</text>
+        <text x="600" y="316" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">computed prices from the catalog cache</text>
+
+        <rect x="460" y="380" width="280" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="404" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Product page → Add to cart</text>
+        <text x="600" y="420" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">steppers · add-ons · computed totals</text>
+
+        <rect x="460" y="480" width="280" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="506" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Cart</text>
+        <text x="600" y="522" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">inline steppers + add-on picks</text>
+        <text x="600" y="536" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">last pick pre-checked from users/{uid}</text>
+        <text x="600" y="550" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">totals recompute server-side</text>
+
+        <rect x="880" y="480" width="280" height="72" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="1020" y="506" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Per-account prefs</text>
+        <text x="1020" y="522" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">favorites + last add-on selection</text>
+        <text x="1020" y="536" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">syncs across devices</text>
+
+        <polygon points="600,598 720,628 600,658 480,628" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="624" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Signed in?</text>
+        <text x="600" y="640" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">at place order</text>
+
+        <rect x="60" y="600" width="280" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="200" y="624" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Sign in with Google</text>
+        <text x="200" y="640" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">one tap · session remembered</text>
+
+        <rect x="460" y="700" width="280" height="56" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="600" y="724" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Checkout — pickup time</text>
+        <text x="600" y="740" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">default ASAP · earliest = now + 15 min</text>
+
+        <rect x="460" y="800" width="280" height="72" rx="6" fill="#f5f5f5"/>
+        <rect x="460" y="800" width="280" height="72" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <text x="600" y="826" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Place order — POST to Laravel</text>
+        <text x="600" y="842" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">validated · throttled · idempotency key</text>
+        <text x="600" y="856" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order code + GCash number + QR · 15-min window starts</text>
+
+        <!-- legend -->
+        <line x1="40" y1="900" x2="1160" y2="900" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="916" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+        <line x1="150" y1="913" x2="182" y2="913" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="190" y="916" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">step</text>
+        <line x1="300" y1="913" x2="332" y2="913" stroke="#4f5d75" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <text x="340" y="916" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">optional / side path</text>
+        <line x1="540" y1="913" x2="572" y2="913" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text x="580" y="916" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">order placed (focal)</text>
+      </svg>
+    </div>
+
+    <section class="spec">
+      <h2>Spec</h2>
+      <dl>
+        <dt>Browse</dt>
+        <dd>Open to everyone — the menu is visible with no login wall. Filter by tapping a category chip.</dd>
+        <dt>Open?</dt>
+        <dd>Hours + force-close + scheduled closures + GCash number &amp; QR configured. Closed or setup incomplete → read-only: menu + announcement, place-order disabled with a plain reason (admin sees “Complete setup”). Open → the menu.</dd>
+        <dt>Menu</dt>
+        <dd>Grouped by category, promo / Top 3 tags, computed prices, served from the catalog cache (no image re-read per view).</dd>
+        <dt>Product page</dt>
+        <dd>Add to cart with steppers, add-ons, and computed totals.</dd>
+        <dt>Per-account prefs</dt>
+        <dd>Favorites and the last add-on selection save to <code>users/{uid}</code> and sync across devices; the last pick is pre-checked in the cart.</dd>
+        <dt>Cart</dt>
+        <dd>Inline steppers + add-on picks; last pick pre-checked from <code>users/{uid}</code>; totals recompute server-side.</dd>
+        <dt>Sign in</dt>
+        <dd>Sign in with Google — one tap, session remembered.</dd>
+        <dt>Checkout</dt>
+        <dd>Pickup time, default ASAP; earliest = now + 15 min.</dd>
+        <dt>Place order</dt>
+        <dd>POST to Laravel: validated, throttled, idempotency key. Returns the order code + GCash number + QR; the 15-minute payment window (<code>deadlineAt</code>) starts.</dd>
+      </dl>
+    </section>
+  </div>
+</body>
+</html>
