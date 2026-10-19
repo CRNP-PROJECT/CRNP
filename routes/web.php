@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\BackupDownloadController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\HistoricalSalesController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RentalController as AdminRentalController;
 use App\Http\Controllers\Admin\ReportsController;
@@ -251,6 +252,14 @@ Route::middleware(['auth', 'staff.role:admin'])->prefix('admin')->name('admin.')
     Route::get('/reports/reservations', [ReportsController::class, 'reservations'])->name('reports.reservations');
     Route::get('/reports/rentals', [ReportsController::class, 'rentals'])->name('reports.rentals');
     Route::post('/reports/refunds/{order}/mark', [ReportsController::class, 'markRefunded'])->name('reports.refunds.mark');
+
+    // Historical sales encoding — an admin tool that records past sales into the
+    // `sales/{id}` ledger on a chosen date. The `historical.sales` gate answers
+    // 404 when the feature is off.
+    Route::middleware('historical.sales')->group(function (): void {
+        Route::get('/historical', [HistoricalSalesController::class, 'create'])->name('historical.create');
+        Route::post('/historical', [HistoricalSalesController::class, 'store'])->name('historical.store');
+    });
 
     // Activity — the bounded feed (time · who · action · order code) plus the
     // per-cashier daily totals grouped by `handledBy`.

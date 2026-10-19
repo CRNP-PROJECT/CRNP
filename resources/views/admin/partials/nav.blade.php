@@ -29,6 +29,13 @@
         'admin.staff.index' => ['admin.staff.'],
         'admin.settings.edit' => ['admin.settings.'],
     ];
+
+    // The historical-sales encoding tool: its link shows only while the feature
+    // is enabled.
+    if (config('settings.historical_sales_enabled')) {
+        $links['historical'] = ['admin.historical.create', 'Encode sales'];
+        $prefixes['admin.historical.create'] = ['admin.historical.'];
+    }
 @endphp
 <header class="site-header">
     <span class="site-title">{{ config('app.name') }} · Admin</span>

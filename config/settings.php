@@ -39,4 +39,14 @@ return [
 
     'facebook_url' => env('FACEBOOK_URL', 'https://www.facebook.com/cratesnplatesdiner/'),
 
+    /*
+    | The **historical sales encoding** surface, which lets an admin record past
+    | sales into the `sales/{id}` ledger with a chosen `soldAt`. Set
+    | `HISTORICAL_SALES_ENABLED=false` to hide it — the link disappears and both
+    | routes answer 404 — while every encoded row stays in the ledger and keeps
+    | feeding the reports.
+    */
+
+    'historical_sales_enabled' => (bool) env('HISTORICAL_SALES_ENABLED', true),
+
 ];

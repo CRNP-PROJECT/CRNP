@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Application;
+use App\Http\Middleware\EnsureHistoricalSalesEnabled;
 use App\Http\Middleware\EnsureKitchenSecret;
 use App\Http\Middleware\EnsureStaffRole;
 use App\Http\Middleware\RedirectToCanonicalHost;
@@ -40,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'staff.role' => EnsureStaffRole::class,
             'kitchen.secret' => EnsureKitchenSecret::class,
+            'historical.sales' => EnsureHistoricalSalesEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

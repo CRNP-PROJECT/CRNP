@@ -967,6 +967,49 @@
         gap: var(--space-2);
     }
 
+    /* The historical-sales encoding form: a date, a payment-method toggle, and
+       a wrapping list of product lines. */
+    .historical-form {
+        display: grid;
+        gap: var(--space-4);
+        max-width: 48rem;
+    }
+
+    .line-set {
+        display: grid;
+        gap: var(--space-3);
+        padding: var(--space-3);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
+    .line-rows {
+        display: grid;
+        gap: var(--space-2);
+    }
+
+    .line-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: var(--space-2);
+    }
+
+    .line-row .field {
+        flex: 1 1 6rem;
+    }
+
+    .line-row .line-row__product {
+        flex: 2 1 14rem;
+    }
+
+    .historical-total {
+        padding: var(--space-3);
+        background: var(--color-surface);
+        border: 1px dashed var(--color-border);
+        border-radius: var(--radius-md);
+    }
+
     .promo-preview {
         padding: var(--space-3);
         background: var(--color-surface);
