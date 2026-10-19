@@ -35,23 +35,34 @@ class AppServiceProvider extends ServiceProvider
             $baseUrl = config('services.firebase.database_url');
             /** @var string $serviceAccountPath */
             $serviceAccountPath = config('services.firebase.service_account_path');
+            /** @var ?string $serviceAccountJson */
+            $serviceAccountJson = config('services.firebase.service_account_json');
             /** @var string $tokenUri */
             $tokenUri = config('services.firebase.token_uri');
             /** @var int $tokenTtl */
             $tokenTtl = config('services.firebase.token_ttl');
+
+            // The inline JSON exists for hosts without a writable credential
+            // file (Render's free plan has no disk); it wins over the path.
+            $hasInlineCredential = is_string($serviceAccountJson) && trim($serviceAccountJson) !== '';
 
             // Local development without the service-account JSON (it is not in
             // version control) must still boot: fall back to the in-memory
             // client so pages render with empty data instead of a 500. Any
             // environment other than `local` still fails loudly on a missing
             // credential, because a silently empty production database is worse.
-            if ($this->app->environment('local') && ! is_file($serviceAccountPath)) {
+            if ($this->app->environment('local') && ! $hasInlineCredential && ! is_file($serviceAccountPath)) {
                 return new InMemoryRtdbClient();
             }
 
             return new RestRtdbClient(
                 $baseUrl,
-                new ServiceAccountTokenProvider($serviceAccountPath, $tokenUri, $tokenTtl),
+                new ServiceAccountTokenProvider(
+                    $serviceAccountPath,
+                    $tokenUri,
+                    $tokenTtl,
+                    $hasInlineCredential ? $serviceAccountJson : null,
+                ),
             );
         });
 

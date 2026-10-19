@@ -44,6 +44,7 @@ return [
     'firebase' => [
         'database_url' => env('FIREBASE_DATABASE_URL'),
         'service_account_path' => env('FIREBASE_SERVICE_ACCOUNT_PATH', storage_path('app/firebase-service-account.json')),
+        'service_account_json' => env('FIREBASE_SERVICE_ACCOUNT_JSON'),
         'token_uri' => env('FIREBASE_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
         'token_ttl' => (int) env('FIREBASE_TOKEN_TTL', 3300),
     ],

@@ -1,40 +1,38 @@
-# Step 1: PHP & Dependencies
-FROM php:8.2-fpm as base
+# Laravel 12 + Firebase RTDB served by PHP's built-in server. No asset build
+# step: the app ships plain CSS/JS, so there is no npm stage.
+FROM php:8.4-fpm
 
-# Install system dependencies
+# GD needs its JPEG/PNG/WebP/freetype libraries at compile time: proof
+# screenshots and catalog images are re-encoded server-side with GD.
 RUN apt-get update && apt-get install -y \
     git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
     unzip \
-    nodejs \
-    npm
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libwebp-dev \
+    libonig-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install gd mbstring bcmath \
+    && rm -rf /var/lib/apt/lists/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
-
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Set working directory
 WORKDIR /var/www
 
-# Copy application code
 COPY . /var/www
 
-# Install Composer dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-interaction \
+    && mkdir -p \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/app/exports \
+        storage/logs \
+        bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
-# Install NPM dependencies & build Vite/Tailwind assets
-RUN npm install
-RUN npm run build
+# Render routes traffic to $PORT (default 10000) on 0.0.0.0.
+EXPOSE 10000
 
-# Expose port and start Laravel server
-EXPOSE 8080
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+ENTRYPOINT ["/bin/sh", "/var/www/docker/entrypoint.sh"]

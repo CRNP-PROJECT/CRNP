@@ -26,11 +26,14 @@ final class ServiceAccountTokenProvider
      * @param  string  $serviceAccountPath  Absolute path to the service-account JSON.
      * @param  string  $tokenUri  Google's OAuth2 token endpoint.
      * @param  int  $ttlSeconds  Cache lifetime, kept below the 3600 s token lifetime.
+     * @param  ?string  $serviceAccountJson  Inline service-account JSON; wins over the path when set,
+     *                                       so hosts without a writable credential file can supply it.
      */
     public function __construct(
         private readonly string $serviceAccountPath,
         private readonly string $tokenUri,
         private readonly int $ttlSeconds = 3300,
+        private readonly ?string $serviceAccountJson = null,
     ) {}
 
     /**
@@ -38,7 +41,7 @@ final class ServiceAccountTokenProvider
      */
     public function token(): string
     {
-        $key = 'rtdb_sa_token_' . md5($this->serviceAccountPath);
+        $key = 'rtdb_sa_token_' . md5($this->serviceAccountPath . '|' . ($this->serviceAccountJson ?? ''));
 
         return (string) Cache::remember($key, $this->ttlSeconds, fn(): string => $this->mint());
     }
@@ -78,14 +81,18 @@ final class ServiceAccountTokenProvider
      */
     private function readServiceAccount(): array
     {
-        if (! is_file($this->serviceAccountPath)) {
-            throw new RuntimeException('The service-account JSON was not found at the configured path.');
-        }
+        $raw = $this->serviceAccountJson;
 
-        $raw = file_get_contents($this->serviceAccountPath);
+        if ($raw === null || trim($raw) === '') {
+            if (! is_file($this->serviceAccountPath)) {
+                throw new RuntimeException('The service-account JSON was not found at the configured path.');
+            }
 
-        if ($raw === false) {
-            throw new RuntimeException('The service-account JSON could not be read.');
+            $raw = file_get_contents($this->serviceAccountPath);
+
+            if ($raw === false) {
+                throw new RuntimeException('The service-account JSON could not be read.');
+            }
         }
 
         $account = json_decode($raw, true);
