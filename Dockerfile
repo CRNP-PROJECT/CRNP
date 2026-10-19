@@ -1,57 +1,40 @@
-FROM php:8.4-cli
+# Step 1: PHP & Dependencies
+FROM php:8.2-fpm as base
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
-    unzip \
     curl \
-    libzip-dev \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    && docker-php-ext-install \
-    pdo \
-    pdo_mysql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
     zip \
-    && rm -rf /var/lib/apt/lists/*
+    unzip \
+    nodejs \
+    npm
 
-# Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
-WORKDIR /var/www/html
+WORKDIR /var/www
 
-# Copy project
-COPY . .
+# Copy application code
+COPY . /var/www
 
-# Install PHP dependencies
-RUN composer install \
-    --no-dev \
-    --optimize-autoloader \
-    --no-interaction
+# Install Composer dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-# Create required Laravel directories
-RUN mkdir -p \
-    storage/framework/cache \
-    storage/framework/sessions \
-    storage/framework/views \
-    storage/logs \
-    bootstrap/cache
+# Install NPM dependencies & build Vite/Tailwind assets
+RUN npm install
+RUN npm run build
 
-# Set permissions
-RUN chmod -R 775 storage bootstrap/cache
-
-# Laravel production settings
-ENV APP_ENV=production
-ENV APP_DEBUG=false
-
-# Render provides the PORT environment variable
-EXPOSE 10000
-
-# Start Laravel server
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+# Expose port and start Laravel server
+EXPOSE 8080
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
