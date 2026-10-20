@@ -194,10 +194,11 @@ it('lists each product add-on as a pick on the encoding form', function (): void
 
     $this->get(route('admin.historical.create'))
         ->assertOk()
-        // The picker JSON the script builds the checkboxes from, and the group.
-        ->assertSee('product-addons', false)
+        // The add-on is drawn server-side, so it is in the HTML even before any
+        // script runs — that is what makes it trackable in the form itself.
         ->assertSee('Extra pearls')
-        ->assertSee('line-row__addons', false);
+        ->assertSee('line-row__addons', false)
+        ->assertSee('name="lines[0][addOns][]"', false);
 });
 
 it('rejects an add-on the product does not offer', function (): void {

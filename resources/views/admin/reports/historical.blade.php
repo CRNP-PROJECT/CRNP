@@ -58,28 +58,7 @@
                         @endphp
 
                         @foreach ($rows as $i => $row)
-                            <div class="line-row">
-                                <label class="field">
-                                    <span class="visually-hidden">Product</span>
-                                    <select class="field__input line-row__product" name="lines[{{ $i }}][productId]">
-                                        <option value="">— pick a product —</option>
-                                        @foreach ($products as $product)
-                                            <option value="{{ $product->id }}" data-price="{{ $product->sellingPrice() }}" @selected(($row['productId'] ?? '') === $product->id)>{{ $product->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </label>
-                                <label class="field">
-                                    <span class="visually-hidden">Quantity</span>
-                                    <input class="field__input line-row__qty" type="number" min="1" step="1" name="lines[{{ $i }}][quantity]" value="{{ $row['quantity'] ?? 1 }}" placeholder="Qty">
-                                </label>
-                                <label class="field">
-                                    <span class="visually-hidden">Unit price</span>
-                                    <input class="field__input line-row__price" type="number" min="0" step="0.01" name="lines[{{ $i }}][unitPrice]" value="{{ $row['unitPrice'] ?? '' }}" placeholder="₱ each (optional)">
-                                </label>
-                                <button type="button" class="link-button line-row__remove">Remove</button>
-
-                                <div class="line-row__addons" data-line="{{ $i }}" data-chosen="{{ json_encode(array_values((array) ($row['addOns'] ?? []))) }}"></div>
-                            </div>
+                            @include('admin.reports.partials.line-row', ['i' => $i, 'row' => $row, 'products' => $products])
                         @endforeach
 
                         @error('lines')<span class="field__error">{{ $message }}</span>@enderror
@@ -102,67 +81,24 @@
             </form>
 
             <template id="line-row-template">
-                <div class="line-row">
-                    <label class="field">
-                        <span class="visually-hidden">Product</span>
-                        <select class="field__input line-row__product" name="lines[__i__][productId]">
-                            <option value="">— pick a product —</option>
-                            @foreach ($products as $product)
-                                <option value="{{ $product->id }}" data-price="{{ $product->sellingPrice() }}">{{ $product->name }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <label class="field">
-                        <span class="visually-hidden">Quantity</span>
-                        <input class="field__input line-row__qty" type="number" min="1" step="1" name="lines[__i__][quantity]" value="1" placeholder="Qty">
-                    </label>
-                    <label class="field">
-                        <span class="visually-hidden">Unit price</span>
-                        <input class="field__input line-row__price" type="number" min="0" step="0.01" name="lines[__i__][unitPrice]" placeholder="₱ each (optional)">
-                    </label>
-                    <button type="button" class="link-button line-row__remove">Remove</button>
-
-                    <div class="line-row__addons" data-line="__i__"></div>
-                </div>
+                @include('admin.reports.partials.line-row', ['i' => '__i__', 'row' => [], 'products' => $products])
             </template>
         @endif
     </main>
 
     @if ($products !== [])
-        @php
-            // productId => list of {name, price} — the add-ons each product
-            // offers, so the script can show the right checkboxes per line.
-            $addOnMap = [];
-            foreach ($products as $product) {
-                $addOnMap[$product->id] = array_map(
-                    static fn ($addOn): array => ['name' => $addOn->name, 'price' => $addOn->price],
-                    $product->addOns,
-                );
-            }
-        @endphp
-
-        <script type="application/json" id="product-addons">{!! json_encode($addOnMap, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
-
         <script>
             (function () {
                 const rows = document.getElementById('line-rows');
                 const addButton = document.getElementById('line-add');
                 const template = document.getElementById('line-row-template');
                 const totalEl = document.getElementById('historical-total');
-                const addOnEl = document.getElementById('product-addons');
 
-                if (!rows || !addButton || !template || !totalEl || !addOnEl) {
+                if (!rows || !addButton || !template || !totalEl) {
                     return;
                 }
 
                 let counter = rows.querySelectorAll('.line-row').length;
-
-                let addOnMap = {};
-                try {
-                    addOnMap = JSON.parse(addOnEl.textContent) || {};
-                } catch (e) {
-                    addOnMap = {};
-                }
 
                 const money = (amount) => '₱' + amount.toFixed(2);
 
@@ -197,64 +133,23 @@
                     totalEl.textContent = money(Math.round(total * 100) / 100);
                 };
 
-                // Rebuild one row's add-on checkboxes for the product it now
-                // shows, keeping any picks the product still offers.
-                const renderAddOns = (row) => {
-                    const select = row.querySelector('.line-row__product');
-                    const group = row.querySelector('.line-row__addons');
-                    const productId = select.value;
-                    const offered = addOnMap[productId] || [];
+                // The row ships one add-on group per product, all server-rendered;
+                // show only the group for the chosen product, hide the rest, and
+                // un-tick the hidden ones so a stray pick can't post.
+                const showAddOns = (row) => {
+                    const productId = row.querySelector('.line-row__product').value;
 
-                    // Seed from the server-side picks (a re-render after a
-                    // validation bounce), then fold in whatever is ticked now.
-                    const chosen = new Set();
+                    row.querySelectorAll('.line-row__addons').forEach((group) => {
+                        const matches = group.dataset.product === productId && productId !== '';
 
-                    if (group.dataset.chosen) {
-                        try {
-                            JSON.parse(group.dataset.chosen).forEach((name) => chosen.add(name));
-                        } catch (e) { /* ignore */ }
-                    }
+                        group.hidden = !matches;
 
-                    group.querySelectorAll('.line-row__addon:checked').forEach((box) => chosen.add(box.value));
-
-                    // The line names its add-ons under its own form index.
-                    const lineKey = group.dataset.line;
-                    delete group.dataset.chosen;
-
-                    group.innerHTML = '';
-
-                    if (offered.length === 0) {
-                        group.hidden = true;
-                        return;
-                    }
-
-                    const legend = document.createElement('span');
-                    legend.className = 'line-row__addons-label';
-                    legend.textContent = 'Add-ons';
-                    group.appendChild(legend);
-
-                    offered.forEach((addOn) => {
-                        const label = document.createElement('label');
-                        label.className = 'line-row__addon-option';
-
-                        const box = document.createElement('input');
-                        box.type = 'checkbox';
-                        box.className = 'line-row__addon';
-                        box.name = 'lines[' + lineKey + '][addOns][]';
-                        box.value = addOn.name;
-                        box.dataset.price = String(addOn.price);
-                        box.checked = chosen.has(addOn.name);
-                        box.addEventListener('change', recalc);
-
-                        const text = document.createElement('span');
-                        text.textContent = addOn.price > 0 ? addOn.name + ' (+' + money(addOn.price) + ')' : addOn.name;
-
-                        label.appendChild(box);
-                        label.appendChild(text);
-                        group.appendChild(label);
+                        if (!matches) {
+                            group.querySelectorAll('.line-row__addon:checked').forEach((box) => {
+                                box.checked = false;
+                            });
+                        }
                     });
-
-                    group.hidden = false;
                 };
 
                 const wire = (row) => {
@@ -268,12 +163,13 @@
                             price.value = option.dataset.price;
                         }
 
-                        renderAddOns(row);
+                        showAddOns(row);
                         recalc();
                     });
 
                     row.querySelector('.line-row__qty').addEventListener('input', recalc);
                     price.addEventListener('input', recalc);
+                    row.querySelectorAll('.line-row__addon').forEach((box) => box.addEventListener('change', recalc));
 
                     row.querySelector('.line-row__remove').addEventListener('click', () => {
                         if (rows.querySelectorAll('.line-row').length > 1) {
@@ -282,7 +178,7 @@
                         }
                     });
 
-                    renderAddOns(row);
+                    showAddOns(row);
                 };
 
                 rows.querySelectorAll('.line-row').forEach(wire);
