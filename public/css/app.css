@@ -3616,6 +3616,35 @@
             overflow-x: auto;
             white-space: nowrap;
         }
+
+        /* Historical encoding on a phone: the payment toggle wraps instead of
+           overflowing, and each item row stacks its fields full-width so the
+           qty, price, and Remove control stay legible and tappable. */
+        .segmented {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .segmented__option {
+            flex: 1 1 auto;
+        }
+
+        .line-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            align-items: stretch;
+        }
+
+        .line-row .field,
+        .line-row .line-row__product {
+            flex: none;
+        }
+
+        .line-row__remove {
+            justify-self: start;
+            min-height: var(--tap-target-touch);
+        }
     }
 }
 
