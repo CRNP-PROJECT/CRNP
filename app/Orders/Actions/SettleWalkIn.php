@@ -71,10 +71,13 @@ final readonly class SettleWalkIn
 
         // `sales/{id}` is 1:1 with the order key — the shared key makes a second
         // sale structurally impossible. `lines` ride along so the Top 3 ranking
-        // (#31) can tally units per product without re-reading the order.
+        // (#31) can tally units per product without re-reading the order, and
+        // `serviceType` is snapshotted so the sales report splits dine-in from
+        // take-out without re-reading the order either.
         $this->client->set("sales/{$orderId}", [
             'code' => $order->code,
             'type' => $order->type,
+            'serviceType' => $order->serviceType?->value,
             'lines' => array_map(static fn(LineItem $line): array => $line->toNode(), $order->lines),
             'total' => $order->total,
             'payments' => $payments,

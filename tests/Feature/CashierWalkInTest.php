@@ -290,3 +290,37 @@ it('shows an empty state for a category with no items', function (): void {
         ->assertDontSee('Milktea')
         ->assertSee('No items in this category');
 });
+
+it('defaults a walk-in to take-out and stamps it on the sale row', function (): void {
+    seedProduct('p1', ['price' => 200.0]);
+
+    $orderId = openWalkIn();
+
+    expect(rtdb()->get("orders/{$orderId}")['serviceType'])->toBe('take_out');
+
+    addItem($orderId, 'p1');
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200']);
+
+    expect(rtdb()->get("sales/{$orderId}")['serviceType'])->toBe('take_out');
+});
+
+it('records a dine-in walk-in chosen at the register', function (): void {
+    seedProduct('p1', ['price' => 200.0]);
+
+    $this->post(route('cashier.walkins.store'), ['serviceType' => 'dine_in'])->assertRedirect();
+
+    $orders = rtdb()->get('orders');
+    $orderId = (string) array_key_first($orders);
+
+    expect(rtdb()->get("orders/{$orderId}")['serviceType'])->toBe('dine_in');
+
+    addItem($orderId, 'p1');
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200']);
+
+    expect(rtdb()->get("sales/{$orderId}")['serviceType'])->toBe('dine_in');
+});
+
+it('rejects an unknown service type at the register', function (): void {
+    $this->post(route('cashier.walkins.store'), ['serviceType' => 'brunch'])
+        ->assertSessionHasErrors('serviceType');
+});

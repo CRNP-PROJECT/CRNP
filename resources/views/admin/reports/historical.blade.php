@@ -49,6 +49,19 @@
                     @error('method')<span class="field__error">{{ $message }}</span>@enderror
                 </fieldset>
 
+                <fieldset class="field">
+                    <legend class="field__label">Service type</legend>
+                    <div class="segmented" role="group" aria-label="Service type">
+                        @foreach ($serviceTypes as $service)
+                            <label class="segmented__option">
+                                <input type="radio" name="serviceType" value="{{ $service->value }}" @checked(old('serviceType', 'take_out') === $service->value)>
+                                <span>{{ $service->label() }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    @error('serviceType')<span class="field__error">{{ $message }}</span>@enderror
+                </fieldset>
+
                 <fieldset class="line-set">
                     <legend class="field__label">Items sold</legend>
 

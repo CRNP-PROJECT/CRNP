@@ -76,6 +76,54 @@
                 <p class="site-main__copy">{{ $mix->orders }} {{ \Illuminate\Support\Str::plural('order', $mix->orders) }} in this range.</p>
             @endif
         </section>
+
+        <section class="dashboard-panel" aria-labelledby="service-heading">
+            <h2 id="service-heading">Service · {{ $from }} → {{ $to }}</h2>
+            <p class="site-main__copy">
+                How orders were served in this range. A backfilled sale recorded
+                before service type was tracked counts as unspecified.
+            </p>
+
+            @if ($serviceMix->orders === 0)
+                <p class="empty-state">No orders in this range.</p>
+            @else
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Service</th>
+                            <th scope="col">Orders</th>
+                            <th scope="col">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Dine-in</td>
+                            <td>{{ $serviceMix->dineInOrders }}</td>
+                            <td>₱{{ number_format($serviceMix->dineIn, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Take-out</td>
+                            <td>{{ $serviceMix->takeOutOrders }}</td>
+                            <td>₱{{ number_format($serviceMix->takeOut, 2) }}</td>
+                        </tr>
+                        @if ($serviceMix->unspecified > 0)
+                            <tr>
+                                <td>Unspecified</td>
+                                <td>{{ $serviceMix->orders - $serviceMix->dineInOrders - $serviceMix->takeOutOrders }}</td>
+                                <td>₱{{ number_format($serviceMix->unspecified, 2) }}</td>
+                            </tr>
+                        @endif
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th scope="row">Total</th>
+                            <td>{{ $serviceMix->orders }}</td>
+                            <td>₱{{ number_format($serviceMix->total(), 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            @endif
+        </section>
     </main>
 </body>
 </html>

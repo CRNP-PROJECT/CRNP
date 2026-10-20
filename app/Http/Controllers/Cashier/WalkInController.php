@@ -42,7 +42,7 @@ final class WalkInController extends Controller
 
     public function store(OpenWalkInRequest $request, OpenWalkIn $openWalkIn): RedirectResponse
     {
-        $id = $openWalkIn($this->cashier(), $request->table());
+        $id = $openWalkIn($this->cashier(), $request->table(), $request->serviceType());
 
         return redirect()->route('cashier.walkins.show', ['walkin' => $id]);
     }

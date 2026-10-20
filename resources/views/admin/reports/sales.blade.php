@@ -48,6 +48,7 @@
                         <tr>
                             <th scope="col">Code</th>
                             <th scope="col">Type</th>
+                            <th scope="col">Service</th>
                             <th scope="col">Sold at</th>
                             <th scope="col">Handled by</th>
                             <th scope="col">Total</th>
@@ -55,9 +56,15 @@
                     </thead>
                     <tbody>
                         @foreach ($sales as $sale)
+                            @php
+                                $service = is_string($sale['serviceType'] ?? null)
+                                    ? \App\Orders\ServiceType::tryFrom($sale['serviceType'])
+                                    : null;
+                            @endphp
                             <tr>
                                 <td>{{ $sale['code'] ?? '—' }}</td>
                                 <td>{{ $sale['type'] ?? '—' }}</td>
+                                <td>{{ $service?->label() ?? '—' }}</td>
                                 <td>{{ isset($sale['soldAt']) ? \Illuminate\Support\Carbon::parse($sale['soldAt'])->setTimezone('Asia/Manila')->format('Y-m-d H:i') : '—' }}</td>
                                 <td>{{ $sale['handledBy']['name'] ?? '—' }}</td>
                                 <td>₱{{ number_format((float) ($sale['total'] ?? 0), 2) }}</td>
@@ -66,7 +73,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th scope="row" colspan="4">Total</th>
+                            <th scope="row" colspan="5">Total</th>
                             <td>₱{{ number_format($total, 2) }}</td>
                         </tr>
                     </tfoot>

@@ -16,6 +16,7 @@ use App\Stats\Actions\MarkRefunded;
 use App\Stats\PaymentMix;
 use App\Stats\RefundsOwed;
 use App\Stats\SalesLedger;
+use App\Stats\ServiceMix;
 use App\Support\BusinessTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -95,6 +96,7 @@ final class ReportsController extends Controller
             'from' => $from,
             'to' => $to,
             'mix' => PaymentMix::fromSales($rows),
+            'serviceMix' => ServiceMix::fromSales($rows),
         ]);
     }
 

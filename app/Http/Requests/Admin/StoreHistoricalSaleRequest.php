@@ -9,6 +9,7 @@ use App\Catalog\Catalog;
 use App\Catalog\Product;
 use App\Orders\LineItem;
 use App\Orders\PaymentMethod;
+use App\Orders\ServiceType;
 use App\Rtdb\Contracts\RtdbClient;
 use App\Support\BusinessTime;
 use Carbon\CarbonImmutable;
@@ -82,6 +83,7 @@ class StoreHistoricalSaleRequest extends FormRequest
         return [
             'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:' . $this->businessToday()],
             'method' => ['required', Rule::enum(PaymentMethod::class)],
+            'serviceType' => ['required', Rule::enum(ServiceType::class)],
             'lines' => ['required', 'array', 'min:1', 'max:50'],
             'lines.*.productId' => ['required', 'string', $this->existingProduct()],
             'lines.*.quantity' => ['required', 'integer', 'min:1', 'max:9999'],
@@ -105,6 +107,14 @@ class StoreHistoricalSaleRequest extends FormRequest
         $validated = $this->validated();
 
         return PaymentMethod::from($validated['method']);
+    }
+
+    public function serviceType(): ServiceType
+    {
+        /** @var array{serviceType: string} $validated */
+        $validated = $this->validated();
+
+        return ServiceType::from($validated['serviceType']);
     }
 
     /**

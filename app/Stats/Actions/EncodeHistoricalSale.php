@@ -9,6 +9,7 @@ use App\Orders\OrderCode;
 use App\Orders\OrderType;
 use App\Orders\Payment;
 use App\Orders\PaymentMethod;
+use App\Orders\ServiceType;
 use App\Rtdb\Contracts\RtdbClient;
 use App\Support\BusinessTime;
 use Carbon\CarbonImmutable;
@@ -45,7 +46,7 @@ final readonly class EncodeHistoricalSale
      * @param  list<LineItem>  $lines
      * @return string  the new sale id
      */
-    public function __invoke(string $date, PaymentMethod $method, array $lines): string
+    public function __invoke(string $date, PaymentMethod $method, array $lines, ServiceType $serviceType = ServiceType::TakeOut): string
     {
         $total = LineItem::sum($lines);
         $id = 'hist-' . Str::ulid();
@@ -53,6 +54,7 @@ final readonly class EncodeHistoricalSale
         $this->client->set("sales/{$id}", [
             'code' => OrderCode::draw()->value,
             'type' => OrderType::WalkIn->value,
+            'serviceType' => $serviceType->value,
             'lines' => array_map(static fn(LineItem $line): array => $line->toNode(), $lines),
             'total' => $total,
             'payments' => [(new Payment($method, $total))->toNode()],

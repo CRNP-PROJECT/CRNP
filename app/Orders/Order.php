@@ -45,6 +45,7 @@ final readonly class Order
         public ?string $verifiedAt = null,
         public ?string $rejectedAt = null,
         public ?string $table = null,
+        public ?ServiceType $serviceType = null,
     ) {}
 
     /**
@@ -84,6 +85,7 @@ final readonly class Order
         $verifiedAt = $node['verifiedAt'] ?? null;
         $rejectedAt = $node['rejectedAt'] ?? null;
         $table = $node['table'] ?? null;
+        $serviceType = $node['serviceType'] ?? null;
 
         return new self(
             id: $id,
@@ -110,6 +112,7 @@ final readonly class Order
             verifiedAt: is_string($verifiedAt) && $verifiedAt !== '' ? $verifiedAt : null,
             rejectedAt: is_string($rejectedAt) && $rejectedAt !== '' ? $rejectedAt : null,
             table: is_string($table) && $table !== '' ? $table : null,
+            serviceType: is_string($serviceType) ? ServiceType::tryFrom($serviceType) : null,
         );
     }
 

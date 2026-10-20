@@ -8,6 +8,7 @@ use App\Catalog\Catalog;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreHistoricalSaleRequest;
 use App\Orders\PaymentMethod;
+use App\Orders\ServiceType;
 use App\Stats\Actions\EncodeHistoricalSale;
 use App\Support\BusinessTime;
 use Carbon\CarbonImmutable;
@@ -30,13 +31,14 @@ final class HistoricalSalesController extends Controller
         return view('admin.reports.historical', [
             'products' => $this->catalog->products(),
             'methods' => PaymentMethod::cases(),
+            'serviceTypes' => ServiceType::cases(),
             'today' => CarbonImmutable::now(BusinessTime::timezone())->toDateString(),
         ]);
     }
 
     public function store(StoreHistoricalSaleRequest $request, EncodeHistoricalSale $encode): RedirectResponse
     {
-        $encode($request->saleDate(), $request->paymentMethod(), $request->lines());
+        $encode($request->saleDate(), $request->paymentMethod(), $request->lines(), $request->serviceType());
 
         return redirect()
             ->route('admin.historical.create')

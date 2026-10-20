@@ -29,6 +29,7 @@ it('encodes a past sale that appears on its chosen date in the sales report', fu
     $this->post(route('admin.historical.store'), [
         'date' => '2026-10-01',
         'method' => 'cash',
+        'serviceType' => 'dine_in',
         'lines' => [['productId' => 'p1', 'quantity' => '2', 'unitPrice' => '120']],
     ])->assertRedirect(route('admin.historical.create'));
 
@@ -54,6 +55,7 @@ it('falls back to the product current price when the unit price is left blank', 
     $this->post(route('admin.historical.store'), [
         'date' => '2026-10-01',
         'method' => 'cash',
+        'serviceType' => 'dine_in',
         'lines' => [['productId' => 'p1', 'quantity' => '3', 'unitPrice' => '']],
     ])->assertRedirect();
 
@@ -66,6 +68,7 @@ it('records no handledBy so the sale stays out of the cashier activity totals', 
     $this->post(route('admin.historical.store'), [
         'date' => '2026-10-01',
         'method' => 'cash',
+        'serviceType' => 'dine_in',
         'lines' => [['productId' => 'p1', 'quantity' => '1']],
     ])->assertRedirect();
 
@@ -78,6 +81,7 @@ it('counts an encoded GCash sale on the GCash side of the payments report', func
     $this->post(route('admin.historical.store'), [
         'date' => '2026-10-01',
         'method' => 'gcash',
+        'serviceType' => 'dine_in',
         'lines' => [['productId' => 'p1', 'quantity' => '1', 'unitPrice' => '100']],
     ])->assertRedirect();
 
@@ -92,6 +96,7 @@ it('rejects a future sale date', function (): void {
     $this->post(route('admin.historical.store'), [
         'date' => '2026-10-07',
         'method' => 'cash',
+        'serviceType' => 'dine_in',
         'lines' => [['productId' => 'p1', 'quantity' => '1']],
     ])->assertSessionHasErrors('date');
 
@@ -102,6 +107,7 @@ it('rejects a line whose product does not exist', function (): void {
     $this->post(route('admin.historical.store'), [
         'date' => '2026-10-01',
         'method' => 'cash',
+        'serviceType' => 'dine_in',
         'lines' => [['productId' => 'nope', 'quantity' => '1']],
     ])->assertSessionHasErrors('lines.0.productId');
 
@@ -114,6 +120,7 @@ it('rejects a line with a zero quantity', function (): void {
     $this->post(route('admin.historical.store'), [
         'date' => '2026-10-01',
         'method' => 'cash',
+        'serviceType' => 'dine_in',
         'lines' => [['productId' => 'p1', 'quantity' => '0']],
     ])->assertSessionHasErrors('lines.0.quantity');
 
@@ -166,6 +173,7 @@ it('records the customer add-ons on a line and adds their prices to the total', 
     $this->post(route('admin.historical.store'), [
         'date' => '2026-10-01',
         'method' => 'cash',
+        'serviceType' => 'dine_in',
         'lines' => [[
             'productId' => 'p1',
             'quantity' => '2',
@@ -209,6 +217,7 @@ it('rejects an add-on the product does not offer', function (): void {
     $this->post(route('admin.historical.store'), [
         'date' => '2026-10-01',
         'method' => 'cash',
+        'serviceType' => 'dine_in',
         'lines' => [[
             'productId' => 'p1',
             'quantity' => '1',
@@ -217,4 +226,55 @@ it('rejects an add-on the product does not offer', function (): void {
     ])->assertSessionHasErrors('lines.0.addOns.0');
 
     expect(rtdb()->get('sales'))->toBeNull();
+});
+
+it('records the chosen service type on the encoded sale', function (): void {
+    seedProduct('p1', ['price' => 100.0]);
+
+    $this->post(route('admin.historical.store'), [
+        'date' => '2026-10-01',
+        'method' => 'cash',
+        'serviceType' => 'dine_in',
+        'lines' => [['productId' => 'p1', 'quantity' => '1', 'unitPrice' => '100']],
+    ])->assertRedirect(route('admin.historical.create'));
+
+    expect(array_values(rtdb()->get('sales'))[0]['serviceType'])->toBe('dine_in');
+});
+
+it('requires a service type to encode a sale', function (): void {
+    seedProduct('p1');
+
+    $this->post(route('admin.historical.store'), [
+        'date' => '2026-10-01',
+        'method' => 'cash',
+        'lines' => [['productId' => 'p1', 'quantity' => '1']],
+    ])->assertSessionHasErrors('serviceType');
+
+    expect(rtdb()->get('sales'))->toBeNull();
+});
+
+it('splits a day into dine-in and take-out on the payments report', function (): void {
+    seedProduct('p1', ['price' => 100.0]);
+
+    $this->post(route('admin.historical.store'), [
+        'date' => '2026-10-01',
+        'method' => 'cash',
+        'serviceType' => 'dine_in',
+        'lines' => [['productId' => 'p1', 'quantity' => '1', 'unitPrice' => '100']],
+    ])->assertRedirect();
+
+    $this->post(route('admin.historical.store'), [
+        'date' => '2026-10-01',
+        'method' => 'cash',
+        'serviceType' => 'take_out',
+        'lines' => [['productId' => 'p1', 'quantity' => '2', 'unitPrice' => '100']],
+    ])->assertRedirect();
+
+    $this->get(route('admin.reports.payments', ['from' => '2026-10-01', 'to' => '2026-10-01']))
+        ->assertOk()
+        ->assertSee('Dine-in')
+        ->assertSee('Take-out')
+        ->assertSee('₱100.00')
+        ->assertSee('₱200.00')
+        ->assertSee('₱300.00');
 });
