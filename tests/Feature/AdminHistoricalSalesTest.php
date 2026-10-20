@@ -152,3 +152,68 @@ it('shows the nav link while the feature is enabled', function (): void {
         ->assertSee('Encode sales')
         ->assertSee('Encode historical sales');
 });
+
+it('records the customer add-ons on a line and adds their prices to the total', function (): void {
+    seedProduct('p1', [
+        'name' => 'Milktea',
+        'price' => 100.0,
+        'addOns' => [
+            ['name' => 'Extra pearls', 'price' => 20.0],
+            ['name' => 'Less sugar', 'price' => 0.0],
+        ],
+    ]);
+
+    $this->post(route('admin.historical.store'), [
+        'date' => '2026-10-01',
+        'method' => 'cash',
+        'lines' => [[
+            'productId' => 'p1',
+            'quantity' => '2',
+            'unitPrice' => '100',
+            'addOns' => ['Extra pearls'],
+        ]],
+    ])->assertRedirect(route('admin.historical.create'));
+
+    $sale = array_values(rtdb()->get('sales'))[0];
+
+    // (100 base + 20 add-on) * 2 = 240.
+    expect($sale['total'])->toBe(240.0)
+        ->and($sale['lines'][0]['addOns'])->toBe([['name' => 'Extra pearls', 'price' => 20.0]]);
+
+    // The reader the receipt uses picks the add-on straight back up.
+    $this->get(route('admin.reports.sales', ['from' => '2026-10-01', 'to' => '2026-10-01']))
+        ->assertOk()
+        ->assertSee('₱240.00');
+});
+
+it('lists each product add-on as a pick on the encoding form', function (): void {
+    seedProduct('p1', [
+        'name' => 'Milktea',
+        'addOns' => [['name' => 'Extra pearls', 'price' => 20.0]],
+    ]);
+
+    $this->get(route('admin.historical.create'))
+        ->assertOk()
+        // The picker JSON the script builds the checkboxes from, and the group.
+        ->assertSee('product-addons', false)
+        ->assertSee('Extra pearls')
+        ->assertSee('line-row__addons', false);
+});
+
+it('rejects an add-on the product does not offer', function (): void {
+    seedProduct('p1', [
+        'addOns' => [['name' => 'Extra pearls', 'price' => 20.0]],
+    ]);
+
+    $this->post(route('admin.historical.store'), [
+        'date' => '2026-10-01',
+        'method' => 'cash',
+        'lines' => [[
+            'productId' => 'p1',
+            'quantity' => '1',
+            'addOns' => ['Free upgrade'],
+        ]],
+    ])->assertSessionHasErrors('lines.0.addOns.0');
+
+    expect(rtdb()->get('sales'))->toBeNull();
+});

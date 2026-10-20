@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Catalog\AddOn;
 use App\Catalog\Catalog;
 use App\Catalog\Product;
 use App\Orders\LineItem;
@@ -26,6 +27,11 @@ use Illuminate\Validation\Rule;
  * to the product's current selling price, so the admin types a price only when
  * the historical one differed. Wholly blank lines are dropped before
  * validation, so the last row can be left empty.
+ *
+ * A line may also carry the customer's **add-ons** — the same per-product
+ * add-ons the register and the customer cart offer. They are validated to be
+ * ones the product actually offers, by name, and ride on the line to the
+ * receipt, so an encoded sale reads exactly like a live one.
  */
 class StoreHistoricalSaleRequest extends FormRequest
 {
@@ -80,6 +86,8 @@ class StoreHistoricalSaleRequest extends FormRequest
             'lines.*.productId' => ['required', 'string', $this->existingProduct()],
             'lines.*.quantity' => ['required', 'integer', 'min:1', 'max:9999'],
             'lines.*.unitPrice' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'lines.*.addOns' => ['nullable', 'array', 'max:50'],
+            'lines.*.addOns.*' => ['string', $this->offeredAddOn()],
         ];
     }
 
@@ -100,13 +108,14 @@ class StoreHistoricalSaleRequest extends FormRequest
     }
 
     /**
-     * The lines to record, each carrying its product's name snapshot.
+     * The lines to record, each carrying its product's name snapshot and the
+     * customer's chosen add-ons.
      *
      * @return list<LineItem>
      */
     public function lines(): array
     {
-        /** @var array<int, array{productId: string, quantity: int|numeric-string, unitPrice?: numeric-string|int|float|null}> $rows */
+        /** @var array<int, array{productId: string, quantity: int|numeric-string, unitPrice?: numeric-string|int|float|null, addOns?: list<string>}> $rows */
         $rows = $this->validated('lines');
 
         $catalog = app(Catalog::class);
@@ -128,10 +137,32 @@ class StoreHistoricalSaleRequest extends FormRequest
                 name: $product->name,
                 unitPrice: is_numeric($unitPrice) ? (float) $unitPrice : $product->sellingPrice(),
                 quantity: (int) $row['quantity'],
+                addOns: $this->offeredAddOns($product, $row['addOns'] ?? []),
             );
         }
 
         return $lines;
+    }
+
+    /**
+     * The chosen add-ons the product offers, in the product's own order — the
+     * same normalization the customer cart applies, so an encoded line prices
+     * its add-ons identically to a live one.
+     *
+     * @param  list<string>  $chosen
+     * @return list<AddOn>
+     */
+    private function offeredAddOns(Product $product, array $chosen): array
+    {
+        $addOns = [];
+
+        foreach ($product->addOns as $addOn) {
+            if (in_array($addOn->name, $chosen, true)) {
+                $addOns[] = $addOn;
+            }
+        }
+
+        return $addOns;
     }
 
     private function businessToday(): string
@@ -148,6 +179,42 @@ class StoreHistoricalSaleRequest extends FormRequest
 
             if (app(RtdbClient::class)->get("products/{$value}") === null) {
                 $fail('Pick a product for this line.');
+            }
+        };
+    }
+
+    /**
+     * An add-on is accepted only when the line's own product offers it, so a
+     * stale or hand-typed name can never invent a price. The add-on's parent
+     * line is read from its dotted path (`lines.3.addOns.0` → `lines.3`).
+     */
+    private function offeredAddOn(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            if (! is_string($value)) {
+                return;
+            }
+
+            $lineKey = implode('.', array_slice(explode('.', $attribute), 0, 2));
+            $productId = $this->input("{$lineKey}.productId");
+
+            if (! is_string($productId)) {
+                return;
+            }
+
+            $product = app(Catalog::class)->product($productId);
+
+            if (! $product instanceof Product) {
+                return;
+            }
+
+            $offered = array_map(
+                static fn(AddOn $addOn): string => $addOn->name,
+                $product->addOns,
+            );
+
+            if (! in_array($value, $offered, true)) {
+                $fail("{$product->name} does not offer that add-on.");
             }
         };
     }
