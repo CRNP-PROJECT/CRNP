@@ -278,3 +278,16 @@ it('splits a day into dine-in and take-out on the payments report', function ():
         ->assertSee('₱200.00')
         ->assertSee('₱300.00');
 });
+
+it('offers a search box to filter the products on the encoding form', function (): void {
+    seedProduct('p1', ['name' => 'Milktea']);
+    seedProduct('p2', ['name' => 'Chicken Wings Buffalo']);
+
+    $this->get(route('admin.historical.create'))
+        ->assertOk()
+        ->assertSee('Search products')
+        ->assertSee('id="product-search"', false)
+        // Every product is still in the options; the script narrows them live.
+        ->assertSee('Milktea')
+        ->assertSee('Chicken Wings Buffalo');
+});

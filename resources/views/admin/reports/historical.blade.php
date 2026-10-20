@@ -65,6 +65,13 @@
                 <fieldset class="line-set">
                     <legend class="field__label">Items sold</legend>
 
+                    {{-- Filter the product pickers below as you type, so a long
+                         menu is searchable instead of a scroll. --}}
+                    <label class="field">
+                        <span class="field__label">Search products</span>
+                        <input class="field__input" type="search" id="product-search" placeholder="Type a product name…" autocomplete="off">
+                    </label>
+
                     <div id="line-rows" class="line-rows">
                         @php
                             $rows = old('lines', [['productId' => '', 'quantity' => 1, 'unitPrice' => '']]);
@@ -106,12 +113,35 @@
                 const addButton = document.getElementById('line-add');
                 const template = document.getElementById('line-row-template');
                 const totalEl = document.getElementById('historical-total');
+                const searchEl = document.getElementById('product-search');
 
                 if (!rows || !addButton || !template || !totalEl) {
                     return;
                 }
 
                 let counter = rows.querySelectorAll('.line-row').length;
+                let searchQuery = '';
+
+                // Hide the product options that do not match the search box, so a
+                // long menu is searchable. The selected option always stays, so a
+                // pick is never filtered out from under the admin.
+                const filterSelect = (select) => {
+                    const query = searchQuery.trim().toLowerCase();
+
+                    Array.from(select.options).forEach((option) => {
+                        if (option.value === '') {
+                            return;
+                        }
+
+                        const matches = query === '' || option.text.toLowerCase().includes(query);
+                        option.hidden = !matches;
+                        option.disabled = !matches && !option.selected;
+                    });
+                };
+
+                const filterAll = () => {
+                    rows.querySelectorAll('.line-row__product').forEach(filterSelect);
+                };
 
                 const money = (amount) => '₱' + amount.toFixed(2);
 
@@ -191,10 +221,18 @@
                         }
                     });
 
+                    filterSelect(select);
                     showAddOns(row);
                 };
 
                 rows.querySelectorAll('.line-row').forEach(wire);
+
+                if (searchEl) {
+                    searchEl.addEventListener('input', () => {
+                        searchQuery = searchEl.value;
+                        filterAll();
+                    });
+                }
 
                 addButton.addEventListener('click', () => {
                     const wrapper = document.createElement('div');
