@@ -1,4 +1,3 @@
-<script>
     (function () {
         var panel = document.querySelector('[data-proof-upload]');
         if (!panel) { return; }
@@ -189,4 +188,3 @@
             });
         }
     })();
-</script>

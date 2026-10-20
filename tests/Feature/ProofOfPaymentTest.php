@@ -360,3 +360,22 @@ it('wires the client to auto-upload on selection with the proof ceiling and one 
         // Motion toned down, not removed, under prefers-reduced-motion.
         ->and($html)->toContain('prefers-reduced-motion: reduce');
 });
+
+it('includes the proof client inline without a nested script tag that would break the tracker', function (): void {
+    // The proof client is a partial included INSIDE the tracker's own <script>
+    // block, so it must carry no <script>/</script> wrapper of its own — a
+    // nested tag closes the outer block early and the Attach button stops
+    // responding.
+    signIn('ada@example.com', 'Ada Lovelace', 'sub-ada');
+    $id = seedProofOrder('sub-ada', 400.0);
+
+    $html = $this->get(route('orders.show', ['order' => $id]))->assertOk()->getContent();
+
+    expect($html)->toBeString()
+        // No `</script>` immediately followed (across whitespace) by another
+        // `</script>` — the tell-tale of a double-wrapped partial.
+        ->and(preg_match('/<\/script>\s*<\/script>/', $html))->toBe(0)
+        // The Attach button and its listener land exactly once each.
+        ->and(substr_count($html, 'type="button" data-proof-attach'))->toBe(1)
+        ->and(substr_count($html, "input.addEventListener('change', begin)"))->toBe(1);
+});
