@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DashboardFilterRequest;
 use App\Settings\SettingsRepository;
+use App\Stats\BookingLedger;
+use App\Stats\BookingMix;
 use App\Stats\DashboardMetrics;
 use App\Stats\PaymentMix;
 use App\Stats\RefundsOwed;
@@ -21,16 +23,19 @@ use Illuminate\Contracts\View\View;
  * It shows the **Complete setup** banner until the GCash number and the QR image
  * are both configured, the **KPIs** (today's sales and orders), the **monthly
  * payment mix** (GCash / cash / total cards for one business month, stepped with
- * prev/next links), the **7-day trend**, **best-sellers**, **peak hours**, and
- * the **refunds-owed badge** counting the outstanding obligations. Everything is
- * computed server-side from the sales ledger (bounded by `soldAt`); a rental
- * booking (#34) never reaches the product ranking or the trend.
+ * prev/next links), the **monthly booking mix** (the same three cards for rental
+ * bookings — their own revenue stream, read from `rentalBookings` by `dateFrom`),
+ * the **7-day trend**, **best-sellers**, **peak hours**, and the **refunds-owed
+ * badge** counting the outstanding obligations. Everything is computed
+ * server-side from the sales ledger (bounded by `soldAt`); a rental booking
+ * (#34) never reaches the product ranking or the trend.
  */
 final class DashboardController extends Controller
 {
     public function __construct(
         private readonly SettingsRepository $settings,
         private readonly SalesLedger $ledger,
+        private readonly BookingLedger $bookings,
         private readonly RefundsOwed $refunds,
     ) {}
 
@@ -53,6 +58,14 @@ final class DashboardController extends Controller
             array_values($this->ledger->between($monthFrom, $monthTo)),
         );
 
+        // The monthly booking mix: rental bookings are their own revenue stream
+        // (never a `sales/{id}` row), so they need their own bounded read —
+        // keyed by the indexed `dateFrom`, the same bound the rental report uses.
+        [$bookingFrom, $bookingTo] = $this->bookingRange($month);
+        $bookingMix = BookingMix::fromBookings(
+            array_values($this->bookings->fromDateRange($bookingFrom, $bookingTo)),
+        );
+
         // The month the cards are titled with, and the two months it steps to.
         $cursor = $this->monthStart($month);
         $previous = $cursor->subMonthNoOverflow();
@@ -72,6 +85,7 @@ final class DashboardController extends Controller
             'refundsCount' => count($refunds),
             'refundsTotal' => round($refundsTotal, 2),
             'paymentMix' => $paymentMix,
+            'bookingMix' => $bookingMix,
             'monthLabel' => $cursor->format('F Y'),
             'previousMonth' => $previous->format('Y-m'),
             'previousMonthLabel' => $previous->format('F Y'),
@@ -116,5 +130,18 @@ final class DashboardController extends Controller
             $start->setTimezone('UTC')->toIso8601ZuluString(),
             $end->setTimezone('UTC')->toIso8601ZuluString(),
         ];
+    }
+
+    /**
+     * The `Y-m-d` date range covering the whole business month — the inclusive
+     * `dateFrom` bound the rental-booking tree is indexed and queried by.
+     *
+     * @return array{string, string}
+     */
+    private function bookingRange(string $month): array
+    {
+        $start = $this->monthStart($month);
+
+        return [$start->toDateString(), $start->endOfMonth()->toDateString()];
     }
 }

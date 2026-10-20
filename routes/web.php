@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Auth\AuthArea;
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\BackupDownloadController;
+use App\Http\Controllers\Admin\CashierHistoryController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\HistoricalSalesController;
@@ -264,6 +265,12 @@ Route::middleware(['auth', 'staff.role:admin'])->prefix('admin')->name('admin.')
     // Activity — the bounded feed (time · who · action · order code) plus the
     // per-cashier daily totals grouped by `handledBy`.
     Route::get('/activity', ActivityController::class)->name('activity');
+
+    // Cashier history — which cashier accepted or rejected which customer:
+    // order accepts (sales `handledBy`), order rejections (the `rejection`
+    // record), and booking verdicts (rentalBookings `handledBy`), latest N and
+    // bounded.
+    Route::get('/cashier-history', CashierHistoryController::class)->name('cashier.history');
 
     // Download the newest export-backup (admin-only).
     Route::get('/backup/download', BackupDownloadController::class)->name('backup.download');

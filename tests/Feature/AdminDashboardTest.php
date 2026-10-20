@@ -176,6 +176,59 @@ it('shows an empty state when the chosen month has no payments', function (): vo
         ->assertSee('No payments in July 2026.');
 });
 
+it('shows the monthly booking mix, paid bookings only, GCash and cash split', function (): void {
+    // A paid booking (confirmed) with no tender legs: prepaid GCash in full.
+    seedRentalBooking('b1', [
+        'code' => 'RNT1',
+        'status' => 'confirmed',
+        'dateFrom' => '2026-10-08',
+        'total' => 150.0,
+        'payments' => [],
+    ]);
+    // A handed-over booking with a split tender: ₱50 cash + ₱50 GCash.
+    seedRentalBooking('b2', [
+        'code' => 'RNT2',
+        'status' => 'handed_over',
+        'dateFrom' => '2026-10-09',
+        'total' => 100.0,
+        'payments' => [['method' => 'cash', 'amount' => 50.0], ['method' => 'gcash', 'amount' => 50.0]],
+    ]);
+    // An unpaid window must never reach the mix.
+    seedRentalBooking('b3', [
+        'code' => 'RNT3',
+        'status' => 'awaiting_payment',
+        'dateFrom' => '2026-10-10',
+        'total' => 999.0,
+        'payments' => [],
+    ]);
+
+    $this->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('Booking GCash · October 2026')
+        ->assertSee('Booking cash · October 2026')
+        ->assertSee('Booking total · October 2026')
+        ->assertSee('₱200.00') // booking GCash: ₱150 prepaid + ₱50 leg
+        ->assertSee('₱50.00')  // booking cash leg
+        ->assertSee('₱250.00') // booking total
+        ->assertDontSee('999.00');
+});
+
+it('excludes a booking whose rental period starts in another month', function (): void {
+    seedRentalBooking('b1', [
+        'code' => 'RNT-SEP',
+        'status' => 'confirmed',
+        'dateFrom' => '2026-09-15',
+        'dateTo' => '2026-09-17',
+        'total' => 444.0,
+        'payments' => [],
+    ]);
+
+    $this->get(route('admin.dashboard', ['month' => '2026-10']))
+        ->assertOk()
+        ->assertSee('No paid bookings in October 2026.')
+        ->assertDontSee('444.00');
+});
+
 it('refuses the dashboard to a cashier and a signed-out visitor', function (): void {
     seedStaff('maria@example.com', StaffRole::Cashier, 'Maria Santos');
 

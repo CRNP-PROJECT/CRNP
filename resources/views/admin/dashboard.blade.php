@@ -88,6 +88,35 @@
             </p>
         @endif
 
+        {{-- Monthly booking mix: the same three cards for rental bookings —
+             their own revenue stream, paid bookings only (confirmed, handed
+             over, or returned). --}}
+        <section class="kpi-row" aria-label="Bookings for {{ $monthLabel }}">
+            <div class="kpi">
+                <span class="kpi__label">Booking GCash · {{ $monthLabel }}</span>
+                <span class="kpi__value">₱{{ number_format($bookingMix->gcash, 2) }}</span>
+            </div>
+            <div class="kpi">
+                <span class="kpi__label">Booking cash · {{ $monthLabel }}</span>
+                <span class="kpi__value">₱{{ number_format($bookingMix->cash, 2) }}</span>
+            </div>
+            <div class="kpi">
+                <span class="kpi__label">Booking total · {{ $monthLabel }}</span>
+                <span class="kpi__value">₱{{ number_format($bookingMix->total(), 2) }}</span>
+            </div>
+        </section>
+
+        @if ($bookingMix->bookings === 0)
+            <p class="empty-state">No paid bookings in {{ $monthLabel }}.</p>
+        @else
+            <p class="site-main__copy">
+                {{ $bookingMix->bookings }} paid {{ \Illuminate\Support\Str::plural('booking', $bookingMix->bookings) }}
+                in {{ $monthLabel }} — a rental booking is prepaid through the same
+                GCash gate as an order, so a booking with no tender legs counts as
+                GCash in full.
+            </p>
+        @endif
+
         <section class="dashboard-panel" aria-labelledby="trend-heading">
             <h2 id="trend-heading">7-day trend</h2>
 
