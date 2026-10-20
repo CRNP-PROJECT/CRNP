@@ -74,6 +74,18 @@ it('shows the KPIs, the 7-day trend, best-sellers, and peak hours', function ():
         ->assertSee('10:00');
 });
 
+it('renders the mobile nav toggle so the admin header folds on a phone', function (): void {
+    $this->get(route('admin.dashboard'))
+        ->assertOk()
+        // The hidden checkbox, its hamburger label, and the drawer wrapper the
+        // narrow-screen rules collapse the nav into.
+        ->assertSee('site-nav-toggle', false)
+        ->assertSee('id="admin-nav-toggle"', false)
+        ->assertSee('site-menu', false)
+        // The nav and the sign-out sit inside the drawer, not loose in the header.
+        ->assertSee('Sign out');
+});
+
 it('downloads the last backup file', function (): void {
     \Illuminate\Support\Facades\Storage::fake('local');
     \Illuminate\Support\Facades\Storage::disk('local')->put('exports/backup.json', '{"sales":[]}');

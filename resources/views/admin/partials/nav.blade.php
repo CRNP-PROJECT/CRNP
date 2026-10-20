@@ -41,17 +41,30 @@
 @endphp
 <header class="site-header">
     <span class="site-title">{{ config('app.name') }} · Admin</span>
-    <nav class="site-nav" aria-label="Admin">
-        @foreach ($links as [$route, $label])
-            @php
-                $isActive = collect($prefixes[$route] ?? [$route])
-                    ->contains(fn (string $prefix): bool => str_starts_with($current, $prefix));
-            @endphp
-            <a class="site-nav__link" href="{{ route($route) }}" @if ($isActive) aria-current="page" @endif>{{ $label }}</a>
-        @endforeach
-    </nav>
-    <form method="POST" action="{{ route('admin.logout') }}" class="site-account__switch">
-        @csrf
-        <button type="submit" class="link-button">Sign out</button>
-    </form>
+
+    <input class="site-nav-toggle" type="checkbox" id="admin-nav-toggle">
+    <label class="site-nav-toggle__button" for="admin-nav-toggle">
+        <span class="visually-hidden">Menu</span>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" focusable="false" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+    </label>
+
+    <div class="site-menu">
+        <nav class="site-nav" aria-label="Admin">
+            @foreach ($links as [$route, $label])
+                @php
+                    $isActive = collect($prefixes[$route] ?? [$route])
+                        ->contains(fn (string $prefix): bool => str_starts_with($current, $prefix));
+                @endphp
+                <a class="site-nav__link" href="{{ route($route) }}" @if ($isActive) aria-current="page" @endif>{{ $label }}</a>
+            @endforeach
+        </nav>
+        <div class="site-account">
+            <form method="POST" action="{{ route('admin.logout') }}">
+                @csrf
+                <button type="submit" class="link-button">Sign out</button>
+            </form>
+        </div>
+    </div>
 </header>
