@@ -257,3 +257,36 @@ it('ignores a stale tile tap on a settled order', function (): void {
 
     expect(rtdb()->get("orders/{$orderId}")['total'])->toBe(200.0);
 });
+
+it('filters the ring-up menu to a chosen category', function (): void {
+    seedCategory('food', 'Food');
+    seedProduct('p1', ['name' => 'Milktea', 'price' => 200.0, 'categoryId' => 'drinks']);
+    seedProduct('p2', ['name' => 'Pandesal', 'price' => 50.0, 'categoryId' => 'food']);
+
+    $orderId = openWalkIn();
+
+    // The whole menu (no chip) shows both categories' products.
+    $this->get(route('cashier.walkins.show', ['walkin' => $orderId]))
+        ->assertOk()
+        ->assertSee('Milktea')
+        ->assertSee('Pandesal')
+        ->assertSee('All Products');
+
+    // A category chip narrows the tiles to that category only.
+    $this->get(route('cashier.walkins.show', ['walkin' => $orderId, 'category' => 'food']))
+        ->assertOk()
+        ->assertSee('Pandesal')
+        ->assertDontSee('Milktea');
+});
+
+it('shows an empty state for a category with no items', function (): void {
+    seedCategory('food', 'Food');
+    seedProduct('p1', ['name' => 'Milktea', 'price' => 200.0, 'categoryId' => 'drinks']);
+
+    $orderId = openWalkIn();
+
+    $this->get(route('cashier.walkins.show', ['walkin' => $orderId, 'category' => 'food']))
+        ->assertOk()
+        ->assertDontSee('Milktea')
+        ->assertSee('No items in this category');
+});

@@ -29,8 +29,31 @@
             <section class="walkin-menu" aria-labelledby="walkin-menu-heading">
                 <h2 class="walkin-panel__title" id="walkin-menu-heading">Menu</h2>
 
+                @if ($categories !== [])
+                    <nav class="category-chips" aria-label="Filter by category">
+                        <a
+                            class="category-chip {{ $selectedCategory === null ? 'category-chip--active' : '' }}"
+                            href="{{ route('cashier.walkins.show', ['walkin' => $order->id]) }}"
+                            @if ($selectedCategory === null) aria-current="true" @endif
+                        >All Products</a>
+                        @foreach ($categories as $id => $category)
+                            <a
+                                class="category-chip {{ $selectedCategory === $id ? 'category-chip--active' : '' }}"
+                                href="{{ route('cashier.walkins.show', ['walkin' => $order->id, 'category' => $id]) }}"
+                                @if ($selectedCategory === $id) aria-current="true" @endif
+                            >{{ $category->name }}</a>
+                        @endforeach
+                    </nav>
+                @endif
+
                 @if ($menu === [])
-                    <p class="empty-state">No menu items yet — the owner adds them from the back office.</p>
+                    <p class="empty-state">
+                        @if ($selectedCategory === null)
+                            No menu items yet — the owner adds them from the back office.
+                        @else
+                            No items in this category — pick another chip or All Products.
+                        @endif
+                    </p>
                 @else
                     <div class="tile-grid">
                         @foreach ($menu as $product)
