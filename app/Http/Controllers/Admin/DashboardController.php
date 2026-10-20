@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\DashboardFilterRequest;
 use App\Settings\SettingsRepository;
 use App\Stats\BookingLedger;
 use App\Stats\BookingMix;
+use App\Stats\DailyTender;
 use App\Stats\DashboardMetrics;
 use App\Stats\PaymentMix;
 use App\Stats\RefundsOwed;
@@ -54,17 +55,20 @@ final class DashboardController extends Controller
         // The monthly payment mix: the GCash-vs-cash split for one business month.
         $month = $this->businessMonth($request->validated('month'));
         [$monthFrom, $monthTo] = $this->monthRange($month);
-        $paymentMix = PaymentMix::fromSales(
-            array_values($this->ledger->between($monthFrom, $monthTo)),
-        );
+        $monthSales = array_values($this->ledger->between($monthFrom, $monthTo));
+        $paymentMix = PaymentMix::fromSales($monthSales);
 
         // The monthly booking mix: rental bookings are their own revenue stream
         // (never a `sales/{id}` row), so they need their own bounded read —
         // keyed by the indexed `dateFrom`, the same bound the rental report uses.
         [$bookingFrom, $bookingTo] = $this->bookingRange($month);
-        $bookingMix = BookingMix::fromBookings(
-            array_values($this->bookings->fromDateRange($bookingFrom, $bookingTo)),
-        );
+        $monthBookings = array_values($this->bookings->fromDateRange($bookingFrom, $bookingTo));
+        $bookingMix = BookingMix::fromBookings($monthBookings);
+
+        // The per-day tender table: the same two streams folded into one row per
+        // business day, each split into orders cash / GCash and bookings cash /
+        // GCash. Reads the two sets already in hand, so it costs no extra query.
+        $dailyTender = DailyTender::fromSalesAndBookings($monthSales, $monthBookings);
 
         // The month the cards are titled with, and the two months it steps to.
         $cursor = $this->monthStart($month);
@@ -86,6 +90,7 @@ final class DashboardController extends Controller
             'refundsTotal' => round($refundsTotal, 2),
             'paymentMix' => $paymentMix,
             'bookingMix' => $bookingMix,
+            'dailyTender' => $dailyTender,
             'monthLabel' => $cursor->format('F Y'),
             'previousMonth' => $previous->format('Y-m'),
             'previousMonthLabel' => $previous->format('F Y'),

@@ -117,6 +117,53 @@
             </p>
         @endif
 
+        {{-- Per-day collections: each business day of the month, split into
+             orders cash / GCash and bookings cash / GCash. --}}
+        <section class="dashboard-panel" aria-labelledby="daily-tender-heading">
+            <h2 id="daily-tender-heading">Daily collections · {{ $monthLabel }}</h2>
+
+            @if ($dailyTender->days === [])
+                <p class="empty-state">No collections in {{ $monthLabel }}.</p>
+            @else
+                @php($dailyTotals = $dailyTender->totals())
+
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Orders · GCash</th>
+                            <th scope="col">Orders · Cash</th>
+                            <th scope="col">Bookings · GCash</th>
+                            <th scope="col">Bookings · Cash</th>
+                            <th scope="col">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($dailyTender->days as $day)
+                            <tr>
+                                <td>{{ \Illuminate\Support\Carbon::parse($day['date'])->format('D j M') }}</td>
+                                <td>₱{{ number_format($day['ordersGcash'], 2) }}</td>
+                                <td>₱{{ number_format($day['ordersCash'], 2) }}</td>
+                                <td>₱{{ number_format($day['bookingsGcash'], 2) }}</td>
+                                <td>₱{{ number_format($day['bookingsCash'], 2) }}</td>
+                                <td>₱{{ number_format($day['ordersGcash'] + $day['ordersCash'] + $day['bookingsGcash'] + $day['bookingsCash'], 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th scope="row">Total</th>
+                            <td>₱{{ number_format($dailyTotals['ordersGcash'], 2) }}</td>
+                            <td>₱{{ number_format($dailyTotals['ordersCash'], 2) }}</td>
+                            <td>₱{{ number_format($dailyTotals['bookingsGcash'], 2) }}</td>
+                            <td>₱{{ number_format($dailyTotals['bookingsCash'], 2) }}</td>
+                            <td>₱{{ number_format($dailyTotals['total'], 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            @endif
+        </section>
+
         <section class="dashboard-panel" aria-labelledby="trend-heading">
             <h2 id="trend-heading">7-day trend</h2>
 

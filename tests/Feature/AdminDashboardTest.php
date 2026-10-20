@@ -241,6 +241,54 @@ it('excludes a booking whose rental period starts in another month', function ()
         ->assertDontSee('444.00');
 });
 
+it('shows a per-day daily-collections table splitting orders and bookings by GCash and cash', function (): void {
+    // Orders on the 6th: a walk-in split ₱25 cash + ₱175 GCash, and an online
+    // pickup of ₱400 as GCash in full.
+    dashboardSale('d1', '2026-10-06T02:00:00Z', [], 200.0, [
+        'payments' => [['method' => 'cash', 'amount' => 25.0], ['method' => 'gcash', 'amount' => 175.0]],
+    ]);
+    dashboardSale('d2', '2026-10-06T03:00:00Z', [], 400.0, [
+        'type' => 'online',
+        'payments' => [],
+    ]);
+    // An order on the 7th: all cash ₱60.
+    dashboardSale('d3', '2026-10-07T02:00:00Z', [], 60.0, [
+        'payments' => [['method' => 'cash', 'amount' => 60.0]],
+    ]);
+
+    // A paid booking on the 8th: prepaid GCash in full.
+    seedRentalBooking('db1', [
+        'code' => 'RNT-DB1',
+        'status' => 'confirmed',
+        'dateFrom' => '2026-10-08',
+        'total' => 150.0,
+        'payments' => [],
+    ]);
+    // An unpaid window on the 9th must never appear.
+    seedRentalBooking('db2', [
+        'code' => 'RNT-DB2',
+        'status' => 'awaiting_payment',
+        'dateFrom' => '2026-10-09',
+        'total' => 999.0,
+        'payments' => [],
+    ]);
+
+    $this->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('Daily collections · October 2026')
+        ->assertSee('Orders · GCash')
+        ->assertSee('Bookings · Cash')
+        // Day 6 orders: GCash ₱575 (₱175 + ₱400), cash ₱25.
+        ->assertSee('₱575.00')
+        ->assertSee('₱25.00')
+        // Day 7 order: cash ₱60.
+        ->assertSee('₱60.00')
+        // Day 8 booking: GCash ₱150.
+        ->assertSee('₱150.00')
+        // The unpaid booking never lands.
+        ->assertDontSee('999.00');
+});
+
 it('refuses the dashboard to a cashier and a signed-out visitor', function (): void {
     seedStaff('maria@example.com', StaffRole::Cashier, 'Maria Santos');
 
