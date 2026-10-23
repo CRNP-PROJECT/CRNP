@@ -324,3 +324,95 @@ it('rejects an unknown service type at the register', function (): void {
     $this->post(route('cashier.walkins.store'), ['serviceType' => 'brunch'])
         ->assertSessionHasErrors('serviceType');
 });
+
+it('offers the service type inside the POS rather than at the register', function (): void {
+    $orderId = openWalkIn();
+
+    $this->get(route('cashier.walkins.show', ['walkin' => $orderId]))
+        ->assertOk()
+        ->assertSee('Service type')
+        ->assertSee('Dine-in')
+        ->assertSee('Take-out');
+
+    $this->get(route('cashier.register'))
+        ->assertOk()
+        ->assertDontSee('Service type');
+});
+
+it('switches the service type inside the POS without clearing the cart', function (): void {
+    seedProduct('p1', ['name' => 'Milktea', 'price' => 200.0]);
+
+    $orderId = openWalkIn();
+    addItem($orderId, 'p1');
+
+    $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]), ['serviceType' => 'dine_in'])
+        ->assertRedirect(route('cashier.walkins.show', ['walkin' => $orderId]));
+
+    $node = rtdb()->get("orders/{$orderId}");
+
+    expect($node['serviceType'])->toBe('dine_in')
+        ->and($node['total'])->toBe(200.0)
+        ->and($node['lines'])->toHaveCount(1);
+
+    // Switching back is the same in-place write, still with the cart intact.
+    $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]), ['serviceType' => 'take_out'])
+        ->assertRedirect(route('cashier.walkins.show', ['walkin' => $orderId]));
+
+    expect(rtdb()->get("orders/{$orderId}")['serviceType'])->toBe('take_out')
+        ->and(rtdb()->get("orders/{$orderId}")['total'])->toBe(200.0);
+});
+
+it('stamps the switched service type onto the sale row at settle', function (): void {
+    seedProduct('p1', ['price' => 200.0]);
+
+    $orderId = openWalkIn();
+    addItem($orderId, 'p1');
+
+    $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]), ['serviceType' => 'dine_in']);
+
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200']);
+
+    expect(rtdb()->get("sales/{$orderId}")['serviceType'])->toBe('dine_in');
+});
+
+it('prints the switched service type on the receipt', function (): void {
+    seedProduct('p1', ['price' => 200.0]);
+
+    $orderId = openWalkIn();
+    addItem($orderId, 'p1');
+
+    $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]), ['serviceType' => 'dine_in']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200']);
+
+    $this->get(route('cashier.walkins.receipt', ['walkin' => $orderId]))
+        ->assertOk()
+        ->assertSee('Service')
+        ->assertSee('Dine-in');
+});
+
+it('ignores a service-type switch on a settled walk-in', function (): void {
+    seedProduct('p1', ['price' => 200.0]);
+
+    $orderId = openWalkIn();
+    addItem($orderId, 'p1');
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200']);
+
+    $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]), ['serviceType' => 'dine_in'])
+        ->assertRedirect(route('cashier.walkins.show', ['walkin' => $orderId]));
+
+    expect(rtdb()->get("orders/{$orderId}")['serviceType'])->toBe('take_out');
+});
+
+it('rejects an unknown service type inside the POS', function (): void {
+    $orderId = openWalkIn();
+
+    $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]), ['serviceType' => 'brunch'])
+        ->assertSessionHasErrors('serviceType');
+});
+
+it('requires a service type on the in-POS switch', function (): void {
+    $orderId = openWalkIn();
+
+    $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]))
+        ->assertSessionHasErrors('serviceType');
+});

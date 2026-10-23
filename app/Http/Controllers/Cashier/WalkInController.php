@@ -8,9 +8,11 @@ use App\Catalog\Catalog;
 use App\Catalog\Product;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Cashier\AddWalkInItemRequest;
+use App\Http\Requests\Cashier\ChangeWalkInServiceTypeRequest;
 use App\Http\Requests\Cashier\OpenWalkInRequest;
 use App\Http\Requests\Cashier\SettleWalkInRequest;
 use App\Orders\Actions\AddItemToWalkIn;
+use App\Orders\Actions\ChangeWalkInServiceType;
 use App\Orders\Actions\OpenWalkIn;
 use App\Orders\Actions\RemoveItemFromWalkIn;
 use App\Orders\Actions\SettleWalkIn;
@@ -81,6 +83,25 @@ final class WalkInController extends Controller
         }
 
         $removeItem($walkin, $product);
+
+        return redirect()->route('cashier.walkins.show', ['walkin' => $walkin]);
+    }
+
+    /**
+     * Switch the open walk-in between dine-in and take-out in place, so the
+     * cart survives a change of mind. Guarded to a pending order like the
+     * other ring-up writes.
+     */
+    public function changeServiceType(
+        ChangeWalkInServiceTypeRequest $request,
+        string $walkin,
+        ChangeWalkInServiceType $change,
+    ): RedirectResponse {
+        if (! $this->find($walkin)->isPending()) {
+            return redirect()->route('cashier.walkins.show', ['walkin' => $walkin]);
+        }
+
+        $change($walkin, $request->serviceType());
 
         return redirect()->route('cashier.walkins.show', ['walkin' => $walkin]);
     }

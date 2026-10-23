@@ -16,24 +16,12 @@
             <p class="site-main__copy">
                 Tap tiles to build the order — promo prices and totals compute
                 themselves. The order code is drawn at ring-up and the kitchen
-                ticket appears only at settle.
+                ticket appears only at settle. Dine-in or take-out is picked
+                inside the order panel, so switching keeps the cart.
             </p>
 
             <form method="POST" action="{{ route('cashier.walkins.store') }}">
                 @csrf
-                <fieldset class="field">
-                    <legend class="field__label">Service type</legend>
-                    <div class="segmented" role="group" aria-label="Service type">
-                        @foreach (\App\Orders\ServiceType::cases() as $service)
-                            <label class="segmented__option">
-                                <input type="radio" name="serviceType" value="{{ $service->value }}" @checked(old('serviceType', 'take_out') === $service->value)>
-                                <span>{{ $service->label() }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                    @error('serviceType')<span class="field__error">{{ $message }}</span>@enderror
-                </fieldset>
-
                 <label class="field">
                     <span class="field__label">Table name (optional)</span>
                     <input class="field__input" type="text" name="table" value="{{ old('table') }}" maxlength="60" placeholder="e.g. Table 4">

@@ -81,6 +81,34 @@
             <section class="walkin-cart" aria-labelledby="walkin-cart-heading">
                 <h2 class="walkin-panel__title" id="walkin-cart-heading">Order</h2>
 
+                {{-- Service type lives here, on the open order: a change of
+                     mind switches the type in place and keeps every line. --}}
+                <div class="walkin-service">
+                    <span class="walkin-service__label" id="service-type-label">Service type</span>
+                    <form method="POST" action="{{ route('cashier.walkins.service-type', ['walkin' => $order->id]) }}">
+                        @csrf
+                        @method('PATCH')
+                        <div class="segmented" role="group" aria-labelledby="service-type-label">
+                            @foreach (\App\Orders\ServiceType::cases() as $service)
+                                <label class="segmented__option">
+                                    <input
+                                        type="radio"
+                                        name="serviceType"
+                                        value="{{ $service->value }}"
+                                        @checked($order->serviceType === $service)
+                                        @disabled(! $order->isPending())
+                                        onchange="this.form.submit()"
+                                    >
+                                    <span>{{ $service->label() }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @if ($order->isPending())
+                            <noscript><button type="submit" class="link-button">Update service type</button></noscript>
+                        @endif
+                    </form>
+                </div>
+
                 @if ($order->lines === [])
                     <p class="empty-state">No items yet — tap a tile to start the order.</p>
                 @else

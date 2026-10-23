@@ -2600,6 +2600,26 @@
         font-size: 1.125rem;
     }
 
+    /* The in-POS service-type switch: a compact segmented control that submits
+       as soon as it changes, so switching never clears the cart. */
+    .walkin-service {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding-bottom: var(--space-3);
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .walkin-service__label {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
     .tile-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));

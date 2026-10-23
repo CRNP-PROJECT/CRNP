@@ -156,6 +156,7 @@ Route::middleware(['auth', 'staff.role:cashier'])->group(function (): void {
         Route::get('/{walkin}', [WalkInController::class, 'show'])->name('show');
         Route::post('/{walkin}/items', [WalkInController::class, 'addItem'])->name('items.store');
         Route::delete('/{walkin}/items/{product}', [WalkInController::class, 'removeItem'])->name('items.destroy');
+        Route::patch('/{walkin}/service-type', [WalkInController::class, 'changeServiceType'])->name('service-type');
         Route::post('/{walkin}/settle', [WalkInController::class, 'settle'])->name('settle');
         Route::get('/{walkin}/receipt', [WalkInController::class, 'receipt'])->name('receipt');
     });

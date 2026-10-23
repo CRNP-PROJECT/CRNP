@@ -23,6 +23,12 @@
                         <span class="receipt__code-value">{{ $order->table }}</span>
                     </p>
                 @endif
+                @if ($order->serviceType !== null)
+                    <p class="receipt__table">
+                        <span class="receipt__code-label">Service</span>
+                        <span class="receipt__code-value">{{ $order->serviceType->label() }}</span>
+                    </p>
+                @endif
             </header>
 
             <table class="receipt__lines">
