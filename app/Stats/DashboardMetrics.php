@@ -28,6 +28,7 @@ final readonly class DashboardMetrics
     /**
      * @param  list<array{date: string, total: float, orders: int, cashOrders: int, gcashOrders: int}>  $trend
      * @param  list<array{productId: string, name: string, units: int, revenue: float}>  $bestSellers
+     * @param  list<array{productId: string, name: string, units: int, revenue: float, days: list<int>}>  $productTrend
      * @param  list<array{hour: string, orders: int, total: float}>  $peakHours
      */
     public function __construct(
@@ -37,6 +38,7 @@ final readonly class DashboardMetrics
         public int $ordersWindow,
         public array $trend,
         public array $bestSellers,
+        public array $productTrend,
         public array $peakHours,
     ) {}
 
@@ -123,13 +125,29 @@ final readonly class DashboardMetrics
             return $b['orders'] <=> $a['orders'] ?: strcmp($a['hour'], $b['hour']);
         });
 
+        $ranked = ProductTally::rankByDay($sales, $days, self::BEST_SELLER_LIMIT);
+
+        $bestSellers = [];
+        $productTrend = [];
+
+        foreach ($ranked as $row) {
+            $bestSellers[] = [
+                'productId' => $row['productId'],
+                'name' => $row['name'],
+                'units' => $row['units'],
+                'revenue' => $row['revenue'],
+            ];
+            $productTrend[] = $row;
+        }
+
         return new self(
             salesToday: round($salesToday, 2),
             ordersToday: $ordersToday,
             salesWindow: round(array_sum($totalsByDay), 2),
             ordersWindow: array_sum($ordersByDay),
             trend: $trend,
-            bestSellers: ProductTally::rank($sales, self::BEST_SELLER_LIMIT),
+            bestSellers: $bestSellers,
+            productTrend: $productTrend,
             peakHours: $peakHours,
         );
     }

@@ -66,10 +66,14 @@ it('shows the KPIs, the 7-day trend, best-sellers, and peak hours', function ():
         ->assertSee('Sales today')
         ->assertSee('₱500.00')
         ->assertSee('Orders today')
-        ->assertSee('7-day trend')
-        ->assertSee('Best sellers')
+        ->assertSee('Sales · last 7 days')
+        ->assertSee('Best sellers · last 7 days')
         // Best seller by units over the window: Adobo (3).
         ->assertSee('Adobo')
+        // The per-day chart: a spark row for each ranked product.
+        ->assertSee('Best sellers per day · last 7 days')
+        ->assertSee('spark__bar', false)
+        ->assertSee('hbar__fill', false)
         ->assertSee('Peak hours')
         ->assertSee('10:00');
 });

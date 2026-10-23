@@ -216,7 +216,9 @@
             @if ($dailyTender->days === [])
                 <p class="empty-state">No collections in {{ $monthLabel }}.</p>
             @else
-                @php($dailyTotals = $dailyTender->totals())
+                @php
+                    $dailyTotals = $dailyTender->totals();
+                @endphp
 
                 <table class="admin-table">
                     <thead>
@@ -258,7 +260,9 @@
         <section class="dashboard-panel" aria-labelledby="trend-heading">
             <h2 id="trend-heading">Sales · last 7 days</h2>
 
-            @php($maxTrend = max(array_map(fn($day) => $day['total'], $metrics->trend)) ?: 1.0)
+            @php
+                $maxTrend = max(array_map(fn($day) => $day['total'], $metrics->trend)) ?: 1.0;
+            @endphp
 
             <ul class="trend" aria-label="Sales each day for the last seven days">
                 @foreach ($metrics->trend as $day)
@@ -284,7 +288,9 @@
             @if ($metrics->ordersWindow === 0)
                 <p class="empty-state">No orders in the last seven days.</p>
             @else
-                @php($maxOrders = max(array_map(fn($day) => $day['orders'], $metrics->trend)) ?: 1)
+                @php
+                    $maxOrders = max(array_map(fn($day) => $day['orders'], $metrics->trend)) ?: 1;
+                @endphp
 
                 <ul class="trend" aria-label="Orders each day for the last seven days">
                     @foreach ($metrics->trend as $day)
@@ -312,29 +318,33 @@
 
         <div class="dashboard-columns">
             <section class="dashboard-panel" aria-labelledby="best-sellers-heading">
-                <h2 id="best-sellers-heading">Best sellers</h2>
+                <h2 id="best-sellers-heading">Best sellers · last 7 days</h2>
 
                 @if ($metrics->bestSellers === [])
                     <p class="empty-state">No sales in the last seven days — the ranking fills itself as orders settle.</p>
                 @else
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Product</th>
-                                <th scope="col">Units</th>
-                                <th scope="col">Revenue</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($metrics->bestSellers as $row)
-                                <tr>
-                                    <td>{{ $row['name'] }}</td>
-                                    <td>{{ $row['units'] }}</td>
-                                    <td>₱{{ number_format($row['revenue'], 2) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    @php
+                        $bestSellerPeak = max(array_map(fn($row) => $row['units'], $metrics->bestSellers)) ?: 1;
+                    @endphp
+
+                    {{-- One bar per product, length by units sold, with the revenue
+                         it earned — the chart form of the ranking table. --}}
+                    <ul class="hbar" aria-label="Best sellers by units over the last seven days">
+                        @foreach ($metrics->bestSellers as $row)
+                            <li class="hbar__row">
+                                <span class="hbar__label">{{ $row['name'] }}</span>
+                                <span class="hbar__track">
+                                    <span
+                                        class="hbar__fill"
+                                        style="width: {{ round(($row['units'] / $bestSellerPeak) * 100, 1) }}%"
+                                    ></span>
+                                </span>
+                                <span class="hbar__value">
+                                    {{ $row['units'] }} u · ₱{{ number_format($row['revenue'], 0) }}
+                                </span>
+                            </li>
+                        @endforeach
+                    </ul>
                 @endif
             </section>
 
@@ -365,6 +375,49 @@
                 @endif
             </section>
         </div>
+
+        {{-- Best sellers per day: a small row of seven bars per product, so the
+             week's shape is visible for each top seller at a glance. --}}
+        <section class="dashboard-panel" aria-labelledby="product-trend-heading">
+            <h2 id="product-trend-heading">Best sellers per day · last 7 days</h2>
+
+            @if ($metrics->productTrend === [])
+                <p class="empty-state">No sales in the last seven days.</p>
+            @else
+                @php
+                    $productDayPeak = 1;
+
+                    foreach ($metrics->productTrend as $productRow) {
+                        $productDayPeak = max($productDayPeak, ...$productRow['days']);
+                    }
+                @endphp
+
+                <ul class="spark" aria-label="Units sold per day for each top product">
+                    @foreach ($metrics->productTrend as $productRow)
+                        <li class="spark__row">
+                            <span class="spark__name">
+                                {{ $productRow['name'] }}
+                                <span class="spark__total">{{ $productRow['units'] }} u</span>
+                            </span>
+                            <span class="spark__days">
+                                @foreach ($productRow['days'] as $index => $units)
+                                    <span
+                                        class="spark__bar"
+                                        style="height: {{ $units === 0 ? 2 : max(6, round(($units / $productDayPeak) * 100)) }}%"
+                                        title="{{ \Illuminate\Support\Carbon::parse($metrics->trend[$index]['date'])->format('D j M') }}: {{ $units }} {{ \Illuminate\Support\Str::plural('unit', $units) }}"
+                                    ></span>
+                                @endforeach
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <p class="site-main__copy">
+                    One bar per day (oldest left, today right), scaled to the
+                    busiest day for a single product.
+                </p>
+            @endif
+        </section>
     </main>
 </body>
 </html>

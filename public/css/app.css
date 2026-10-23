@@ -1250,6 +1250,101 @@
         white-space: nowrap;
     }
 
+    /* Dashboard - best sellers: a horizontal units bar per product, and a
+       seven-bar sparkline row per product for its per-day shape. */
+    .hbar {
+        display: grid;
+        gap: var(--space-3);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .hbar__row {
+        display: grid;
+        grid-template-columns: minmax(4.5rem, 9rem) 1fr auto;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .hbar__label {
+        overflow: hidden;
+        color: var(--color-text);
+        font-size: 0.875rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .hbar__track {
+        height: 0.625rem;
+        overflow: hidden;
+        background: var(--color-surface-hover);
+        border-radius: var(--radius-pill);
+    }
+
+    .hbar__fill {
+        display: block;
+        min-width: 2px;
+        height: 100%;
+        background: var(--color-brand);
+        border-radius: var(--radius-pill);
+    }
+
+    .hbar__value {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    .spark {
+        display: grid;
+        gap: var(--space-3);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .spark__row {
+        display: grid;
+        grid-template-columns: minmax(4.5rem, 9rem) 1fr;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .spark__name {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        color: var(--color-text);
+        font-size: 0.875rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .spark__total {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+    }
+
+    .spark__days {
+        display: flex;
+        align-items: flex-end;
+        gap: var(--space-1);
+        height: 2.5rem;
+    }
+
+    .spark__bar {
+        flex: 1;
+        min-height: 2px;
+        background: var(--color-brand);
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        opacity: 0.85;
+    }
+
+    .spark__bar:hover {
+        opacity: 1;
+    }
+
     /* Report charts — the GCash/cash donut and its legend. The figures are
        always printed beside the ring, so colour is never the only signal. */
     .chart {
