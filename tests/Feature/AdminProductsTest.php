@@ -97,6 +97,47 @@ it('persists per-product add-ons with a name and price', function (): void {
     ]);
 });
 
+it('persists more than three add-ons on one product', function (): void {
+    seedCategory('drinks', 'Drinks');
+
+    $addOns = [];
+
+    foreach (range(1, 6) as $number) {
+        $addOns[] = ['name' => "Extra {$number}", 'price' => '5'];
+    }
+
+    $this->post('/admin/products', [
+        'name' => 'Milktea',
+        'description' => 'Classic',
+        'price' => '120',
+        'categoryId' => 'drinks',
+        'image' => UploadedFile::fake()->image('milktea.jpg'),
+        'addOns' => $addOns,
+    ])->assertRedirect(route('admin.products.index'));
+
+    expect(array_values(onlyProduct()['node']['addOns']))->toHaveCount(6);
+});
+
+it('renders a row per stored add-on plus the add-another control', function (): void {
+    seedCategory('drinks', 'Drinks');
+    seedProduct('p1', [
+        'addOns' => [
+            ['name' => 'Pearl', 'price' => 15.0],
+            ['name' => 'Grass jelly', 'price' => 10.0],
+            ['name' => 'Less ice', 'price' => 0.0],
+            ['name' => 'Extra shot', 'price' => 20.0],
+        ],
+    ]);
+
+    $this->get('/admin/products/p1/edit')
+        ->assertOk()
+        ->assertSee('name="addOns[3][name]"', false)
+        ->assertSee('value="Extra shot"', false)
+        ->assertSee('data-addon-add', false)
+        ->assertSee('data-addon-template', false)
+        ->assertSee('Up to 20 add-ons');
+});
+
 it('drops a blank add-on row instead of storing it', function (): void {
     seedCategory('drinks', 'Drinks');
 

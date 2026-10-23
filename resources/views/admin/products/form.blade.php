@@ -76,30 +76,152 @@
                     <span class="field__error">@error('theme'){{ $message }}@enderror</span>
                 </label>
 
+                @php
+                    $addOnRows = [];
+                    $postedAddOns = old('addOns');
+
+                    if (is_array($postedAddOns)) {
+                        foreach (array_values($postedAddOns) as $postedAddOn) {
+                            $addOnRows[] = [
+                                'name' => is_array($postedAddOn) ? ($postedAddOn['name'] ?? '') : '',
+                                'price' => is_array($postedAddOn) ? ($postedAddOn['price'] ?? '') : '',
+                            ];
+                        }
+                    } else {
+                        foreach ($product?->addOns ?? [] as $addOn) {
+                            $addOnRows[] = ['name' => $addOn->name, 'price' => $addOn->price];
+                        }
+                    }
+
+                    while (count($addOnRows) < 3) {
+                        $addOnRows[] = ['name' => '', 'price' => ''];
+                    }
+                @endphp
+
                 <fieldset class="addon-set">
                     <legend>Add-ons</legend>
                     <p class="field__label">A name the customer sees and the price it adds.</p>
-                    @for ($i = 0; $i < 3; $i++)
-                        <div class="addon-row">
-                            <label class="field">
-                                <span class="visually-hidden">Add-on name</span>
-                                <input class="field__input" type="text" name="addOns[{{ $i }}][name]" value="{{ old("addOns.{$i}.name", ($product?->addOns[$i] ?? null)?->name) }}" placeholder="Name">
-                            </label>
-                            <label class="field">
-                                <span class="visually-hidden">Add-on price</span>
-                                <input class="field__input" type="number" step="0.01" min="0" name="addOns[{{ $i }}][price]" value="{{ old("addOns.{$i}.price", ($product?->addOns[$i] ?? null)?->price) }}" placeholder="₱">
-                            </label>
-                        </div>
-                    @endfor
+
+                    <div class="addon-rows" data-addon-rows>
+                        @foreach ($addOnRows as $i => $row)
+                            <div class="addon-row" data-addon-row>
+                                <label class="field">
+                                    <span class="visually-hidden">Add-on name</span>
+                                    <input class="field__input" type="text" name="addOns[{{ $i }}][name]" value="{{ $row['name'] }}" placeholder="Name" maxlength="60">
+                                </label>
+                                <label class="field">
+                                    <span class="visually-hidden">Add-on price</span>
+                                    <input class="field__input" type="number" step="0.01" min="0" name="addOns[{{ $i }}][price]" value="{{ $row['price'] }}" placeholder="₱">
+                                </label>
+                                <button type="button" class="link-button addon-row__remove" data-addon-remove>Remove</button>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div>
+                        <button type="button" class="link-button" data-addon-add>+ Add another add-on</button>
+                        <p class="field__hint">Up to 20 add-ons; empty rows are skipped.</p>
+                    </div>
+
+                    <noscript>
+                        <p class="field__error">Enable JavaScript to add more than the rows shown, or save and edit again to add the rest.</p>
+                    </noscript>
+
                     @error('addOns.*.name')<span class="field__error">{{ $message }}</span>@enderror
                     @error('addOns.*.price')<span class="field__error">{{ $message }}</span>@enderror
+                    @error('addOns')<span class="field__error">{{ $message }}</span>@enderror
                 </fieldset>
+
+                <template data-addon-template>
+                    <div class="addon-row" data-addon-row>
+                        <label class="field">
+                            <span class="visually-hidden">Add-on name</span>
+                            <input class="field__input" type="text" name="addOns[__index__][name]" placeholder="Name" maxlength="60">
+                        </label>
+                        <label class="field">
+                            <span class="visually-hidden">Add-on price</span>
+                            <input class="field__input" type="number" step="0.01" min="0" name="addOns[__index__][price]" placeholder="₱">
+                        </label>
+                        <button type="button" class="link-button addon-row__remove" data-addon-remove>Remove</button>
+                    </div>
+                </template>
 
                 <div class="action-row">
                     <button type="submit" class="primary-button">{{ $product === null ? 'Add product' : 'Save product' }}</button>
                     <a class="link-button" href="{{ route('admin.products.index') }}">Cancel</a>
                 </div>
             </form>
+
+            <script>
+                (function () {
+                    const list = document.querySelector('[data-addon-rows]');
+                    const addButton = document.querySelector('[data-addon-add]');
+                    const template = document.querySelector('[data-addon-template]');
+
+                    if (!list || !addButton || !template) {
+                        return;
+                    }
+
+                    const maxRows = 20;
+                    let nextIndex = 0;
+
+                    const rows = () => list.querySelectorAll('[data-addon-row]');
+
+                    const sync = () => {
+                        addButton.hidden = rows().length >= maxRows;
+                    };
+
+                    rows().forEach((row) => {
+                        const field = row.querySelector('input[name^="addOns["]');
+                        const match = field ? /addOns\[(\d+)\]/.exec(field.name) : null;
+
+                        if (match) {
+                            nextIndex = Math.max(nextIndex, Number(match[1]) + 1);
+                        }
+                    });
+
+                    addButton.addEventListener('click', () => {
+                        if (rows().length >= maxRows) {
+                            return;
+                        }
+
+                        const holder = document.createElement('div');
+                        holder.innerHTML = template.innerHTML.replaceAll('__index__', String(nextIndex));
+                        nextIndex += 1;
+
+                        const row = holder.firstElementChild;
+
+                        if (!row) {
+                            return;
+                        }
+
+                        list.append(row);
+                        row.querySelector('input')?.focus();
+                        sync();
+                    });
+
+                    list.addEventListener('click', (event) => {
+                        const remove = event.target.closest('[data-addon-remove]');
+                        const row = remove ? remove.closest('[data-addon-row]') : null;
+
+                        if (!row) {
+                            return;
+                        }
+
+                        if (rows().length <= 1) {
+                            row.querySelectorAll('input').forEach((input) => {
+                                input.value = '';
+                            });
+                        } else {
+                            row.remove();
+                        }
+
+                        sync();
+                    });
+
+                    sync();
+                })();
+            </script>
 
             @if ($product !== null)
                 <section class="promo-panel" aria-labelledby="promo-heading">
