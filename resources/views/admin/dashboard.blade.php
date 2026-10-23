@@ -88,6 +88,51 @@
             </p>
         @endif
 
+        {{-- Cash-vs-GCash *counts*: how many orders were paid each way in the
+             month. A split-tender walk-in counts on both sides. --}}
+        <section class="dashboard-panel" aria-labelledby="tender-count-heading">
+            <h2 id="tender-count-heading">Cash vs GCash · orders · {{ $monthLabel }}</h2>
+
+            @if ($tenderCounts->orders === 0)
+                <p class="empty-state">No orders in {{ $monthLabel }}.</p>
+            @else
+                @php
+                    $countPeak = max($tenderCounts->cashOrders, $tenderCounts->gcashOrders, 1);
+                @endphp
+
+                <ul class="trend" aria-label="Orders paid by method in {{ $monthLabel }}">
+                    <li class="trend__day">
+                        <span class="trend__bar-wrap">
+                            <span
+                                class="trend__bar trend__bar--cash"
+                                style="height: {{ round(($tenderCounts->cashOrders / $countPeak) * 100, 1) }}%"
+                                title="Cash: {{ $tenderCounts->cashOrders }} {{ \Illuminate\Support\Str::plural('order', $tenderCounts->cashOrders) }}"
+                            ></span>
+                        </span>
+                        <span class="trend__value">{{ $tenderCounts->cashOrders }}</span>
+                        <span class="trend__date">Cash</span>
+                    </li>
+                    <li class="trend__day">
+                        <span class="trend__bar-wrap">
+                            <span
+                                class="trend__bar"
+                                style="height: {{ round(($tenderCounts->gcashOrders / $countPeak) * 100, 1) }}%"
+                                title="GCash: {{ $tenderCounts->gcashOrders }} {{ \Illuminate\Support\Str::plural('order', $tenderCounts->gcashOrders) }}"
+                            ></span>
+                        </span>
+                        <span class="trend__value">{{ $tenderCounts->gcashOrders }}</span>
+                        <span class="trend__date">GCash</span>
+                    </li>
+                </ul>
+
+                <p class="site-main__copy">
+                    {{ $tenderCounts->orders }} {{ \Illuminate\Support\Str::plural('order', $tenderCounts->orders) }}
+                    in {{ $monthLabel }}. A split-tender walk-in counts on both
+                    sides; an online pickup counts as GCash.
+                </p>
+            @endif
+        </section>
+
         {{-- Monthly booking mix: the same three cards for rental bookings —
              their own revenue stream, paid bookings only (confirmed, handed
              over, or returned). --}}

@@ -161,6 +161,33 @@ it('shows the monthly payment mix, separating GCash from cash', function (): voi
         ->assertSee('November 2026');
 });
 
+it('charts how many orders were paid by cash and by GCash', function (): void {
+    // Cash only.
+    dashboardSale('t1', '2026-10-06T02:00:00Z', [], 200.0, [
+        'payments' => [['method' => 'cash', 'amount' => 200.0]],
+    ]);
+    // GCash only.
+    dashboardSale('t2', '2026-10-06T03:00:00Z', [], 150.0, [
+        'payments' => [['method' => 'gcash', 'amount' => 150.0]],
+    ]);
+    // Online: GCash in full.
+    dashboardSale('t3', '2026-10-06T04:00:00Z', [], 400.0, [
+        'type' => 'online',
+        'payments' => [],
+    ]);
+    // Split tender: counts on both sides.
+    dashboardSale('t4', '2026-10-06T05:00:00Z', [], 100.0, [
+        'payments' => [['method' => 'cash', 'amount' => 50.0], ['method' => 'gcash', 'amount' => 50.0]],
+    ]);
+
+    $this->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('Cash vs GCash · orders · October 2026')
+        // Cash: t1 + t4. GCash: t2 + t3 + t4.
+        ->assertSee('title="Cash: 2 orders"', false)
+        ->assertSee('title="GCash: 3 orders"', false);
+});
+
 it('filters the monthly payment mix by the chosen month', function (): void {
     dashboardSale('aug', '2026-08-15T02:00:00Z', [], 111.0, [
         'payments' => [['method' => 'cash', 'amount' => 111.0]],

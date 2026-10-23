@@ -119,7 +119,7 @@ it('charts daily sales and lists every order in the range, including unsold ones
         ->assertDontSee('999.00');
 });
 
-it('draws a GCash-versus-cash comparison chart on the payments report', function (): void {
+it('keeps the GCash and cash totals on the payments report without a chart', function (): void {
     seedSale('w1', [
         'type' => 'walkin',
         'total' => 100.0,
@@ -129,9 +129,9 @@ it('draws a GCash-versus-cash comparison chart on the payments report', function
 
     $this->get(route('admin.reports.payments', ['from' => '2026-10-06', 'to' => '2026-10-06']))
         ->assertOk()
-        ->assertSee('donut__ring', false)
-        ->assertSee('GCash · ₱75.00 (75%)')
-        ->assertSee('Cash · ₱25.00 (25%)');
+        ->assertSee('₱75.00')
+        ->assertSee('₱25.00')
+        ->assertDontSee('donut__ring', false);
 });
 
 it('refuses Mark refunded to a cashier', function (): void {

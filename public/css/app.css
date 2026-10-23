@@ -1231,6 +1231,10 @@
         filter: brightness(1.15);
     }
 
+    .trend__bar--cash {
+        background: var(--color-border-strong);
+    }
+
     .trend__value,
     .trend__date {
         color: var(--color-text-muted);

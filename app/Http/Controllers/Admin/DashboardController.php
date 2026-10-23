@@ -14,6 +14,7 @@ use App\Stats\DashboardMetrics;
 use App\Stats\PaymentMix;
 use App\Stats\RefundsOwed;
 use App\Stats\SalesLedger;
+use App\Stats\TenderCounts;
 use App\Support\BusinessTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -24,7 +25,9 @@ use Illuminate\Contracts\View\View;
  * It shows the **Complete setup** banner until the GCash number and the QR image
  * are both configured, the **KPIs** (today's sales and orders), the **monthly
  * payment mix** (GCash / cash / total cards for one business month, stepped with
- * prev/next links), the **monthly booking mix** (the same three cards for rental
+ * prev/next links) and the **cash-vs-GCash order counts** (how many orders were
+ * paid each way, a split-tender walk-in counted on both sides), the **monthly
+ * booking mix** (the same three cards for rental
  * bookings — their own revenue stream, read from `rentalBookings` by `dateFrom`),
  * the **7-day trend**, **best-sellers**, **peak hours**, and the **refunds-owed
  * badge** counting the outstanding obligations. Everything is computed
@@ -58,6 +61,10 @@ final class DashboardController extends Controller
         $monthSales = array_values($this->ledger->between($monthFrom, $monthTo));
         $paymentMix = PaymentMix::fromSales($monthSales);
 
+        // The cash-vs-GCash *counts* for the month: how many orders were paid
+        // each way, alongside the amount mix above.
+        $tenderCounts = TenderCounts::fromSales($monthSales);
+
         // The monthly booking mix: rental bookings are their own revenue stream
         // (never a `sales/{id}` row), so they need their own bounded read —
         // keyed by the indexed `dateFrom`, the same bound the rental report uses.
@@ -89,6 +96,7 @@ final class DashboardController extends Controller
             'refundsCount' => count($refunds),
             'refundsTotal' => round($refundsTotal, 2),
             'paymentMix' => $paymentMix,
+            'tenderCounts' => $tenderCounts,
             'bookingMix' => $bookingMix,
             'dailyTender' => $dailyTender,
             'monthLabel' => $cursor->format('F Y'),
