@@ -88,40 +88,44 @@
             </p>
         @endif
 
-        {{-- Cash-vs-GCash *counts* per day across the seven-day window: one
-             grey (cash) and one gold (GCash) bar for each day. A split-tender
-             walk-in counts on both sides. --}}
+        {{-- Cash-vs-GCash *counts*, one pair of bars for each day of the month:
+             grey is cash, gold is GCash. A split-tender walk-in counts on both
+             sides; an online pickup is a GCash order. --}}
         <section class="dashboard-panel" aria-labelledby="tender-count-heading">
-            <h2 id="tender-count-heading">Cash vs GCash · orders · last 7 days</h2>
+            <h2 id="tender-count-heading">Cash vs GCash · orders · per day · {{ $monthLabel }}</h2>
 
             @if ($tenderCounts->orders === 0)
-                <p class="empty-state">No orders in the last seven days.</p>
+                <p class="empty-state">No orders in {{ $monthLabel }}.</p>
             @else
                 @php
+                    $tenderDays = array_values(array_filter(
+                        $dailyTender->days,
+                        static fn (array $day): bool => ($day['cashOrders'] + $day['gcashOrders']) > 0,
+                    ));
                     $tenderPeak = 1;
 
-                    foreach ($metrics->trend as $trendDay) {
-                        $tenderPeak = max($tenderPeak, $trendDay['cashOrders'], $trendDay['gcashOrders']);
+                    foreach ($tenderDays as $tenderDay) {
+                        $tenderPeak = max($tenderPeak, $tenderDay['cashOrders'], $tenderDay['gcashOrders']);
                     }
                 @endphp
 
-                <ul class="trend" aria-label="Orders paid by method each day">
-                    @foreach ($metrics->trend as $trendDay)
+                <ul class="trend" aria-label="Orders paid by method each day of {{ $monthLabel }}">
+                    @foreach ($tenderDays as $tenderDay)
                         <li class="trend__day">
                             <span class="trend__bar-wrap trend__bar-wrap--pair">
                                 <span
                                     class="trend__bar trend__bar--cash"
-                                    style="height: {{ round(($trendDay['cashOrders'] / $tenderPeak) * 100, 1) }}%"
-                                    title="Cash {{ $trendDay['cashOrders'] }} · GCash {{ $trendDay['gcashOrders'] }}"
+                                    style="height: {{ round(($tenderDay['cashOrders'] / $tenderPeak) * 100, 1) }}%"
+                                    title="{{ \Illuminate\Support\Carbon::parse($tenderDay['date'])->format('j M') }} · Cash {{ $tenderDay['cashOrders'] }} · GCash {{ $tenderDay['gcashOrders'] }}"
                                 ></span>
                                 <span
                                     class="trend__bar"
-                                    style="height: {{ round(($trendDay['gcashOrders'] / $tenderPeak) * 100, 1) }}%"
-                                    title="Cash {{ $trendDay['cashOrders'] }} · GCash {{ $trendDay['gcashOrders'] }}"
+                                    style="height: {{ round(($tenderDay['gcashOrders'] / $tenderPeak) * 100, 1) }}%"
+                                    title="{{ \Illuminate\Support\Carbon::parse($tenderDay['date'])->format('j M') }} · Cash {{ $tenderDay['cashOrders'] }} · GCash {{ $tenderDay['gcashOrders'] }}"
                                 ></span>
                             </span>
-                            <span class="trend__value">{{ $trendDay['cashOrders'] }} / {{ $trendDay['gcashOrders'] }}</span>
-                            <span class="trend__date">{{ \Illuminate\Support\Carbon::parse($trendDay['date'])->format('D j') }}</span>
+                            <span class="trend__value">{{ $tenderDay['cashOrders'] }} / {{ $tenderDay['gcashOrders'] }}</span>
+                            <span class="trend__date">{{ \Illuminate\Support\Carbon::parse($tenderDay['date'])->format('j M') }}</span>
                         </li>
                     @endforeach
                 </ul>
@@ -132,8 +136,8 @@
                     {{ \Illuminate\Support\Str::plural('order', $tenderCounts->cashOrders) }}
                     by cash and {{ $tenderCounts->gcashOrders }}
                     {{ \Illuminate\Support\Str::plural('order', $tenderCounts->gcashOrders) }}
-                    by GCash in the last seven days. A split-tender walk-in counts
-                    on both sides.
+                    by GCash in {{ $monthLabel }}. A split-tender walk-in counts on
+                    both sides; an online pickup is a GCash order.
                 </p>
             @endif
         </section>

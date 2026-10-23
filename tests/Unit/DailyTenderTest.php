@@ -52,6 +52,8 @@ it('buckets orders and bookings into one row per day, split by GCash and cash', 
             'ordersGcash' => 575.0,
             'bookingsCash' => 0.0,
             'bookingsGcash' => 0.0,
+            'cashOrders' => 1,
+            'gcashOrders' => 2,
         ])
         ->and($table->days[1])->toBe([
             'date' => '2026-10-07',
@@ -59,6 +61,8 @@ it('buckets orders and bookings into one row per day, split by GCash and cash', 
             'ordersGcash' => 0.0,
             'bookingsCash' => 0.0,
             'bookingsGcash' => 0.0,
+            'cashOrders' => 1,
+            'gcashOrders' => 0,
         ])
         ->and($table->days[2])->toBe([
             'date' => '2026-10-08',
@@ -66,6 +70,8 @@ it('buckets orders and bookings into one row per day, split by GCash and cash', 
             'ordersGcash' => 0.0,
             'bookingsCash' => 50.0,
             'bookingsGcash' => 200.0,
+            'cashOrders' => 0,
+            'gcashOrders' => 0,
         ]);
 
     expect($table->totals())->toBe([
