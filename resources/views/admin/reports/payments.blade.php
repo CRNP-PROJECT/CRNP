@@ -48,32 +48,7 @@
             @if ($mix->orders === 0)
                 <p class="empty-state">No payments in this range.</p>
             @else
-                @php
-                    $mixTotal = $mix->total();
-                    $gcashShare = $mixTotal > 0 ? ($mix->gcash / $mixTotal) * 100 : 0;
-                    $cashShare = $mixTotal > 0 ? ($mix->cash / $mixTotal) * 100 : 0;
-                @endphp
-
-                <figure class="chart">
-                    <div class="split-bar" role="img" aria-label="GCash ₱{{ number_format($mix->gcash, 2) }}, cash ₱{{ number_format($mix->cash, 2) }}">
-                        <span class="split-bar__segment split-bar__segment--gcash" style="width: {{ $gcashShare }}%">
-                            {{ $gcashShare >= 12 ? round($gcashShare) . '%' : '' }}
-                        </span>
-                        <span class="split-bar__segment split-bar__segment--cash" style="width: {{ $cashShare }}%">
-                            {{ $cashShare >= 12 ? round($cashShare) . '%' : '' }}
-                        </span>
-                    </div>
-                    <figcaption class="chart-legend">
-                        <span class="chart-legend__item">
-                            <span class="chart-legend__swatch chart-legend__swatch--gcash"></span>
-                            GCash · ₱{{ number_format($mix->gcash, 2) }} ({{ round($gcashShare) }}%)
-                        </span>
-                        <span class="chart-legend__item">
-                            <span class="chart-legend__swatch chart-legend__swatch--cash"></span>
-                            Cash · ₱{{ number_format($mix->cash, 2) }} ({{ round($cashShare) }}%)
-                        </span>
-                    </figcaption>
-                </figure>
+                @include('admin.reports.partials.tender-donut', ['mix' => $mix])
 
                 <table class="admin-table">
                     <thead>

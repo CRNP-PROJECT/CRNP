@@ -1238,48 +1238,16 @@
         white-space: nowrap;
     }
 
-    /* Report charts — a stacked GCash/cash bar and its legend. The figures are
-       always printed beside the bar, so colour is never the only signal. */
+    /* Report charts — the GCash/cash donut and its legend. The figures are
+       always printed beside the ring, so colour is never the only signal. */
     .chart {
         margin: 0 0 var(--space-3);
-    }
-
-    .split-bar {
-        display: flex;
-        width: 100%;
-        height: 2rem;
-        overflow: hidden;
-        background: var(--color-surface-raised);
-        border-radius: var(--radius-sm);
-    }
-
-    .split-bar__segment {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 0;
-        color: var(--color-brand-ink);
-        font-size: 0.75rem;
-        font-weight: 700;
-        transition: filter var(--dur) var(--ease);
-    }
-
-    .split-bar__segment:hover {
-        filter: brightness(1.1);
-    }
-
-    .split-bar__segment--gcash {
-        background: var(--color-brand);
-    }
-
-    .split-bar__segment--cash {
-        color: var(--color-text);
-        background: var(--color-border-strong);
     }
 
     .chart-legend {
         display: flex;
         flex-wrap: wrap;
+        justify-content: center;
         gap: var(--space-3);
         margin-top: var(--space-3);
     }
@@ -1304,6 +1272,42 @@
 
     .chart-legend__swatch--cash {
         background: var(--color-border-strong);
+    }
+
+    /* A GCash-versus-cash donut: the ring is a conic gradient split at the
+       GCash share; the hole carries the collected total. */
+    .donut {
+        display: grid;
+        justify-items: center;
+        margin: 0;
+    }
+
+    .donut__ring {
+        position: relative;
+        width: 12rem;
+        max-width: 100%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+    }
+
+    .donut__hole {
+        position: absolute;
+        inset: 1.5rem;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        background: var(--color-surface-raised);
+        border-radius: 50%;
+    }
+
+    .donut__total {
+        font-size: 1.125rem;
+        font-weight: 700;
+    }
+
+    .donut__caption {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
     }
 
     /* Admin reports — a segmented tab row, a one-click date filter, and compact

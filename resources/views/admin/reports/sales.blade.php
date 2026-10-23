@@ -74,6 +74,16 @@
             @endif
         </section>
 
+        <section class="dashboard-panel" aria-labelledby="tender-heading">
+            <h2 id="tender-heading">GCash vs cash · {{ $from }} → {{ $to }}</h2>
+
+            @if ($mix->orders === 0)
+                <p class="empty-state">No payments in this range.</p>
+            @else
+                @include('admin.reports.partials.tender-donut', ['mix' => $mix])
+            @endif
+        </section>
+
         <section class="dashboard-panel" aria-labelledby="sales-heading">
             <h2 id="sales-heading">Sales · {{ $from }} → {{ $to }}</h2>
 

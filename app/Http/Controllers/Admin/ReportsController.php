@@ -96,6 +96,7 @@ final class ReportsController extends Controller
             'refunds' => $refunds,
             'refundsTotal' => round($refundsTotal, 2),
             'timeline' => DailySales::fromSalesInRange($rows, $from, $to),
+            'mix' => PaymentMix::fromSales($rows),
             'orders' => $orders,
             'ordersTotal' => round($ordersTotal, 2),
         ]);

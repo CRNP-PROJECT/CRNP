@@ -108,6 +108,8 @@ it('charts daily sales and lists every order in the range, including unsold ones
     $this->get(route('admin.reports.sales', ['from' => '2026-10-06', 'to' => '2026-10-06']))
         ->assertOk()
         ->assertSee('Daily sales')
+        ->assertSee('GCash vs cash')
+        ->assertSee('donut__ring', false)
         ->assertSee('All orders')
         ->assertSee('SOLD1')
         ->assertSee('OPEN1')
@@ -127,8 +129,7 @@ it('draws a GCash-versus-cash comparison chart on the payments report', function
 
     $this->get(route('admin.reports.payments', ['from' => '2026-10-06', 'to' => '2026-10-06']))
         ->assertOk()
-        ->assertSee('split-bar__segment--gcash', false)
-        ->assertSee('split-bar__segment--cash', false)
+        ->assertSee('donut__ring', false)
         ->assertSee('GCash · ₱75.00 (75%)')
         ->assertSee('Cash · ₱25.00 (25%)');
 });
