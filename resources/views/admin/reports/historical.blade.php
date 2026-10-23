@@ -71,6 +71,7 @@
                         <span class="field__label">Search products</span>
                         <input class="field__input" type="search" id="product-search" placeholder="Type a product name…" autocomplete="off">
                     </label>
+                    <p class="field__hint" id="product-search-status" role="status" aria-live="polite"></p>
 
                     <div id="line-rows" class="line-rows">
                         @php
@@ -114,6 +115,7 @@
                 const template = document.getElementById('line-row-template');
                 const totalEl = document.getElementById('historical-total');
                 const searchEl = document.getElementById('product-search');
+                const statusEl = document.getElementById('product-search-status');
 
                 if (!rows || !addButton || !template || !totalEl) {
                     return;
@@ -122,25 +124,75 @@
                 let counter = rows.querySelectorAll('.line-row').length;
                 let searchQuery = '';
 
-                // Hide the product options that do not match the search box, so a
-                // long menu is searchable. The selected option always stays, so a
-                // pick is never filtered out from under the admin.
+                // Snapshot the full product list once, so filtering can rebuild
+                // each row's options instead of hiding them (browsers ignore
+                // `hidden` / `display:none` on <option>). Read a real row — a
+                // <template>'s children live in `content`, not its own subtree.
+                const productOptions = (() => {
+                    const source = rows.querySelector('.line-row__product')
+                        || template.content.querySelector('.line-row__product');
+
+                    if (!source) {
+                        return [];
+                    }
+
+                    return Array.from(source.options)
+                        .filter((option) => option.value !== '')
+                        .map((option) => ({
+                            value: option.value,
+                            label: option.text,
+                            price: option.dataset.price || '',
+                        }));
+                })();
+
+                // Rebuild a select's options to those matching the current query,
+                // always keeping the selected product so a pick is never dropped.
                 const filterSelect = (select) => {
                     const query = searchQuery.trim().toLowerCase();
+                    const selected = select.value;
 
-                    Array.from(select.options).forEach((option) => {
-                        if (option.value === '') {
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+
+                    productOptions.forEach((product) => {
+                        const matches = query === '' || product.label.toLowerCase().includes(query);
+
+                        if (!matches && product.value !== selected) {
                             return;
                         }
 
-                        const matches = query === '' || option.text.toLowerCase().includes(query);
-                        option.hidden = !matches;
-                        option.disabled = !matches && !option.selected;
+                        const option = document.createElement('option');
+                        option.value = product.value;
+                        option.textContent = product.label;
+
+                        if (product.price !== '') {
+                            option.dataset.price = product.price;
+                        }
+
+                        select.appendChild(option);
                     });
+
+                    select.value = selected;
                 };
 
                 const filterAll = () => {
                     rows.querySelectorAll('.line-row__product').forEach(filterSelect);
+
+                    if (!statusEl) {
+                        return;
+                    }
+
+                    const query = searchQuery.trim().toLowerCase();
+                    const count = query === ''
+                        ? productOptions.length
+                        : productOptions.filter((product) => product.label.toLowerCase().includes(query)).length;
+
+                    statusEl.textContent = query === ''
+                        ? ''
+                        : count === 0
+                            ? 'No products match “' + searchQuery.trim() + '”.'
+                            : count + ' product' + (count === 1 ? '' : 's') + ' match. Open a product picker to choose.';
                 };
 
                 const money = (amount) => '₱' + amount.toFixed(2);
