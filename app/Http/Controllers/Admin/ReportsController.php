@@ -7,12 +7,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReportFilterRequest;
 use App\Orders\HandledBy;
+use App\Orders\Order;
+use App\Orders\Orders;
 use App\Reservations\Reservations;
 use App\Rtdb\Contracts\RtdbClient;
 use App\Rtdb\RtdbQuery;
 use App\Staff\Staff;
 use App\Staff\StaffDirectory;
 use App\Stats\Actions\MarkRefunded;
+use App\Stats\DailySales;
 use App\Stats\PaymentMix;
 use App\Stats\RefundsOwed;
 use App\Stats\SalesLedger;
@@ -46,6 +49,7 @@ final class ReportsController extends Controller
         private readonly SalesLedger $ledger,
         private readonly RefundsOwed $refunds,
         private readonly Reservations $reservations,
+        private readonly Orders $orders,
         private readonly RtdbClient $client,
         private readonly StaffDirectory $directory,
     ) {}
@@ -53,11 +57,9 @@ final class ReportsController extends Controller
     public function sales(ReportFilterRequest $request): View
     {
         [$from, $to] = $this->range($request->validated('from'), $request->validated('to'));
+        [$fromIso, $toIso] = $this->instantRange($from, $to);
 
-        $rows = array_values($this->ledger->between(
-            CarbonImmutable::parse($from)->startOfDay()->toIso8601ZuluString(),
-            CarbonImmutable::parse($to)->endOfDay()->toIso8601ZuluString(),
-        ));
+        $rows = array_values($this->ledger->between($fromIso, $toIso));
 
         $total = 0.0;
 
@@ -73,6 +75,19 @@ final class ReportsController extends Controller
             $refundsTotal += $refund['refundOwed'];
         }
 
+        // Every order placed in the range, across all statuses — a pending or
+        // rejected order never reaches the sales ledger, so the report cannot
+        // show it from `sales` alone. Bounded by the indexed `placedAt`.
+        $orders = array_values($this->orders->placedBetween($fromIso, $toIso));
+
+        usort($orders, static fn(Order $a, Order $b): int => strcmp((string) $b->placedAt, (string) $a->placedAt));
+
+        $ordersTotal = 0.0;
+
+        foreach ($orders as $order) {
+            $ordersTotal += $order->total;
+        }
+
         return view('admin.reports.sales', [
             'from' => $from,
             'to' => $to,
@@ -80,17 +95,18 @@ final class ReportsController extends Controller
             'total' => round($total, 2),
             'refunds' => $refunds,
             'refundsTotal' => round($refundsTotal, 2),
+            'timeline' => DailySales::fromSalesInRange($rows, $from, $to),
+            'orders' => $orders,
+            'ordersTotal' => round($ordersTotal, 2),
         ]);
     }
 
     public function payments(ReportFilterRequest $request): View
     {
         [$from, $to] = $this->range($request->validated('from'), $request->validated('to'));
+        [$fromIso, $toIso] = $this->instantRange($from, $to);
 
-        $rows = array_values($this->ledger->between(
-            CarbonImmutable::parse($from)->startOfDay()->toIso8601ZuluString(),
-            CarbonImmutable::parse($to)->endOfDay()->toIso8601ZuluString(),
-        ));
+        $rows = array_values($this->ledger->between($fromIso, $toIso));
 
         return view('admin.reports.payments', [
             'from' => $from,
@@ -161,6 +177,24 @@ final class ReportsController extends Controller
         $end = is_string($to) && $to !== '' ? $to : $start;
 
         return [$start, $end];
+    }
+
+    /**
+     * The UTC instant bounds of a Manila date range — from 00:00 on `$from`
+     * through 23:59:59 on `$to`, in the diner's timezone. The reports filter
+     * on plain `Y-m-d` dates, so a "6 Oct" report must mean the whole Manila
+     * 6th, not the UTC day that straddles it.
+     *
+     * @return array{string, string}
+     */
+    private function instantRange(string $from, string $to): array
+    {
+        $timezone = BusinessTime::timezone();
+
+        return [
+            CarbonImmutable::parse($from, $timezone)->startOfDay()->toIso8601ZuluString(),
+            CarbonImmutable::parse($to, $timezone)->endOfDay()->toIso8601ZuluString(),
+        ];
     }
 
     private function admin(): HandledBy

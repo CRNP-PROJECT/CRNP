@@ -37,6 +37,43 @@
             <button type="submit" class="primary-button">Apply</button>
         </form>
 
+        <section class="dashboard-panel" aria-labelledby="sales-chart-heading">
+            <h2 id="sales-chart-heading">Daily sales</h2>
+
+            @if ($timeline->truncated)
+                <p class="field__hint">
+                    Showing the most recent {{ \App\Stats\DailySales::MAX_DAYS }} days of this range.
+                    Narrow the dates for an earlier window.
+                </p>
+            @endif
+
+            @if ($sales === [])
+                <p class="empty-state">No sales in this range.</p>
+            @else
+                @php
+                    $peak = $timeline->peak();
+                @endphp
+
+                <ul class="trend" aria-label="Daily sales for the range">
+                    @foreach ($timeline->days as $day)
+                        <li class="trend__day">
+                            <span class="trend__bar-wrap">
+                                <span
+                                    class="trend__bar"
+                                    style="height: {{ $peak > 0 ? round(($day['total'] / $peak) * 100, 1) : 0 }}%"
+                                    title="{{ \Illuminate\Support\Carbon::parse($day['date'])->format('D j M') }}: ₱{{ number_format($day['total'], 2) }} · {{ $day['orders'] }} {{ \Illuminate\Support\Str::plural('order', $day['orders']) }}"
+                                ></span>
+                            </span>
+                            @if (count($timeline->days) <= 14)
+                                <span class="trend__value">₱{{ number_format($day['total'], 0) }}</span>
+                            @endif
+                            <span class="trend__date">{{ \Illuminate\Support\Carbon::parse($day['date'])->format('j M') }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </section>
+
         <section class="dashboard-panel" aria-labelledby="sales-heading">
             <h2 id="sales-heading">Sales · {{ $from }} → {{ $to }}</h2>
 
@@ -75,6 +112,56 @@
                         <tr>
                             <th scope="row" colspan="5">Total</th>
                             <td>₱{{ number_format($total, 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            @endif
+        </section>
+
+        <section class="dashboard-panel" aria-labelledby="orders-heading">
+            <h2 id="orders-heading">All orders · {{ $from }} → {{ $to }}</h2>
+            <p class="site-main__copy">
+                Every order placed in this range, whatever its status — a pending,
+                rejected, or dismissed order never reaches the sales ledger, so it
+                appears here and nowhere else.
+            </p>
+
+            @if ($orders === [])
+                <p class="empty-state">No orders in this range.</p>
+            @else
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Code</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Placed at</th>
+                            <th scope="col">Customer</th>
+                            <th scope="col">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($orders as $order)
+                            <tr>
+                                <td>{{ $order->code }}</td>
+                                <td>{{ $order->type === 'online' ? 'Online' : 'Walk-in' }}</td>
+                                <td>{{ \Illuminate\Support\Str::headline($order->status->value) }}</td>
+                                <td>{{ $order->placedAt !== null ? \Illuminate\Support\Carbon::parse($order->placedAt)->setTimezone('Asia/Manila')->format('Y-m-d H:i') : '—' }}</td>
+                                <td>
+                                    @if ($order->customerUid !== null)
+                                        <span title="{{ $order->customerUid }}">{{ \Illuminate\Support\Str::limit($order->customerUid, 12) }}</span>
+                                    @else
+                                        Walk-in
+                                    @endif
+                                </td>
+                                <td>₱{{ number_format($order->total, 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th scope="row" colspan="5">Total</th>
+                            <td>₱{{ number_format($ordersTotal, 2) }}</td>
                         </tr>
                     </tfoot>
                 </table>

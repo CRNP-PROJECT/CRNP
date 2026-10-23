@@ -72,6 +72,35 @@ final readonly class Orders
     }
 
     /**
+     * The orders placed in the UTC instant range [$fromIso, $toIso] inclusive,
+     * keyed by id — the admin report's "all orders" read.
+     *
+     * Bounded by the indexed `placedAt` field (see `database.rules.json`), so a
+     * report never scans the whole tree. A row that cannot be parsed is skipped.
+     *
+     * @return array<string, Order>
+     */
+    public function placedBetween(string $fromIso, string $toIso): array
+    {
+        $rows = $this->client->query(
+            'orders',
+            RtdbQuery::orderBy('placedAt')->range($fromIso, $toIso),
+        );
+
+        $orders = [];
+
+        foreach ($rows as $id => $row) {
+            $order = Order::fromNode((string) $id, $row);
+
+            if ($order !== null) {
+                $orders[(string) $id] = $order;
+            }
+        }
+
+        return $orders;
+    }
+
+    /**
      * The account's active order, from `users/{uid}/activeOrderId` (#23).
      *
      * The tracker reopens this with zero typing; a terminal order (served,

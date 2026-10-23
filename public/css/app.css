@@ -1238,6 +1238,74 @@
         white-space: nowrap;
     }
 
+    /* Report charts — a stacked GCash/cash bar and its legend. The figures are
+       always printed beside the bar, so colour is never the only signal. */
+    .chart {
+        margin: 0 0 var(--space-3);
+    }
+
+    .split-bar {
+        display: flex;
+        width: 100%;
+        height: 2rem;
+        overflow: hidden;
+        background: var(--color-surface-raised);
+        border-radius: var(--radius-sm);
+    }
+
+    .split-bar__segment {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        color: var(--color-brand-ink);
+        font-size: 0.75rem;
+        font-weight: 700;
+        transition: filter var(--dur) var(--ease);
+    }
+
+    .split-bar__segment:hover {
+        filter: brightness(1.1);
+    }
+
+    .split-bar__segment--gcash {
+        background: var(--color-brand);
+    }
+
+    .split-bar__segment--cash {
+        color: var(--color-text);
+        background: var(--color-border-strong);
+    }
+
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+        margin-top: var(--space-3);
+    }
+
+    .chart-legend__item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+        color: var(--color-text-muted);
+        font-size: 0.8125rem;
+    }
+
+    .chart-legend__swatch {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 2px;
+    }
+
+    .chart-legend__swatch--gcash {
+        background: var(--color-brand);
+    }
+
+    .chart-legend__swatch--cash {
+        background: var(--color-border-strong);
+    }
+
     /* Admin reports — a segmented tab row, a one-click date filter, and compact
        tables. */
     .report-tabs {

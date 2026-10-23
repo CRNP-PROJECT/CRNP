@@ -3,7 +3,7 @@
     ".read": "auth != null",
     ".write": "auth != null",
     "orders": {
-      ".indexOn": ["status", "deadlineAt", "updatedAt", "settledAt"]
+      ".indexOn": ["status", "deadlineAt", "updatedAt", "settledAt", "placedAt"]
     },
     "proofs": {
       ".indexOn": ["rejectedAt"]

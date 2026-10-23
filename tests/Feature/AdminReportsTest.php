@@ -82,7 +82,55 @@ it('drops a refunded obligation out of the refunds-owed list', function (): void
 
     $this->get(route('admin.reports.sales', ['from' => '2026-10-01', 'to' => '2026-10-10']))
         ->assertOk()
-        ->assertDontSee('REJ1');
+        ->assertSee('No refunds owed — nothing outstanding.');
+});
+
+it('charts daily sales and lists every order in the range, including unsold ones', function (): void {
+    seedSale('s1', ['code' => 'SOLD1', 'total' => 100.0, 'soldAt' => '2026-10-06T04:00:00Z']);
+    // An order that never settled: it is in no sales row, so the report can
+    // only show it from the orders tree.
+    seedAdminOrder('o1', [
+        'code' => 'OPEN1',
+        'status' => 'awaiting_payment',
+        'total' => 250.0,
+        'placedAt' => '2026-10-06T05:00:00Z',
+        'refundOwed' => null,
+    ]);
+    // An order outside the range must not leak in.
+    seedAdminOrder('o2', [
+        'code' => 'OUTSIDE',
+        'status' => 'pending',
+        'total' => 999.0,
+        'placedAt' => '2026-09-01T05:00:00Z',
+        'refundOwed' => null,
+    ]);
+
+    $this->get(route('admin.reports.sales', ['from' => '2026-10-06', 'to' => '2026-10-06']))
+        ->assertOk()
+        ->assertSee('Daily sales')
+        ->assertSee('All orders')
+        ->assertSee('SOLD1')
+        ->assertSee('OPEN1')
+        ->assertSee('Awaiting Payment')
+        ->assertSee('₱250.00')
+        ->assertDontSee('OUTSIDE')
+        ->assertDontSee('999.00');
+});
+
+it('draws a GCash-versus-cash comparison chart on the payments report', function (): void {
+    seedSale('w1', [
+        'type' => 'walkin',
+        'total' => 100.0,
+        'payments' => [['method' => 'cash', 'amount' => 25.0], ['method' => 'gcash', 'amount' => 75.0]],
+        'soldAt' => '2026-10-06T04:00:00Z',
+    ]);
+
+    $this->get(route('admin.reports.payments', ['from' => '2026-10-06', 'to' => '2026-10-06']))
+        ->assertOk()
+        ->assertSee('split-bar__segment--gcash', false)
+        ->assertSee('split-bar__segment--cash', false)
+        ->assertSee('GCash · ₱75.00 (75%)')
+        ->assertSee('Cash · ₱25.00 (25%)');
 });
 
 it('refuses Mark refunded to a cashier', function (): void {
