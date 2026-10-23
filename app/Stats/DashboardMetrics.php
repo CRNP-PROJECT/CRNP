@@ -11,11 +11,13 @@ use Carbon\CarbonInterface;
 /**
  * The dashboard's computed figures (PLAN §4 *Admin* — *Dashboard*).
  *
- * Everything is derived server-side from the sales ledger: the KPIs for today,
- * a 7-day trend, the best-sellers, and the peak hours. The window is bounded by
- * the indexed `soldAt` field, and the ledger only returns order sales — a rental
- * booking (#34) is excluded from the product ranking and the trend, so the
- * dashboard ranks products only. The server computes; the human only reads.
+ * Everything is derived server-side from the sales ledger: the KPIs for today
+ * (including how many orders were paid cash vs GCash today), a 7-day trend, the
+ * best-sellers (with their per-day units), and the peak hours. The window is
+ * bounded by the indexed `soldAt` field, and the ledger only returns order
+ * sales — a rental booking (#34) is excluded from the product ranking and the
+ * trend, so the dashboard ranks products only. The server computes; the human
+ * only reads.
  */
 final readonly class DashboardMetrics
 {
@@ -34,6 +36,7 @@ final readonly class DashboardMetrics
     public function __construct(
         public float $salesToday,
         public int $ordersToday,
+        public TenderCounts $todayTender,
         public float $salesWindow,
         public int $ordersWindow,
         public array $trend,
@@ -62,6 +65,9 @@ final readonly class DashboardMetrics
         $salesToday = 0.0;
         $ordersToday = 0;
 
+        /** @var list<array<string, mixed>> $todaySales */
+        $todaySales = [];
+
         foreach ($sales as $sale) {
             $soldAt = $sale['soldAt'] ?? null;
             $total = $sale['total'] ?? 0;
@@ -86,6 +92,7 @@ final readonly class DashboardMetrics
             if ($date === $today) {
                 $salesToday += $amount;
                 $ordersToday++;
+                $todaySales[] = $sale;
             }
         }
 
@@ -127,6 +134,7 @@ final readonly class DashboardMetrics
         return new self(
             salesToday: round($salesToday, 2),
             ordersToday: $ordersToday,
+            todayTender: TenderCounts::fromSales($todaySales),
             salesWindow: round(array_sum($totalsByDay), 2),
             ordersWindow: array_sum($ordersByDay),
             trend: $trend,

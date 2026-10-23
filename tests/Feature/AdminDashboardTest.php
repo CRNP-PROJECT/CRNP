@@ -186,10 +186,10 @@ it('charts how many orders were paid by cash and by GCash', function (): void {
 
     $this->get(route('admin.dashboard'))
         ->assertOk()
-        ->assertSee('Cash vs GCash · orders · per day · October 2026')
-        ->assertSee('trend__bar-wrap--pair', false)
-        // Cash: t1 + t4. GCash: t2 + t3 + t4, all on 6 Oct.
-        ->assertSee('6 Oct · Cash 2 · GCash 3')
+        ->assertSee('Cash vs GCash · orders · today')
+        // Cash: t1 + t4. GCash: t2 + t3 + t4, all today.
+        ->assertSee('title="Cash: 2 orders"', false)
+        ->assertSee('title="GCash: 3 orders"', false)
         ->assertSee('Sales · last 7 days')
         ->assertSee('Orders · last 7 days');
 });

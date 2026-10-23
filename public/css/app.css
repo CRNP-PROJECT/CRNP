@@ -1235,14 +1235,6 @@
         background: var(--color-border-strong);
     }
 
-    .trend__bar-wrap--pair {
-        gap: 2px;
-    }
-
-    .trend__bar-wrap--pair .trend__bar {
-        width: 50%;
-    }
-
     .trend__value,
     .trend__date {
         color: var(--color-text-muted);

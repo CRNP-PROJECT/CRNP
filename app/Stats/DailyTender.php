@@ -37,23 +37,19 @@ final readonly class DailyTender
     ];
 
     /**
-     * @param  list<array{date: string, ordersCash: float, ordersGcash: float, bookingsCash: float, bookingsGcash: float, cashOrders: int, gcashOrders: int}>  $days
+     * @param  list<array{date: string, ordersCash: float, ordersGcash: float, bookingsCash: float, bookingsGcash: float}>  $days
      */
     public function __construct(public array $days) {}
 
     /**
      * Bucket the month's order sales and rental bookings into one row per day.
      *
-     * Alongside the amounts, each day counts how many **orders** were paid each
-     * way (an online pickup is a GCash order, a split-tender walk-in counts on
-     * both sides) — the same rule as {@see TenderCounts}.
-     *
      * @param  list<array<string, mixed>>  $sales  order sales over the month
      * @param  list<array<string, mixed>>  $bookings  rental bookings starting in the month
      */
     public static function fromSalesAndBookings(array $sales, array $bookings): self
     {
-        /** @var array<string, array{ordersCash: float, ordersGcash: float, bookingsCash: float, bookingsGcash: float, cashOrders: int, gcashOrders: int}> $byDay */
+        /** @var array<string, array{ordersCash: float, ordersGcash: float, bookingsCash: float, bookingsGcash: float}> $byDay */
         $byDay = [];
 
         foreach ($sales as $sale) {
@@ -67,17 +63,6 @@ final readonly class DailyTender
             [$cash, $gcash] = self::salesTender($sale);
             $row['ordersCash'] = round($row['ordersCash'] + $cash, 2);
             $row['ordersGcash'] = round($row['ordersGcash'] + $gcash, 2);
-
-            $methods = TenderCounts::methodsFor($sale);
-
-            if ($methods['cash']) {
-                $row['cashOrders']++;
-            }
-
-            if ($methods['gcash']) {
-                $row['gcashOrders']++;
-            }
-
             $byDay[$date] = $row;
         }
 
@@ -112,8 +97,6 @@ final readonly class DailyTender
                 'ordersGcash' => $row['ordersGcash'],
                 'bookingsCash' => $row['bookingsCash'],
                 'bookingsGcash' => $row['bookingsGcash'],
-                'cashOrders' => $row['cashOrders'],
-                'gcashOrders' => $row['gcashOrders'],
             ];
         }
 
@@ -149,18 +132,11 @@ final readonly class DailyTender
     }
 
     /**
-     * @return array{ordersCash: float, ordersGcash: float, bookingsCash: float, bookingsGcash: float, cashOrders: int, gcashOrders: int}
+     * @return array{ordersCash: float, ordersGcash: float, bookingsCash: float, bookingsGcash: float}
      */
     private static function blank(): array
     {
-        return [
-            'ordersCash' => 0.0,
-            'ordersGcash' => 0.0,
-            'bookingsCash' => 0.0,
-            'bookingsGcash' => 0.0,
-            'cashOrders' => 0,
-            'gcashOrders' => 0,
-        ];
+        return ['ordersCash' => 0.0, 'ordersGcash' => 0.0, 'bookingsCash' => 0.0, 'bookingsGcash' => 0.0];
     }
 
     /**
