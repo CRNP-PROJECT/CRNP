@@ -26,7 +26,7 @@ final readonly class DashboardMetrics
     public const BEST_SELLER_LIMIT = 5;
 
     /**
-     * @param  list<array{date: string, total: float, orders: int}>  $trend
+     * @param  list<array{date: string, total: float, orders: int, cashOrders: int, gcashOrders: int}>  $trend
      * @param  list<array{productId: string, name: string, units: int, revenue: float}>  $bestSellers
      * @param  list<array{hour: string, orders: int, total: float}>  $peakHours
      */
@@ -54,6 +54,10 @@ final readonly class DashboardMetrics
         $totalsByDay = array_fill_keys($days, 0.0);
         /** @var array<string, int> $ordersByDay */
         $ordersByDay = array_fill_keys($days, 0);
+        /** @var array<string, int> $cashOrdersByDay */
+        $cashOrdersByDay = array_fill_keys($days, 0);
+        /** @var array<string, int> $gcashOrdersByDay */
+        $gcashOrdersByDay = array_fill_keys($days, 0);
         /** @var array<string, array{orders: int, total: float}> $byHour */
         $byHour = [];
 
@@ -76,6 +80,16 @@ final readonly class DashboardMetrics
             if (array_key_exists($date, $totalsByDay)) {
                 $totalsByDay[$date] += $amount;
                 $ordersByDay[$date]++;
+
+                $methods = TenderCounts::methodsFor($sale);
+
+                if ($methods['cash']) {
+                    $cashOrdersByDay[$date]++;
+                }
+
+                if ($methods['gcash']) {
+                    $gcashOrdersByDay[$date]++;
+                }
             }
 
             $current = $byHour[$hour] ?? ['orders' => 0, 'total' => 0.0];
@@ -94,6 +108,8 @@ final readonly class DashboardMetrics
                 'date' => $date,
                 'total' => round($totalsByDay[$date], 2),
                 'orders' => $ordersByDay[$date],
+                'cashOrders' => $cashOrdersByDay[$date],
+                'gcashOrders' => $gcashOrdersByDay[$date],
             ];
         }
 

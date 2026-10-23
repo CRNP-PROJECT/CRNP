@@ -38,35 +38,50 @@ final readonly class TenderCounts
         $gcash = 0;
 
         foreach ($sales as $sale) {
-            if (($sale['type'] ?? null) === OrderType::Online->value) {
-                $gcash++;
+            $methods = self::methodsFor($sale);
 
-                continue;
-            }
-
-            $usedCash = false;
-            $usedGcash = false;
-
-            foreach (self::payments($sale) as $payment) {
-                $method = $payment['method'] ?? null;
-
-                if ($method === PaymentMethod::Cash->value) {
-                    $usedCash = true;
-                } elseif ($method === PaymentMethod::Gcash->value) {
-                    $usedGcash = true;
-                }
-            }
-
-            if ($usedCash) {
+            if ($methods['cash']) {
                 $cash++;
             }
 
-            if ($usedGcash) {
+            if ($methods['gcash']) {
                 $gcash++;
             }
         }
 
         return new self($cash, $gcash, count($sales));
+    }
+
+    /**
+     * Whether one sale's tender reached cash and/or GCash.
+     *
+     * This is the single place the count rules live: an online pickup is GCash
+     * in full, a walk-in is counted by each tender leg it carries (so a split
+     * counts on both sides).
+     *
+     * @param  array<string, mixed>  $sale
+     * @return array{cash: bool, gcash: bool}
+     */
+    public static function methodsFor(array $sale): array
+    {
+        if (($sale['type'] ?? null) === OrderType::Online->value) {
+            return ['cash' => false, 'gcash' => true];
+        }
+
+        $cash = false;
+        $gcash = false;
+
+        foreach (self::payments($sale) as $payment) {
+            $method = $payment['method'] ?? null;
+
+            if ($method === PaymentMethod::Cash->value) {
+                $cash = true;
+            } elseif ($method === PaymentMethod::Gcash->value) {
+                $gcash = true;
+            }
+        }
+
+        return ['cash' => $cash, 'gcash' => $gcash];
     }
 
     /**

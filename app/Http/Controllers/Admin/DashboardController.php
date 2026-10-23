@@ -61,9 +61,9 @@ final class DashboardController extends Controller
         $monthSales = array_values($this->ledger->between($monthFrom, $monthTo));
         $paymentMix = PaymentMix::fromSales($monthSales);
 
-        // The cash-vs-GCash *counts* for the month: how many orders were paid
-        // each way, alongside the amount mix above.
-        $tenderCounts = TenderCounts::fromSales($monthSales);
+        // The cash-vs-GCash counts for the seven-day window: how many orders
+        // were paid each way, alongside the same window's daily bars.
+        $tenderCounts = TenderCounts::fromSales($sales);
 
         // The monthly booking mix: rental bookings are their own revenue stream
         // (never a `sales/{id}` row), so they need their own bounded read —

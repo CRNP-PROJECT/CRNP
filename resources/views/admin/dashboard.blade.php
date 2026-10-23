@@ -88,47 +88,52 @@
             </p>
         @endif
 
-        {{-- Cash-vs-GCash *counts*: how many orders were paid each way in the
-             month. A split-tender walk-in counts on both sides. --}}
+        {{-- Cash-vs-GCash *counts* per day across the seven-day window: one
+             grey (cash) and one gold (GCash) bar for each day. A split-tender
+             walk-in counts on both sides. --}}
         <section class="dashboard-panel" aria-labelledby="tender-count-heading">
-            <h2 id="tender-count-heading">Cash vs GCash · orders · {{ $monthLabel }}</h2>
+            <h2 id="tender-count-heading">Cash vs GCash · orders · last 7 days</h2>
 
             @if ($tenderCounts->orders === 0)
-                <p class="empty-state">No orders in {{ $monthLabel }}.</p>
+                <p class="empty-state">No orders in the last seven days.</p>
             @else
                 @php
-                    $countPeak = max($tenderCounts->cashOrders, $tenderCounts->gcashOrders, 1);
+                    $tenderPeak = 1;
+
+                    foreach ($metrics->trend as $trendDay) {
+                        $tenderPeak = max($tenderPeak, $trendDay['cashOrders'], $trendDay['gcashOrders']);
+                    }
                 @endphp
 
-                <ul class="trend" aria-label="Orders paid by method in {{ $monthLabel }}">
-                    <li class="trend__day">
-                        <span class="trend__bar-wrap">
-                            <span
-                                class="trend__bar trend__bar--cash"
-                                style="height: {{ round(($tenderCounts->cashOrders / $countPeak) * 100, 1) }}%"
-                                title="Cash: {{ $tenderCounts->cashOrders }} {{ \Illuminate\Support\Str::plural('order', $tenderCounts->cashOrders) }}"
-                            ></span>
-                        </span>
-                        <span class="trend__value">{{ $tenderCounts->cashOrders }}</span>
-                        <span class="trend__date">Cash</span>
-                    </li>
-                    <li class="trend__day">
-                        <span class="trend__bar-wrap">
-                            <span
-                                class="trend__bar"
-                                style="height: {{ round(($tenderCounts->gcashOrders / $countPeak) * 100, 1) }}%"
-                                title="GCash: {{ $tenderCounts->gcashOrders }} {{ \Illuminate\Support\Str::plural('order', $tenderCounts->gcashOrders) }}"
-                            ></span>
-                        </span>
-                        <span class="trend__value">{{ $tenderCounts->gcashOrders }}</span>
-                        <span class="trend__date">GCash</span>
-                    </li>
+                <ul class="trend" aria-label="Orders paid by method each day">
+                    @foreach ($metrics->trend as $trendDay)
+                        <li class="trend__day">
+                            <span class="trend__bar-wrap trend__bar-wrap--pair">
+                                <span
+                                    class="trend__bar trend__bar--cash"
+                                    style="height: {{ round(($trendDay['cashOrders'] / $tenderPeak) * 100, 1) }}%"
+                                    title="Cash {{ $trendDay['cashOrders'] }} · GCash {{ $trendDay['gcashOrders'] }}"
+                                ></span>
+                                <span
+                                    class="trend__bar"
+                                    style="height: {{ round(($trendDay['gcashOrders'] / $tenderPeak) * 100, 1) }}%"
+                                    title="Cash {{ $trendDay['cashOrders'] }} · GCash {{ $trendDay['gcashOrders'] }}"
+                                ></span>
+                            </span>
+                            <span class="trend__value">{{ $trendDay['cashOrders'] }} / {{ $trendDay['gcashOrders'] }}</span>
+                            <span class="trend__date">{{ \Illuminate\Support\Carbon::parse($trendDay['date'])->format('D j') }}</span>
+                        </li>
+                    @endforeach
                 </ul>
 
                 <p class="site-main__copy">
-                    {{ $tenderCounts->orders }} {{ \Illuminate\Support\Str::plural('order', $tenderCounts->orders) }}
-                    in {{ $monthLabel }}. A split-tender walk-in counts on both
-                    sides; an online pickup counts as GCash.
+                    Each day shows <strong>cash</strong> (grey) and
+                    <strong>GCash</strong> (gold) orders: {{ $tenderCounts->cashOrders }}
+                    {{ \Illuminate\Support\Str::plural('order', $tenderCounts->cashOrders) }}
+                    by cash and {{ $tenderCounts->gcashOrders }}
+                    {{ \Illuminate\Support\Str::plural('order', $tenderCounts->gcashOrders) }}
+                    by GCash in the last seven days. A split-tender walk-in counts
+                    on both sides.
                 </p>
             @endif
         </section>
@@ -161,6 +166,47 @@
                 GCash in full.
             </p>
         @endif
+
+        {{-- Bookings per day: paid booking revenue filed under each booking's
+             start date, so a busy day shows at a glance. --}}
+        <section class="dashboard-panel" aria-labelledby="booking-daily-heading">
+            <h2 id="booking-daily-heading">Bookings per day · {{ $monthLabel }}</h2>
+
+            @php
+                $bookingDays = array_values(array_filter(
+                    $dailyTender->days,
+                    static fn (array $day): bool => ($day['bookingsCash'] + $day['bookingsGcash']) > 0,
+                ));
+                $bookingPeak = 1.0;
+
+                foreach ($bookingDays as $bookingDay) {
+                    $bookingPeak = max($bookingPeak, $bookingDay['bookingsCash'] + $bookingDay['bookingsGcash']);
+                }
+            @endphp
+
+            @if ($bookingDays === [])
+                <p class="empty-state">No paid bookings in {{ $monthLabel }}.</p>
+            @else
+                <ul class="trend" aria-label="Booking revenue each day">
+                    @foreach ($bookingDays as $bookingDay)
+                        @php
+                            $bookingTotalDay = $bookingDay['bookingsCash'] + $bookingDay['bookingsGcash'];
+                        @endphp
+                        <li class="trend__day">
+                            <span class="trend__bar-wrap">
+                                <span
+                                    class="trend__bar"
+                                    style="height: {{ round(($bookingTotalDay / $bookingPeak) * 100, 1) }}%"
+                                    title="{{ \Illuminate\Support\Carbon::parse($bookingDay['date'])->format('j M') }}: ₱{{ number_format($bookingTotalDay, 2) }}"
+                                ></span>
+                            </span>
+                            <span class="trend__value">₱{{ number_format($bookingTotalDay, 0) }}</span>
+                            <span class="trend__date">{{ \Illuminate\Support\Carbon::parse($bookingDay['date'])->format('j M') }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </section>
 
         {{-- Per-day collections: each business day of the month, split into
              orders cash / GCash and bookings cash / GCash. --}}
@@ -210,17 +256,18 @@
         </section>
 
         <section class="dashboard-panel" aria-labelledby="trend-heading">
-            <h2 id="trend-heading">7-day trend</h2>
+            <h2 id="trend-heading">Sales · last 7 days</h2>
 
             @php($maxTrend = max(array_map(fn($day) => $day['total'], $metrics->trend)) ?: 1.0)
 
-            <ul class="trend">
+            <ul class="trend" aria-label="Sales each day for the last seven days">
                 @foreach ($metrics->trend as $day)
                     <li class="trend__day">
                         <span class="trend__bar-wrap">
                             <span
                                 class="trend__bar"
                                 style="height: {{ round(($day['total'] / $maxTrend) * 100, 1) }}%"
+                                title="₱{{ number_format($day['total'], 2) }}"
                             ></span>
                         </span>
                         <span class="trend__value">₱{{ number_format($day['total'], 0) }}</span>
@@ -228,6 +275,39 @@
                     </li>
                 @endforeach
             </ul>
+        </section>
+
+        {{-- Orders per day: the same seven days, counted rather than summed. --}}
+        <section class="dashboard-panel" aria-labelledby="orders-trend-heading">
+            <h2 id="orders-trend-heading">Orders · last 7 days</h2>
+
+            @if ($metrics->ordersWindow === 0)
+                <p class="empty-state">No orders in the last seven days.</p>
+            @else
+                @php($maxOrders = max(array_map(fn($day) => $day['orders'], $metrics->trend)) ?: 1)
+
+                <ul class="trend" aria-label="Orders each day for the last seven days">
+                    @foreach ($metrics->trend as $day)
+                        <li class="trend__day">
+                            <span class="trend__bar-wrap">
+                                <span
+                                    class="trend__bar"
+                                    style="height: {{ round(($day['orders'] / $maxOrders) * 100, 1) }}%"
+                                    title="{{ $day['orders'] }} {{ \Illuminate\Support\Str::plural('order', $day['orders']) }}"
+                                ></span>
+                            </span>
+                            <span class="trend__value">{{ $day['orders'] }}</span>
+                            <span class="trend__date">{{ \Illuminate\Support\Carbon::parse($day['date'])->format('D j M') }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <p class="site-main__copy">
+                    {{ $metrics->ordersWindow }}
+                    {{ \Illuminate\Support\Str::plural('order', $metrics->ordersWindow) }}
+                    in the last seven days.
+                </p>
+            @endif
         </section>
 
         <div class="dashboard-columns">
