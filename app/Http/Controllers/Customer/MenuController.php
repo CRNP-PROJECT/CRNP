@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
 
 /**
  * The public landing page: the menu, grouped under category titles, filtered by
- * a category chip, served from the coalesced catalog cache.
+ * a category dropdown, served from the coalesced catalog cache.
  *
  * The open/closed badge and the place-order gate compute from #20's settings
  * (hours, force-close, closures, the GCash payment block); the announcement
@@ -39,11 +39,13 @@ final class MenuController extends Controller
         $categoryId = is_string($categoryId) && $categoryId !== '' ? $categoryId : null;
 
         $settings = $this->settings->current();
+        $categories = $this->storefront->categories();
 
         return view('menu.index', [
             'groups' => $this->storefront->groups($categoryId),
-            'categories' => $this->storefront->categories(),
+            'categories' => $categories,
             'selectedCategory' => $categoryId,
+            'selectedCategoryName' => $categoryId === null ? null : ($categories[$categoryId]->name ?? null),
             'gate' => OrderingGate::for($settings, $this->status, now()),
             'banner' => $settings->bannerVisible ? $settings->bannerText : null,
             'topThree' => $this->topThree->productIds(),

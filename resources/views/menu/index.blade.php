@@ -28,20 +28,38 @@
         </section>
 
         @if ($categories !== [])
-            <nav class="category-chips" aria-label="Filter by category">
-                <a
-                    class="category-chip {{ $selectedCategory === null ? 'category-chip--active' : '' }}"
-                    href="{{ route('home') }}"
-                    @if ($selectedCategory === null) aria-current="true" @endif
-                >All Products</a>
-                @foreach ($categories as $id => $category)
-                    <a
-                        class="category-chip {{ $selectedCategory === $id ? 'category-chip--active' : '' }}"
-                        href="{{ route('home', ['category' => $id]) }}"
-                        @if ($selectedCategory === $id) aria-current="true" @endif
-                    >{{ $category->name }}</a>
-                @endforeach
-            </nav>
+            {{-- One compact dropdown instead of a chip per category: a long
+                 menu stays tidy, and picking a category re-renders the groups
+                 filtered to it. --}}
+            <details class="category-menu">
+                <summary class="category-menu__button">
+                    <span class="category-menu__text">
+                        <span class="category-menu__label">Category</span>
+                        <span class="category-menu__value">{{ $selectedCategoryName ?? 'All Products' }}</span>
+                    </span>
+                    <svg class="category-menu__chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                        <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                </summary>
+                <ul class="category-menu__list">
+                    <li>
+                        <a
+                            class="category-menu__item"
+                            href="{{ route('home') }}"
+                            @if ($selectedCategory === null) aria-current="true" @endif
+                        >All Products</a>
+                    </li>
+                    @foreach ($categories as $id => $category)
+                        <li>
+                            <a
+                                class="category-menu__item"
+                                href="{{ route('home', ['category' => $id]) }}"
+                                @if ($selectedCategory === $id) aria-current="true" @endif
+                            >{{ $category->name }}</a>
+                        </li>
+                    @endforeach
+                </ul>
+            </details>
         @endif
 
         <div id="menu">

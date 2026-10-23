@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 /**
  * #22 — customer menu and browse.
  *
- * The public menu groups products by category, filters by a category chip,
+ * The public menu groups products by category, filters by a category dropdown,
  * renders each card from the coalesced catalog cache (never re-reading the
  * base64 images), and computes the promo strike-through and "% off". The
  * open/closed badge and the place-order gate follow #20's StoreStatus and the
@@ -25,10 +25,11 @@ it('groups the menu under category titles in the admin order', function (): void
         ->assertOk()
         ->assertSee('<h2 class="menu-group__title" id="menu-group-drinks">Drinks</h2>', false)
         ->assertSee('<h2 class="menu-group__title" id="menu-group-mains">Mains</h2>', false)
-        ->assertSeeInOrder(['Milktea', 'Adobo']);
+        ->assertSeeInOrder(['Milktea', 'Adobo'])
+        ->assertSee('category-menu', false);
 });
 
-it('filters the menu to one category when a chip is tapped', function (): void {
+it('filters the menu to one category when it is picked from the dropdown', function (): void {
     seedCategory('drinks', 'Drinks', 1);
     seedCategory('mains', 'Mains', 2);
     seedProduct('p1', ['name' => 'Milktea', 'categoryId' => 'drinks']);
@@ -38,7 +39,9 @@ it('filters the menu to one category when a chip is tapped', function (): void {
         ->assertOk()
         ->assertSee('Milktea')
         ->assertDontSee('Adobo')
-        ->assertDontSee('id="menu-group-mains"', false);
+        ->assertDontSee('id="menu-group-mains"', false)
+        ->assertSee('category-menu__value', false)
+        ->assertSee('Drinks');
 });
 
 it('groups a product with no matching category under All Products', function (): void {

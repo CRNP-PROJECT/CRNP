@@ -1596,47 +1596,8 @@
         height: 16px;
     }
 
-    .category-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-    }
-
-    .category-chip {
-        display: inline-flex;
-        align-items: center;
-        min-height: var(--tap-target-touch);
-        padding: var(--space-1) var(--space-4);
-        background: var(--color-surface-raised);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-pill);
-        color: var(--color-text-muted);
-        text-decoration: none;
-        font-size: 0.9375rem;
-        font-weight: 600;
-        transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-    }
-
-    .category-chip--active {
-        background: var(--color-brand);
-        border-color: var(--color-brand);
-        color: var(--color-brand-ink);
-    }
-
-    .category-chip:hover {
-        color: var(--color-text);
-        background: var(--color-surface-hover);
-        border-color: var(--color-border-strong);
-    }
-
-    .category-chip--active:hover {
-        background: var(--color-brand-strong);
-        border-color: var(--color-brand-strong);
-        color: var(--color-brand-ink);
-    }
-
-    /* The POS category filter: one dropdown button instead of a chip per
-       category, so a long menu stays compact and the tiles keep the width. */
+    /* The category filter, on the public menu and inside the POS: one dropdown
+       button instead of a chip per category, so a long menu stays compact. */
     .category-menu {
         position: relative;
         width: 100%;
