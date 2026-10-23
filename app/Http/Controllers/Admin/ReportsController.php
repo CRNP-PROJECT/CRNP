@@ -168,14 +168,18 @@ final class ReportsController extends Controller
     }
 
     /**
+     * The report's date range. Both bounds are optional: with none supplied the
+     * report opens on the current month to date, so its charts show real figures
+     * rather than an empty single day. A lone `from` still ends at today.
+     *
      * @return array{string, string}
      */
     private function range(mixed $from, mixed $to): array
     {
-        $today = CarbonImmutable::instance(now('UTC'))->setTimezone(BusinessTime::timezone())->toDateString();
+        $today = CarbonImmutable::instance(now('UTC'))->setTimezone(BusinessTime::timezone());
 
-        $start = is_string($from) && $from !== '' ? $from : $today;
-        $end = is_string($to) && $to !== '' ? $to : $start;
+        $start = is_string($from) && $from !== '' ? $from : $today->startOfMonth()->toDateString();
+        $end = is_string($to) && $to !== '' ? $to : $today->toDateString();
 
         return [$start, $end];
     }

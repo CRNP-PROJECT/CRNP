@@ -46,7 +46,7 @@
             </p>
 
             @if ($mix->orders === 0)
-                <p class="empty-state">No payments in this range.</p>
+                <p class="empty-state">No payments in this range. Widen the dates above to see the chart.</p>
             @else
                 @include('admin.reports.partials.tender-donut', ['mix' => $mix])
 
