@@ -265,18 +265,23 @@ it('filters the ring-up menu to a chosen category', function (): void {
 
     $orderId = openWalkIn();
 
-    // The whole menu (no chip) shows both categories' products.
+    // The whole menu (no filter) shows both categories' products, and the
+    // category control is one compact dropdown rather than a chip per category.
     $this->get(route('cashier.walkins.show', ['walkin' => $orderId]))
         ->assertOk()
         ->assertSee('Milktea')
         ->assertSee('Pandesal')
-        ->assertSee('All Products');
+        ->assertSee('All Products')
+        ->assertSee('category-menu', false);
 
-    // A category chip narrows the tiles to that category only.
+    // Choosing a category narrows the tiles to that category only, and the
+    // button shows the chosen name.
     $this->get(route('cashier.walkins.show', ['walkin' => $orderId, 'category' => 'food']))
         ->assertOk()
         ->assertSee('Pandesal')
-        ->assertDontSee('Milktea');
+        ->assertDontSee('Milktea')
+        ->assertSee('category-menu__value', false)
+        ->assertSee('Food');
 });
 
 it('shows an empty state for a category with no items', function (): void {

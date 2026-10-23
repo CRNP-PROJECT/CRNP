@@ -1635,6 +1635,110 @@
         color: var(--color-brand-ink);
     }
 
+    /* The POS category filter: one dropdown button instead of a chip per
+       category, so a long menu stays compact and the tiles keep the width. */
+    .category-menu {
+        position: relative;
+        width: 100%;
+        max-width: 22rem;
+    }
+
+    .category-menu__button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        min-height: var(--tap-target-touch);
+        padding: var(--space-1) var(--space-4);
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        list-style: none;
+        transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+    }
+
+    .category-menu__button::-webkit-details-marker {
+        display: none;
+    }
+
+    .category-menu__button:hover {
+        border-color: var(--color-border-strong);
+        background: var(--color-surface-hover);
+    }
+
+    .category-menu[open] .category-menu__button {
+        border-color: var(--color-brand);
+    }
+
+    .category-menu__text {
+        display: grid;
+        gap: 2px;
+        text-align: left;
+    }
+
+    .category-menu__label {
+        color: var(--color-text-muted);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .category-menu__value {
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    .category-menu__chevron {
+        flex: 0 0 auto;
+        transition: transform var(--dur) var(--ease);
+    }
+
+    .category-menu[open] .category-menu__chevron {
+        transform: rotate(180deg);
+    }
+
+    .category-menu__list {
+        position: absolute;
+        z-index: 30;
+        top: calc(100% + var(--space-1));
+        left: 0;
+        width: 100%;
+        max-height: 18rem;
+        margin: 0;
+        padding: var(--space-1);
+        overflow-y: auto;
+        list-style: none;
+        background: var(--color-surface-raised);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+    }
+
+    .category-menu__item {
+        display: flex;
+        align-items: center;
+        min-height: var(--tap-target-touch);
+        padding: 0 var(--space-3);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-muted);
+        text-decoration: none;
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    .category-menu__item:hover,
+    .category-menu__item:focus-visible {
+        color: var(--color-text);
+        background: var(--color-surface-hover);
+    }
+
+    .category-menu__item[aria-current="true"] {
+        color: var(--color-brand);
+        background: var(--color-brand-soft);
+    }
+
     .menu-group {
         display: grid;
         gap: var(--space-3);

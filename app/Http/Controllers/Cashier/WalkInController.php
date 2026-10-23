@@ -53,12 +53,14 @@ final class WalkInController extends Controller
     {
         $categoryId = $request->query('category');
         $categoryId = is_string($categoryId) && $categoryId !== '' ? $categoryId : null;
+        $categories = $this->catalog->categories();
 
         return view('cashier.walkin.show', [
             'order' => $this->find($walkin),
             'menu' => $this->menu($categoryId),
-            'categories' => $this->catalog->categories(),
+            'categories' => $categories,
             'selectedCategory' => $categoryId,
+            'selectedCategoryName' => $categoryId === null ? null : ($categories[$categoryId]->name ?? null),
             'cashier' => $this->directory->forUser(auth()->user()),
         ]);
     }
