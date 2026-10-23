@@ -10,7 +10,7 @@
 
     $links = [
         'dashboard' => ['admin.dashboard', 'Dashboard'],
-        'reports' => ['admin.reports.sales', 'Reports'],
+        'reports' => ['admin.reports.sales', 'Sales'],
         'activity' => ['admin.activity', 'Activity'],
         'cashier-history' => ['admin.cashier.history', 'Cashier history'],
         'products' => ['admin.products.index', 'Products'],
