@@ -98,6 +98,7 @@
                             <th scope="col">Service</th>
                             <th scope="col">Sold at</th>
                             <th scope="col">Handled by</th>
+                            <th scope="col">Products</th>
                             <th scope="col">Total</th>
                         </tr>
                     </thead>
@@ -113,14 +114,26 @@
                                 <td>{{ $sale['type'] ?? '—' }}</td>
                                 <td>{{ $service?->label() ?? '—' }}</td>
                                 <td>{{ isset($sale['soldAt']) ? \Illuminate\Support\Carbon::parse($sale['soldAt'])->setTimezone('Asia/Manila')->format('Y-m-d H:i') : '—' }}</td>
-                                <td>{{ $sale['handledBy']['name'] ?? '—' }}</td>
+                                <td>{{ $sale['handledBy']['name'] ?? 'Cashier' }}</td>
+                                <td>
+                                    @php
+                                        $lines = is_array($sale['lines'] ?? null) ? $sale['lines'] : [];
+                                    @endphp
+                                    @if (empty($lines))
+                                        —
+                                    @else
+                                        @foreach ($lines as $line)
+                                            {{ $line['name'] ?? 'Product' }} x{{ $line['quantity'] ?? 1 }}@if (!$loop->last), @endif
+                                        @endforeach
+                                    @endif
+                                </td>
                                 <td>₱{{ number_format((float) ($sale['total'] ?? 0), 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th scope="row" colspan="5">Total</th>
+                            <th scope="row" colspan="6">Total</th>
                             <td>₱{{ number_format($total, 2) }}</td>
                         </tr>
                     </tfoot>
