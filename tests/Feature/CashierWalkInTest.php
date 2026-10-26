@@ -377,6 +377,24 @@ it('filters the ring-up menu to a chosen category', function (): void {
         ->assertSee('Food');
 });
 
+it('shows a menu search box that can filter the tiles by name', function (): void {
+    seedProduct('p1', ['name' => 'Milktea', 'price' => 200.0]);
+    seedProduct('p2', ['name' => 'Pandesal', 'price' => 50.0]);
+
+    $orderId = openWalkIn();
+
+    // The search box sits above the tiles with a live region for the count, and
+    // every tile carries the product name the client-side filter reads.
+    $this->get(route('cashier.walkins.show', ['walkin' => $orderId]))
+        ->assertOk()
+        ->assertSee('Search menu')
+        ->assertSee('id="walkin-menu-search"', false)
+        ->assertSee('id="walkin-menu-search-status"', false)
+        ->assertSee('role="status"', false)
+        ->assertSee('data-name="Milktea"', false)
+        ->assertSee('data-name="Pandesal"', false);
+});
+
 it('shows an empty state for a category with no items', function (): void {
     seedCategory('food', 'Food');
     seedProduct('p1', ['name' => 'Milktea', 'price' => 200.0, 'categoryId' => 'drinks']);
@@ -386,7 +404,9 @@ it('shows an empty state for a category with no items', function (): void {
     $this->get(route('cashier.walkins.show', ['walkin' => $orderId, 'category' => 'food']))
         ->assertOk()
         ->assertDontSee('Milktea')
-        ->assertSee('No items in this category');
+        ->assertSee('No items in this category')
+        // No tiles means no filter to offer.
+        ->assertDontSee('id="walkin-menu-search"', false);
 });
 
 it('defaults a walk-in to take-out and stamps it on the sale row', function (): void {

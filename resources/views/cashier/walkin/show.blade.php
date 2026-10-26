@@ -29,6 +29,16 @@
             <section class="walkin-menu" aria-labelledby="walkin-menu-heading">
                 <h2 class="walkin-panel__title" id="walkin-menu-heading">Menu</h2>
 
+                {{-- Filter the tiles as the cashier types, so a long menu never
+                     needs a scroll to find one dish. --}}
+                @if ($menu !== [])
+                    <label class="field">
+                        <span class="field__label">Search menu</span>
+                        <input class="field__input" type="search" id="walkin-menu-search" placeholder="Type a dish or drink…" autocomplete="off">
+                    </label>
+                    <p class="field__hint" id="walkin-menu-search-status" role="status" aria-live="polite"></p>
+                @endif
+
                 @if ($categories !== [])
                     {{-- One compact dropdown instead of a chip per category: a
                          long menu stays tidy, and picking a category reloads
@@ -75,7 +85,9 @@
                 @else
                     <div class="tile-grid">
                         @foreach ($menu as $product)
-                            <form method="POST" action="{{ route('cashier.walkins.items.store', ['walkin' => $order->id]) }}" class="tile">
+                            {{-- The tile carries its product name so the menu search
+                                 can filter the grid without a round trip. --}}
+                            <form method="POST" action="{{ route('cashier.walkins.items.store', ['walkin' => $order->id]) }}" class="tile" data-name="{{ $product->name }}">
                                 @csrf
                                 <input type="hidden" name="product" value="{{ $product->id }}">
                                 <input type="hidden" name="quantity" value="1">
@@ -227,5 +239,48 @@
             </section>
         </div>
     </main>
+
+    {{-- Filter the menu tiles as the cashier types: a long menu is typed down to
+         the one dish instead of scrolled. The status line reads the count back,
+         so an empty result is never a silently blank panel. --}}
+    <script>
+        (() => {
+            const searchEl = document.getElementById('walkin-menu-search');
+            const statusEl = document.getElementById('walkin-menu-search-status');
+
+            if (!searchEl) {
+                return;
+            }
+
+            const tiles = Array.from(document.querySelectorAll('.tile-grid .tile'));
+
+            const filter = () => {
+                const query = searchEl.value.trim().toLowerCase();
+                let shown = 0;
+
+                tiles.forEach((tile) => {
+                    const matches = query === '' || (tile.dataset.name || '').toLowerCase().includes(query);
+
+                    tile.hidden = !matches;
+
+                    if (matches) {
+                        shown += 1;
+                    }
+                });
+
+                if (!statusEl) {
+                    return;
+                }
+
+                statusEl.textContent = query === ''
+                    ? ''
+                    : shown === 0
+                        ? 'No products match “' + searchEl.value.trim() + '”.'
+                        : shown + (shown === 1 ? ' product found.' : ' products found.');
+            };
+
+            searchEl.addEventListener('input', filter);
+        })();
+    </script>
 </body>
 </html>

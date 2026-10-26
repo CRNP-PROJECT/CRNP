@@ -2665,6 +2665,7 @@
     .walkin-cart {
         display: grid;
         gap: var(--space-3);
+        min-width: 0;
         padding: var(--space-4);
         background: var(--color-surface-raised);
         border: 1px solid var(--color-border);
@@ -2715,6 +2716,12 @@
         text-align: left;
         cursor: pointer;
         transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+
+    /* The menu search hides non-matching tiles; the explicit display keeps the
+       grid box from overriding the browser's [hidden] rule. */
+    .tile[hidden] {
+        display: none;
     }
 
     .tile__tap {
@@ -2834,6 +2841,18 @@
         color: var(--color-text-muted);
         font-size: 0.8125rem;
         font-variant-numeric: tabular-nums;
+    }
+
+    /* The order table sits in the narrow half of the POS, and an add-on pick
+       adds a second line of text there — tighter cells keep the four columns
+       inside the panel instead of pushing it off the page. */
+    .walkin-cart .admin-table {
+        font-size: 0.875rem;
+    }
+
+    .walkin-cart .admin-table th,
+    .walkin-cart .admin-table td {
+        padding-inline: var(--space-2);
     }
 
     .walkin-total {
