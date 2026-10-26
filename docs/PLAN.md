@@ -590,9 +590,10 @@ All at `/`.
   row itself; the rejection record and the Restore audit entry
   already carry *who*. No money tap exists without a name behind it,
   and admin **Activity** reads them back (§4 *Admin*).
-- Walk-in ring-up: tap product tiles to build the order; each tile
-  shows that product's **add-ons**, and ticking one adds its price to
-  the line. Promo price, totals, and change compute themselves. The
+- Walk-in ring-up: tap product tiles to build the order; a tile with
+  **add-ons** opens that product's add-on list in the order panel, and
+  ticking one adds its price to the line before it joins the order.
+  Promo price, totals, and change compute themselves. The
   walk-in draws an **order code at ring-up** — the same code space as
   online orders, printed on the receipt — and the **kitchen ticket
   appears at settle**, not at the first tile tap: payment stays the

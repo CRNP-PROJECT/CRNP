@@ -2699,17 +2699,17 @@
 
     .tile-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
         align-items: start;
-        gap: var(--space-2);
+        gap: var(--space-3);
     }
 
     .tile {
         display: grid;
-        gap: var(--space-1);
+        gap: var(--space-2);
         width: 100%;
         min-height: var(--tap-target-touch);
-        padding: var(--space-3);
+        padding: var(--space-4);
         background: var(--color-surface);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
@@ -2782,13 +2782,27 @@
     }
 
     .tile__name {
+        font-size: 1.0625rem;
         font-weight: 600;
     }
 
     .tile__price {
         color: var(--color-text-muted);
-        font-size: 0.9375rem;
+        font-size: 1rem;
         font-variant-numeric: tabular-nums;
+    }
+
+    .tile__badge {
+        justify-self: start;
+        margin-top: var(--space-1);
+        padding: 2px var(--space-2);
+        border: 1px solid var(--color-border);
+        border-radius: 999px;
+        color: var(--color-text-muted);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
     }
 
     .tile__addons {
@@ -2799,6 +2813,12 @@
         padding: var(--space-2) 0 0;
         border: 0;
         border-top: 1px solid var(--color-border);
+    }
+
+    /* The picker owns the add-on list once script is running; the explicit rule
+       keeps .tile__addons' display from overriding the browser's [hidden]. */
+    .tile__addons[hidden] {
+        display: none;
     }
 
     .tile__addons-title {
@@ -2915,10 +2935,10 @@
         font-size: 0.8125rem;
     }
 
-    /* The ticked add-ons waiting in the order panel: one card per selection, so
-       the cashier sees the exact product, picks, and price before the transfer,
-       and the transfer tap moves that line into the order. */
-    .walkin-draft {
+    /* The add-on picker sits in the order panel: a tile tap moves that product's
+       list here, so the menu stays one clean tile per product and the choice is
+       made beside the line it will join. */
+    .walkin-picker {
         display: grid;
         gap: var(--space-2);
         padding: var(--space-3);
@@ -2927,39 +2947,26 @@
         border-radius: var(--radius-md);
     }
 
-    .walkin-draft[hidden] {
+    .walkin-picker[hidden] {
         display: none;
     }
 
-    .walkin-draft__title {
-        color: var(--color-text-muted);
-        font-size: 0.75rem;
+    .walkin-picker__title {
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
+        overflow-wrap: break-word;
     }
 
-    .walkin-draft__list {
-        display: grid;
-        gap: var(--space-2);
+    .walkin-picker__slot {
+        min-width: 0;
+    }
+
+    .walkin-picker .tile__addons {
         margin: 0;
         padding: 0;
-        list-style: none;
+        border-top: 0;
     }
 
-    .walkin-draft__item {
-        display: grid;
-        gap: var(--space-1);
-        padding-bottom: var(--space-2);
-        border-bottom: 1px dashed var(--color-border);
-    }
-
-    .walkin-draft__item:last-child {
-        padding-bottom: 0;
-        border-bottom: 0;
-    }
-
-    .walkin-draft__head {
+    .walkin-picker__total {
         display: flex;
         align-items: baseline;
         justify-content: space-between;
@@ -2967,30 +2974,16 @@
         font-weight: 600;
     }
 
-    .walkin-draft__price {
+    .walkin-picker__amount {
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
 
-    .walkin-draft__addons {
-        display: grid;
-        gap: 2px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        color: var(--color-text-muted);
-        font-size: 0.8125rem;
-    }
-
-    .walkin-draft__addon {
+    .walkin-picker__actions {
         display: flex;
-        justify-content: space-between;
+        flex-wrap: wrap;
+        align-items: center;
         gap: var(--space-2);
-    }
-
-    .walkin-draft__addon-price {
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
     }
 
     .walkin-total {

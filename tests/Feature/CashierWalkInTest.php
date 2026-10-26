@@ -251,7 +251,7 @@ it('prints a receipt with the breakdown and order code', function (): void {
         ->assertSee('Print receipt');
 });
 
-it('shows each product\'s add-ons and prices on the ring-up tiles', function (): void {
+it('keeps each product\'s add-ons with its tile for the order-card picker', function (): void {
     seedProduct('p1', [
         'name' => 'Milktea',
         'price' => 200.0,
@@ -269,7 +269,9 @@ it('shows each product\'s add-ons and prices on the ring-up tiles', function ():
         ->assertSee('Extra pearls')
         ->assertSee('+₱20.00')
         ->assertSee('Less sugar')
-        ->assertSee('name="addOns[]"', false);
+        ->assertSee('name="addOns[]"', false)
+        ->assertSee('id="tile-form-p1"', false)
+        ->assertSee('form="tile-form-p1"', false);
 });
 
 it('adds only the ticked add-on price to the product line', function (): void {
@@ -458,7 +460,7 @@ it('shows a menu search box that can filter the tiles by name', function (): voi
         ->assertSee('data-name="Pandesal"', false);
 });
 
-it('shows the ticked add-ons in the order panel ready to transfer', function (): void {
+it('opens a product\'s add-ons in the order-card picker', function (): void {
     seedProduct('p1', [
         'name' => 'Milktea',
         'price' => 200.0,
@@ -470,16 +472,17 @@ it('shows the ticked add-ons in the order panel ready to transfer', function ():
 
     $orderId = openWalkIn();
 
-    // The order panel carries a hidden "ready to add" card that the ticks fill
-    // in, and the tile plus each add-on carry the prices the preview adds up.
+    // The order panel carries a hidden picker; a tile tap moves that product's
+    // add-on list into it and the picker's Add button submits the tile form.
     $this->get(route('cashier.walkins.show', ['walkin' => $orderId]))
         ->assertOk()
-        ->assertSee('id="walkin-draft"', false)
-        ->assertSee('Ready to add')
+        ->assertSee('id="walkin-picker"', false)
+        ->assertSee('id="walkin-picker-slot"', false)
+        ->assertSee('id="walkin-picker-add"', false)
+        ->assertSee('id="walkin-picker-cancel"', false)
         ->assertSee('data-price="200.00"', false)
         ->assertSee('data-price="20.00"', false)
-        ->assertSee('data-price="0.00"', false)
-        ->assertSee('walkin-draft-list', false);
+        ->assertSee('data-price="0.00"', false);
 });
 
 it('shows an empty state for a category with no items', function (): void {
