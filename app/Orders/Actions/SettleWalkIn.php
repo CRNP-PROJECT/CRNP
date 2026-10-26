@@ -10,21 +10,21 @@ use App\Orders\Orders;
 use App\Orders\OrderStatus;
 use App\Orders\Payment;
 use App\Orders\SplitTender;
-use App\Orders\TenderMethod;
 use App\Rtdb\Contracts\RtdbClient;
 use App\Stats\Actions\TopThreeRanking;
 use InvalidArgumentException;
 
 /**
- * Settles a walk-in: derives the tender from the cashier's payment choice,
- * asserts it sums to the total, then writes the order and its sale row.
+ * Settles a walk-in: derives the tender from the cashier's cash received and
+ * GCash amount, asserts it sums to the total, then writes the order and its
+ * sale row.
  *
- * `Cash` → all-cash with computed change and no GCash leg; `GCash` → one
- * GCash leg for the typed amount, which must equal the total; `Split` → the
- * typed cash and GCash legs, which must sum to the total, change `0`, and a
- * ref# is required because the GCash leg is `> 0` (PLAN §4 *Cashier POS*). At
- * settle the order flips to `cooking`, so the kitchen ticket appears the same
- * instant and not before.
+ * The one **Cash + GCash** form carries both numbers: the GCash leg is the
+ * typed GCash amount (which may be `0`), the cash leg is the remaining balance,
+ * and change is whatever the cash received exceeds it by. A ref# is required
+ * whenever the GCash leg is `> 0` (PLAN §4 *Cashier POS*). At settle the order
+ * flips to `cooking`, so the kitchen ticket appears the same instant and not
+ * before.
  *
  * The status guard makes a stale or duplicate settle a friendly no-op. The
  * `sales/{id}` row is keyed by the same order id (1:1 with the order), so a
@@ -42,8 +42,7 @@ final readonly class SettleWalkIn
 
     public function __invoke(
         string $orderId,
-        TenderMethod $method,
-        float $cashTyped,
+        float $cashReceived,
         float $gcashTyped,
         ?string $gcashRef,
         HandledBy $handledBy,
@@ -55,7 +54,7 @@ final readonly class SettleWalkIn
             return;
         }
 
-        $tender = SplitTender::for($method, $order->total, $cashTyped, $gcashTyped);
+        $tender = SplitTender::for($order->total, $cashReceived, $gcashTyped);
         $gcashRef = $gcashRef !== null ? trim($gcashRef) : null;
 
         if ($tender->requiresGcashRef && ($gcashRef === null || $gcashRef === '')) {

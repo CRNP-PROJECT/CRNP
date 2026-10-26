@@ -213,55 +213,40 @@
                 </p>
 
                 @if ($order->isPending())
-                    {{-- The cashier picks the payment method first, then types only
-                         the amounts that choice needs. The server builds the tender
-                         and refuses a choice that cannot balance. --}}
-                    @php($selectedMethod = old('method', \App\Orders\TenderMethod::Cash->value))
+                    {{-- One Cash + GCash form: the cashier types the cash
+                         received and the GCash amount (either may be 0), so the
+                         saved legs still record which method each peso used. --}}
                     <form
                         method="POST"
                         action="{{ route('cashier.walkins.settle', ['walkin' => $order->id]) }}"
                         class="settle-form"
-                        data-total="{{ number_format($order->total, 2, '.', '') }}"
                     >
                         @csrf
 
-                        <fieldset class="settle-form__method">
-                            <legend class="field__label">Payment method</legend>
-                            <div class="segmented settle-form__segmented">
-                                @foreach (\App\Orders\TenderMethod::cases() as $method)
-                                    <label class="segmented__option">
-                                        <input
-                                            type="radio"
-                                            name="method"
-                                            value="{{ $method->value }}"
-                                            @checked($selectedMethod === $method->value)
-                                        >
-                                        <span>{{ $method->label() }}</span>
-                                    </label>
-                                @endforeach
-                            </div>
-                        </fieldset>
+                        <p class="settle-form__hint">
+                            <strong>Payment method:</strong> Cash + GCash
+                        </p>
 
-                        <label class="field" data-payment-field="cash">
-                            <span class="field__label" data-payment-cash-label>Cash handed over (₱)</span>
-                            <input class="field__input" type="number" name="cash" step="0.01" min="0" value="{{ old('cash') }}">
+                        <label class="field">
+                            <span class="field__label">Cash received (₱)</span>
+                            <input class="field__input" type="number" name="cash" step="0.01" min="0" value="{{ old('cash', '0') }}">
                             @error('cash')<span class="field__error">{{ $message }}</span>@enderror
                         </label>
 
-                        <label class="field" data-payment-field="gcash-amount">
+                        <label class="field">
                             <span class="field__label">GCash amount (₱)</span>
-                            <input class="field__input" type="number" name="gcashAmount" step="0.01" min="0" value="{{ old('gcashAmount') }}">
+                            <input class="field__input" type="number" name="gcashAmount" step="0.01" min="0" value="{{ old('gcashAmount', '0') }}">
                             @error('gcashAmount')<span class="field__error">{{ $message }}</span>@enderror
                         </label>
 
-                        <label class="field" data-payment-field="gcash-ref">
+                        <label class="field">
                             <span class="field__label">GCash ref#</span>
                             <input class="field__input" type="text" name="gcashRef" value="{{ old('gcashRef') }}" maxlength="64">
                             @error('gcashRef')<span class="field__error">{{ $message }}</span>@enderror
                         </label>
 
-                        <p class="settle-form__hint" data-payment-hint>
-                            Enter the cash handed over; change is computed automatically.
+                        <p class="settle-form__hint">
+                            Enter 0 for the method not used. Change is computed from the cash received.
                         </p>
 
                         <button type="submit" class="primary-button">Settle &amp; print receipt</button>
@@ -316,83 +301,24 @@
         })();
     </script>
 
-    {{-- The settle form shows only the fields the picked payment method needs:
-         Cash → cash only; GCash → GCash amount + ref#; Cash + GCash → all
-         three. The GCash amount prefills with the total and is cleared when
-         the cashier switches away, so a split starts from a blank box. --}}
+    {{-- The ref# is only needed when the cashier enters a GCash amount. The
+         server enforces the same rule; this keeps the field honest before the
+         submit. --}}
     <script>
         (function () {
             var form = document.querySelector('.settle-form');
             if (!form) { return; }
 
-            var cash = form.querySelector('[data-payment-field="cash"]');
-            var cashLabel = form.querySelector('[data-payment-cash-label]');
-            var gcashAmount = form.querySelector('[data-payment-field="gcash-amount"]');
-            var gcashRef = form.querySelector('[data-payment-field="gcash-ref"]');
-            var gcashAmountInput = form.querySelector('input[name="gcashAmount"]');
-            var hint = form.querySelector('[data-payment-hint]');
-            var methods = form.querySelectorAll('input[name="method"]');
-            var total = parseFloat(form.getAttribute('data-total') || '0');
-            var autoFilled = false;
-            var lastMethod = null;
+            var gcashAmount = form.querySelector('input[name="gcashAmount"]');
+            var gcashRef = form.querySelector('input[name="gcashRef"]');
 
-            var copy = {
-                cash: {
-                    label: 'Cash handed over (₱)',
-                    hint: 'Enter the cash handed over; change is computed automatically.'
-                },
-                gcash: {
-                    label: 'Cash handed over (₱)',
-                    hint: 'The full total is paid by GCash; confirm the amount and enter the reference number.'
-                },
-                split: {
-                    label: 'Cash amount (₱)',
-                    hint: 'Enter the cash and GCash amounts; together they must equal the total.'
-                }
-            };
-
-            function toggle(field, visible) {
-                if (!field) { return; }
-
-                field.hidden = !visible;
-                field.querySelectorAll('input').forEach(function (input) {
-                    input.disabled = !visible;
-                    input.required = visible;
-                });
-            }
+            if (!gcashAmount || !gcashRef) { return; }
 
             function sync() {
-                var picked = form.querySelector('input[name="method"]:checked');
-                var method = picked ? picked.value : 'cash';
-
-                toggle(cash, method !== 'gcash');
-                toggle(gcashAmount, method !== 'cash');
-                toggle(gcashRef, method !== 'cash');
-
-                var methodChanged = lastMethod !== null && lastMethod !== method;
-
-                if (gcashAmountInput) {
-                    if (method === 'gcash' && (methodChanged || gcashAmountInput.value === '' || autoFilled)) {
-                        gcashAmountInput.value = total.toFixed(2);
-                        autoFilled = true;
-                    } else if (method !== 'gcash' && autoFilled) {
-                        gcashAmountInput.value = '';
-                        autoFilled = false;
-                    }
-                }
-
-                lastMethod = method;
-
-                var selected = copy[method] || copy.cash;
-                if (cashLabel) { cashLabel.textContent = selected.label; }
-                if (hint) { hint.textContent = selected.hint; }
+                gcashRef.required = parseFloat(gcashAmount.value || '0') > 0;
             }
 
-            if (gcashAmountInput) {
-                gcashAmountInput.addEventListener('input', function () { autoFilled = false; });
-            }
-
-            methods.forEach(function (input) { input.addEventListener('change', sync); });
+            gcashAmount.addEventListener('input', sync);
             sync();
         })();
     </script>

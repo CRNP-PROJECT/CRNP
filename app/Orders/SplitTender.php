@@ -7,19 +7,18 @@ namespace App\Orders;
 use InvalidArgumentException;
 
 /**
- * The tender derived from the cashier's payment choice at settle (PLAN §4
+ * The tender derived from the cashier's two typed amounts at settle (PLAN §4
  * *Cashier POS*).
  *
- * `Cash` → all-cash, `change = cash handed − total`, no GCash leg.
- * `GCash` → one GCash leg equal to the typed amount, which must equal the
- * total; no change, ref# required.
- * `Split` → one cash leg and one GCash leg, both typed by the cashier, which
- * must sum to the total; change `0`, ref# required.
+ * The cashier always uses the one **Cash + GCash** form: the cash received and
+ * the GCash amount, either of which may be `0` when that method was not used.
+ * The GCash leg is the typed GCash amount; the cash leg is the remaining
+ * balance, so the payments always sum to the total. Change is whatever the cash
+ * received exceeds that balance by — `0` for a GCash-only sale.
  *
- * The payments always sum to the total by construction;
- * {@see assertBalanced()} re-checks it on the write. The arithmetic runs in
- * integer centavos, so the derived legs and the change carry no floating-point
- * drift.
+ * The arithmetic runs in integer centavos, so the derived legs and the change
+ * carry no floating-point drift. {@see assertBalanced()} re-checks the sum on
+ * the write.
  */
 final readonly class SplitTender
 {
@@ -32,66 +31,41 @@ final readonly class SplitTender
         public bool $requiresGcashRef,
     ) {}
 
-    public static function for(TenderMethod $method, float $total, float $cashTyped, float $gcashTyped): self
-    {
-        return match ($method) {
-            TenderMethod::Cash => self::cash($total, $cashTyped),
-            TenderMethod::Gcash => self::gcash($total, $gcashTyped),
-            TenderMethod::Split => self::split($total, $cashTyped, $gcashTyped),
-        };
-    }
-
-    private static function cash(float $total, float $cashTyped): self
+    public static function for(float $total, float $cashReceived, float $gcashTyped): self
     {
         $totalCents = self::cents($total);
-        $cashCents = self::cents($cashTyped);
-
-        if ($cashCents < $totalCents) {
-            throw new InvalidArgumentException('Cash received must cover the order total.');
-        }
-
-        return new self(
-            [new Payment(PaymentMethod::Cash, self::pesos($totalCents))],
-            self::pesos($cashCents - $totalCents),
-            false,
-        );
-    }
-
-    private static function gcash(float $total, float $gcashTyped): self
-    {
-        $totalCents = self::cents($total);
+        $cashCents = self::cents($cashReceived);
         $gcashCents = self::cents($gcashTyped);
 
-        if ($gcashCents !== $totalCents) {
-            throw new InvalidArgumentException('The GCash amount must equal the order total.');
+        if ($cashCents < 0 || $gcashCents < 0) {
+            throw new InvalidArgumentException('Tender amounts cannot be negative.');
+        }
+
+        if ($gcashCents > $totalCents) {
+            throw new InvalidArgumentException('The GCash amount cannot exceed the order total.');
+        }
+
+        if ($cashCents + $gcashCents < $totalCents) {
+            throw new InvalidArgumentException('The cash and GCash amounts must cover the order total.');
+        }
+
+        $appliedCashCents = $totalCents - $gcashCents;
+        $changeCents = $cashCents + $gcashCents - $totalCents;
+
+        $payments = [];
+
+        if ($appliedCashCents > 0) {
+            $payments[] = new Payment(PaymentMethod::Cash, self::pesos($appliedCashCents));
+        }
+
+        if ($gcashCents > 0) {
+            $payments[] = new Payment(PaymentMethod::Gcash, self::pesos($gcashCents));
         }
 
         return new self(
-            [new Payment(PaymentMethod::Gcash, self::pesos($gcashCents))],
-            0.0,
-            true,
-        );
-    }
-
-    private static function split(float $total, float $cashTyped, float $gcashTyped): self
-    {
-        $totalCents = self::cents($total);
-        $cashCents = self::cents($cashTyped);
-        $gcashCents = self::cents($gcashTyped);
-
-        if ($cashCents <= 0 || $gcashCents <= 0 || $cashCents + $gcashCents !== $totalCents) {
-            throw new InvalidArgumentException(
-                'A split needs cash and GCash amounts that sum to the order total.',
-            );
-        }
-
-        return new self(
-            [
-                new Payment(PaymentMethod::Cash, self::pesos($cashCents)),
-                new Payment(PaymentMethod::Gcash, self::pesos($gcashCents)),
-            ],
-            0.0,
-            true,
+            $payments,
+            self::pesos($changeCents),
+            $gcashCents > 0,
         );
     }
 

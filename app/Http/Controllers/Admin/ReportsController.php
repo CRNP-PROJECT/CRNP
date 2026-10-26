@@ -113,6 +113,7 @@ final class ReportsController extends Controller
             'from' => $from,
             'to' => $to,
             'mix' => PaymentMix::fromSales($rows),
+            'cashiers' => PaymentMix::byCashier($rows),
             'serviceMix' => ServiceMix::fromSales($rows),
         ]);
     }

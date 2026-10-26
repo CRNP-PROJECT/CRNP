@@ -189,7 +189,6 @@ it('rings up a walk-in with cash + GCash and prints the receipt', function (): v
 
     // Cash + GCash: cash 100 of a 400 total → GCash 300, ref# required.
     $this->post(route('cashier.walkins.settle', ['walkin' => $id]), [
-        'method' => 'split',
         'cash' => '100',
         'gcashAmount' => '300',
         'gcashRef' => '1234567890',

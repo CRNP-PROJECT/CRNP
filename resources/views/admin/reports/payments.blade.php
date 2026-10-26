@@ -77,6 +77,52 @@
             @endif
         </section>
 
+        <section class="dashboard-panel" aria-labelledby="cashier-heading">
+            <h2 id="cashier-heading">By cashier · {{ $from }} → {{ $to }}</h2>
+            <p class="site-main__copy">
+                Who took the cash and who took the GCash. Each sale row already
+                carries the cashier stamp and its tender legs, so the figures are
+                summed from the same ledger — no extra field is stored. A backfilled
+                sale has no cashier stamp and stays out.
+            </p>
+
+            @if ($cashiers === [])
+                <p class="empty-state">No cashier-attributed payments in this range.</p>
+            @else
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Cashier</th>
+                            <th scope="col">Orders</th>
+                            <th scope="col">Cash</th>
+                            <th scope="col">GCash</th>
+                            <th scope="col">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($cashiers as $cashier)
+                            <tr>
+                                <td>{{ $cashier['name'] }}</td>
+                                <td>{{ $cashier['orders'] }}</td>
+                                <td>₱{{ number_format($cashier['cash'], 2) }}</td>
+                                <td>₱{{ number_format($cashier['gcash'], 2) }}</td>
+                                <td>₱{{ number_format($cashier['total'], 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th scope="row">Total</th>
+                            <td>{{ array_sum(array_column($cashiers, 'orders')) }}</td>
+                            <td>₱{{ number_format(array_sum(array_column($cashiers, 'cash')), 2) }}</td>
+                            <td>₱{{ number_format(array_sum(array_column($cashiers, 'gcash')), 2) }}</td>
+                            <td>₱{{ number_format(array_sum(array_column($cashiers, 'total')), 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            @endif
+        </section>
+
         <section class="dashboard-panel" aria-labelledby="service-heading">
             <h2 id="service-heading">Service · {{ $from }} → {{ $to }}</h2>
             <p class="site-main__copy">

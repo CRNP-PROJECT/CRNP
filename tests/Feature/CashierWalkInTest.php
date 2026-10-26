@@ -78,7 +78,7 @@ it('keeps the walk-in off the kitchen board until it is settled', function (): v
     expect(rtdb()->get("orders/{$orderId}")['status'])->toBe('pending')
         ->and(onKitchenBoard())->toBe([]);
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '200'])
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200', 'gcashAmount' => '0'])
         ->assertRedirect(route('cashier.walkins.receipt', ['walkin' => $orderId]));
 
     expect(rtdb()->get("orders/{$orderId}")['status'])->toBe('cooking')
@@ -101,20 +101,20 @@ it('optionally carries a table name and prints it on the receipt', function (): 
     expect(rtdb()->get("orders/{$tabled}")['table'])->toBe('Table 4');
 
     addItem($tabled, 'p1');
-    $this->post(route('cashier.walkins.settle', ['walkin' => $tabled]), ['method' => 'cash', 'cash' => '200']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $tabled]), ['cash' => '200', 'gcashAmount' => '0']);
 
     $this->get(route('cashier.walkins.receipt', ['walkin' => $tabled]))
         ->assertOk()
         ->assertSee('Table 4');
 });
 
-it('settles cash at or above the total as all-cash with computed change', function (): void {
+it('settles cash above the total with computed change and no GCash leg', function (): void {
     seedProduct('p1', ['price' => 200.0]);
 
     $orderId = openWalkIn();
     addItem($orderId, 'p1');
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '250'])
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '250', 'gcashAmount' => '0'])
         ->assertRedirect(route('cashier.walkins.receipt', ['walkin' => $orderId]));
 
     $node = rtdb()->get("orders/{$orderId}");
@@ -124,19 +124,19 @@ it('settles cash at or above the total as all-cash with computed change', functi
         ->and($node['gcashRef'] ?? null)->toBeNull();
 });
 
-it('splits the tender when the cashier chooses cash + GCash and requires a ref#', function (): void {
+it('settles a split with both typed legs and a ref#', function (): void {
     seedProduct('p1', ['price' => 200.0]);
 
     $orderId = openWalkIn();
     addItem($orderId, 'p1');
 
-    // A split without a ref# is refused at the boundary; the order is untouched.
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'split', 'cash' => '100', 'gcashAmount' => '100'])
+    // A GCash leg without a ref# is refused at the boundary; the order is untouched.
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '100', 'gcashAmount' => '100'])
         ->assertSessionHasErrors('gcashRef');
 
     expect(rtdb()->get("orders/{$orderId}")['status'])->toBe('pending');
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'split', 'cash' => '100', 'gcashAmount' => '100', 'gcashRef' => '1234567890'])
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '100', 'gcashAmount' => '100', 'gcashRef' => '1234567890'])
         ->assertRedirect(route('cashier.walkins.receipt', ['walkin' => $orderId]));
 
     $node = rtdb()->get("orders/{$orderId}");
@@ -148,19 +148,19 @@ it('splits the tender when the cashier chooses cash + GCash and requires a ref#'
         ->and($node['gcashRef'])->toBe('1234567890');
 });
 
-it('settles a full GCash payment with one leg and a ref#', function (): void {
+it('settles a GCash-only payment with one leg and a ref#', function (): void {
     seedProduct('p1', ['price' => 200.0]);
 
     $orderId = openWalkIn();
     addItem($orderId, 'p1');
 
-    // A GCash settle without a ref# is refused at the boundary.
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'gcash', 'gcashAmount' => '200'])
+    // A GCash-only settle without a ref# is refused at the boundary.
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '0', 'gcashAmount' => '200'])
         ->assertSessionHasErrors('gcashRef');
 
     expect(rtdb()->get("orders/{$orderId}")['status'])->toBe('pending');
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'gcash', 'gcashAmount' => '200', 'gcashRef' => 'GC-777'])
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '0', 'gcashAmount' => '200', 'gcashRef' => 'GC-777'])
         ->assertRedirect(route('cashier.walkins.receipt', ['walkin' => $orderId]));
 
     $node = rtdb()->get("orders/{$orderId}");
@@ -171,14 +171,26 @@ it('settles a full GCash payment with one leg and a ref#', function (): void {
         ->and($node['gcashRef'])->toBe('GC-777');
 });
 
-it('refuses cash under the total when the cashier chose cash', function (): void {
+it('refuses tender under the total', function (): void {
     seedProduct('p1', ['price' => 200.0]);
 
     $orderId = openWalkIn();
     addItem($orderId, 'p1');
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '100'])
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '100', 'gcashAmount' => '0'])
         ->assertSessionHasErrors('cash');
+
+    expect(rtdb()->get("orders/{$orderId}")['status'])->toBe('pending');
+});
+
+it('refuses a GCash amount above the total', function (): void {
+    seedProduct('p1', ['price' => 200.0]);
+
+    $orderId = openWalkIn();
+    addItem($orderId, 'p1');
+
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '0', 'gcashAmount' => '250', 'gcashRef' => 'GC-1'])
+        ->assertSessionHasErrors('gcashAmount');
 
     expect(rtdb()->get("orders/{$orderId}")['status'])->toBe('pending');
 });
@@ -189,7 +201,7 @@ it('stamps handledBy on the walk-in order and its sale row', function (): void {
     $orderId = openWalkIn();
     addItem($orderId, 'p1');
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '200']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200', 'gcashAmount' => '0']);
 
     $expected = ['uid' => StaffDirectory::idForEmail('maria@example.com'), 'name' => 'Maria Santos'];
 
@@ -203,7 +215,7 @@ it('stamps handledBy on the walk-in order and its sale row', function (): void {
         ->and($sale['code'])->toBe(rtdb()->get("orders/{$orderId}")['code']);
 });
 
-it('offers cash, GCash, and cash + GCash at settle', function (): void {
+it('offers one cash + GCash form at settle', function (): void {
     seedProduct('p1', ['price' => 200.0]);
 
     $orderId = openWalkIn();
@@ -212,54 +224,11 @@ it('offers cash, GCash, and cash + GCash at settle', function (): void {
     $this->get(route('cashier.walkins.show', ['walkin' => $orderId]))
         ->assertOk()
         ->assertSee('Payment method')
-        ->assertSee('name="method"', false)
         ->assertSee('Cash + GCash')
         ->assertSee('name="cash"', false)
         ->assertSee('name="gcashAmount"', false)
-        ->assertSee('name="gcashRef"', false);
-});
-
-it('requires the GCash amount to equal the total when the cashier chose GCash', function (): void {
-    seedProduct('p1', ['price' => 200.0]);
-
-    $orderId = openWalkIn();
-    addItem($orderId, 'p1');
-
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), [
-        'method' => 'gcash',
-        'gcashAmount' => '150',
-        'gcashRef' => 'GC-1',
-    ])->assertSessionHasErrors('gcashAmount');
-
-    expect(rtdb()->get("orders/{$orderId}")['status'])->toBe('pending');
-});
-
-it('requires a split to enter cash and GCash amounts that sum to the total', function (): void {
-    seedProduct('p1', ['price' => 200.0]);
-
-    $orderId = openWalkIn();
-    addItem($orderId, 'p1');
-
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), [
-        'method' => 'split',
-        'cash' => '50',
-        'gcashAmount' => '100',
-        'gcashRef' => 'GC-1',
-    ])->assertSessionHasErrors('gcashAmount');
-
-    expect(rtdb()->get("orders/{$orderId}")['status'])->toBe('pending');
-});
-
-it('rejects an unknown payment method', function (): void {
-    seedProduct('p1', ['price' => 200.0]);
-
-    $orderId = openWalkIn();
-    addItem($orderId, 'p1');
-
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'card', 'cash' => '200'])
-        ->assertSessionHasErrors('method');
-
-    expect(rtdb()->get("orders/{$orderId}")['status'])->toBe('pending');
+        ->assertSee('name="gcashRef"', false)
+        ->assertDontSee('name="method"', false);
 });
 
 it('prints a receipt with the breakdown and order code', function (): void {
@@ -268,7 +237,7 @@ it('prints a receipt with the breakdown and order code', function (): void {
     $orderId = openWalkIn();
     addItem($orderId, 'p1');
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'split', 'cash' => '100', 'gcashAmount' => '100', 'gcashRef' => '999']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '100', 'gcashAmount' => '100', 'gcashRef' => '999']);
 
     $code = rtdb()->get("orders/{$orderId}")['code'];
 
@@ -388,7 +357,7 @@ it('prints the add-ons under each line on the receipt', function (): void {
     $orderId = openWalkIn();
     addItem($orderId, 'p1', 1, ['Extra pearls', 'Less sugar']);
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '220']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '220', 'gcashAmount' => '0']);
 
     $this->get(route('cashier.walkins.receipt', ['walkin' => $orderId]))
         ->assertOk()
@@ -421,11 +390,11 @@ it('guards settle so a second tap is a friendly no-op', function (): void {
     $orderId = openWalkIn();
     addItem($orderId, 'p1');
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '200'])
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200', 'gcashAmount' => '0'])
         ->assertRedirect(route('cashier.walkins.receipt', ['walkin' => $orderId]));
 
     // The order is no longer pending, so a stale second settle does not flip it.
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '500'])
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '500', 'gcashAmount' => '0'])
         ->assertRedirect(route('cashier.walkins.receipt', ['walkin' => $orderId]));
 
     expect(rtdb()->get("orders/{$orderId}")['change'])->toBe(0.0);
@@ -437,7 +406,7 @@ it('ignores a stale tile tap on a settled order', function (): void {
     $orderId = openWalkIn();
     addItem($orderId, 'p1');
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '200']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200', 'gcashAmount' => '0']);
 
     $this->post(route('cashier.walkins.items.store', ['walkin' => $orderId]), ['product' => 'p1', 'quantity' => 1])
         ->assertRedirect(route('cashier.walkins.show', ['walkin' => $orderId]));
@@ -535,7 +504,7 @@ it('defaults a walk-in to take-out and stamps it on the sale row', function (): 
     expect(rtdb()->get("orders/{$orderId}")['serviceType'])->toBe('take_out');
 
     addItem($orderId, 'p1');
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '200']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200', 'gcashAmount' => '0']);
 
     expect(rtdb()->get("sales/{$orderId}")['serviceType'])->toBe('take_out');
 });
@@ -551,7 +520,7 @@ it('records a dine-in walk-in chosen at the register', function (): void {
     expect(rtdb()->get("orders/{$orderId}")['serviceType'])->toBe('dine_in');
 
     addItem($orderId, 'p1');
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '200']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200', 'gcashAmount' => '0']);
 
     expect(rtdb()->get("sales/{$orderId}")['serviceType'])->toBe('dine_in');
 });
@@ -606,7 +575,7 @@ it('stamps the switched service type onto the sale row at settle', function (): 
 
     $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]), ['serviceType' => 'dine_in']);
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '200']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200', 'gcashAmount' => '0']);
 
     expect(rtdb()->get("sales/{$orderId}")['serviceType'])->toBe('dine_in');
 });
@@ -618,7 +587,7 @@ it('prints the switched service type on the receipt', function (): void {
     addItem($orderId, 'p1');
 
     $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]), ['serviceType' => 'dine_in']);
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '200']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200', 'gcashAmount' => '0']);
 
     $this->get(route('cashier.walkins.receipt', ['walkin' => $orderId]))
         ->assertOk()
@@ -631,7 +600,7 @@ it('ignores a service-type switch on a settled walk-in', function (): void {
 
     $orderId = openWalkIn();
     addItem($orderId, 'p1');
-    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['method' => 'cash', 'cash' => '200']);
+    $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '200', 'gcashAmount' => '0']);
 
     $this->patch(route('cashier.walkins.service-type', ['walkin' => $orderId]), ['serviceType' => 'dine_in'])
         ->assertRedirect(route('cashier.walkins.show', ['walkin' => $orderId]));

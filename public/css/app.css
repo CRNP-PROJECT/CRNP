@@ -3012,33 +3012,9 @@
         gap: var(--space-3);
     }
 
-    .settle-form__method {
-        display: grid;
-        gap: var(--space-2);
-        min-width: 0;
-        margin: 0;
-        padding: 0;
-        border: 0;
-    }
-
-    .settle-form__segmented {
-        display: flex;
-        width: 100%;
-    }
-
-    .settle-form__segmented .segmented__option {
-        flex: 1 1 0;
-    }
-
     .settle-form__hint {
         color: var(--color-text-muted);
         font-size: 0.875rem;
-    }
-
-    /* The method switch hides the field that does not apply; .field's own
-       display rule would otherwise win over the browser's [hidden] default. */
-    .settle-form [hidden] {
-        display: none;
     }
 
     /* The online pickup queue: grouped sections, each a list of scalar rows with

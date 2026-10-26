@@ -6,22 +6,21 @@ namespace App\Http\Requests\Cashier;
 
 use App\Orders\Order;
 use App\Orders\Orders;
-use App\Orders\TenderMethod;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Validates the walk-in settle POST: the chosen payment method and the fields
- * that choice needs (PLAN §4 *Cashier POS*).
+ * Validates the walk-in settle POST: the one **Cash + GCash** form's two
+ * amounts (PLAN §4 *Cashier POS*).
  *
- * - **Cash** — the cash handed over, which must cover the total; change is
- *   computed.
- * - **GCash** — the GCash amount (which must equal the total) plus a ref#.
- * - **Cash + GCash** — the cash and GCash amounts, which must sum to the
- *   total, plus the GCash ref#.
+ * - **Cash received** — what the customer handed over; it may be `0` for a
+ *   GCash-only sale. It must cover the balance the GCash amount leaves.
+ * - **GCash amount** — what the customer sent; it may be `0` for a cash-only
+ *   sale and can never exceed the total.
+ * - **GCash ref#** — required only when the GCash amount is above `0`.
  *
- * The order total is read here so a choice that cannot balance is refused at
+ * The order total is read here so a choice that cannot cover it is refused at
  * the boundary before any write. A stale or duplicate tap on a settled order
  * is short-circuited to no rules so the controller's status guard returns the
  * friendly no-op rather than a spurious error.
@@ -42,91 +41,47 @@ final class SettleWalkInRequest extends FormRequest
             return [];
         }
 
-        $rules = ['method' => ['required', Rule::enum(TenderMethod::class)]];
-        $methodInput = $this->input('method');
-        $method = is_string($methodInput) ? TenderMethod::tryFrom($methodInput) : null;
-
-        if ($method === null) {
-            return $rules;
-        }
-
         $total = $this->pendingOrder()?->total;
 
-        if ($method->needsCash()) {
-            $rules['cash'] = [
+        return [
+            'cash' => [
                 'required',
                 'numeric',
                 'min:0',
-                function (string $attribute, mixed $value, Closure $fail) use ($method, $total): void {
+                function (string $attribute, mixed $value, Closure $fail) use ($total): void {
                     if ($total === null || ! is_numeric($value)) {
                         return;
                     }
 
-                    $cashCents = self::cents((float) $value);
+                    $gcash = $this->input('gcashAmount', 0);
+                    $gcashCents = is_numeric($gcash) ? self::cents((float) $gcash) : 0;
 
-                    if ($method === TenderMethod::Cash && $cashCents < self::cents($total)) {
-                        $fail('Cash received must cover the total.');
-                    }
-
-                    if ($method === TenderMethod::Split && $cashCents <= 0) {
-                        $fail('A split needs a cash amount above zero.');
+                    if (self::cents((float) $value) + $gcashCents < self::cents($total)) {
+                        $fail('The cash and GCash amounts must cover the total.');
                     }
                 },
-            ];
-        }
-
-        if ($method->needsGcashAmount()) {
-            $rules['gcashAmount'] = [
+            ],
+            'gcashAmount' => [
                 'required',
                 'numeric',
                 'min:0',
-                function (string $attribute, mixed $value, Closure $fail) use ($method, $total): void {
+                function (string $attribute, mixed $value, Closure $fail) use ($total): void {
                     if ($total === null || ! is_numeric($value)) {
                         return;
                     }
 
-                    $totalCents = self::cents($total);
-                    $gcashCents = self::cents((float) $value);
-
-                    if ($method === TenderMethod::Gcash && $gcashCents !== $totalCents) {
-                        $fail('The GCash amount must equal the total.');
-
-                        return;
-                    }
-
-                    if ($method !== TenderMethod::Split) {
-                        return;
-                    }
-
-                    if ($gcashCents <= 0) {
-                        $fail('A split needs a GCash amount above zero.');
-
-                        return;
-                    }
-
-                    $cash = $this->input('cash', 0);
-                    $cashCents = is_numeric($cash) ? self::cents((float) $cash) : 0;
-
-                    if ($cashCents + $gcashCents !== $totalCents) {
-                        $fail('The cash and GCash amounts must add up to the total.');
+                    if (self::cents((float) $value) > self::cents($total)) {
+                        $fail('The GCash amount cannot exceed the total.');
                     }
                 },
-            ];
-        }
-
-        if ($method->needsGcashRef()) {
-            $rules['gcashRef'] = ['required', 'string', 'max:64'];
-        }
-
-        return $rules;
-    }
-
-    public function tenderMethod(): TenderMethod
-    {
-        /** @var array{method: string} $validated */
-        $validated = $this->validated();
-
-        return TenderMethod::from($validated['method']);
+            ],
+            'gcashRef' => [
+                Rule::requiredIf(fn(): bool => $this->gcashTyped() > 0),
+                'nullable',
+                'string',
+                'max:64',
+            ],
+        ];
     }
 
     public function cash(): float
@@ -148,6 +103,13 @@ final class SettleWalkInRequest extends FormRequest
         $ref = $this->validated()['gcashRef'] ?? null;
 
         return is_string($ref) ? $ref : null;
+    }
+
+    private function gcashTyped(): float
+    {
+        $amount = $this->input('gcashAmount');
+
+        return is_numeric($amount) ? (float) $amount : 0.0;
     }
 
     private static function cents(float $amount): int

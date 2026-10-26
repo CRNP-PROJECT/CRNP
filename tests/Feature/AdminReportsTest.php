@@ -165,6 +165,32 @@ it('splits the sales ledger into GCash and cash totals on the payments report', 
         ->assertSee('₱300.00'); // total
 });
 
+it('splits the payments report by the cashier who handled each sale', function (): void {
+    $maria = ['uid' => 'staff-maria', 'name' => 'Maria Santos'];
+    $jose = ['uid' => 'staff-jose', 'name' => 'Jose Cruz'];
+
+    seedSale('w1', [
+        'type' => 'walkin',
+        'total' => 100.0,
+        'payments' => [['method' => 'cash', 'amount' => 100.0]],
+        'handledBy' => $maria,
+        'soldAt' => '2026-10-06T04:00:00Z',
+    ]);
+    seedSale('o1', [
+        'type' => 'online',
+        'total' => 400.0,
+        'payments' => [],
+        'handledBy' => $jose,
+        'soldAt' => '2026-10-06T05:00:00Z',
+    ]);
+
+    $this->get(route('admin.reports.payments', ['from' => '2026-10-06', 'to' => '2026-10-06']))
+        ->assertOk()
+        ->assertSee('By cashier')
+        ->assertSee('Maria Santos')
+        ->assertSee('Jose Cruz');
+});
+
 it('counts an online pickup as GCash in full on the payments report', function (): void {
     seedSale('w1', ['type' => 'walkin', 'total' => 100.0, 'payments' => [['method' => 'cash', 'amount' => 100.0]], 'soldAt' => '2026-10-06T04:00:00Z']);
     seedSale('o1', ['type' => 'online', 'total' => 400.0, 'payments' => [], 'soldAt' => '2026-10-06T05:00:00Z']);

@@ -26,7 +26,7 @@ demonstrated end-to-end, not localhost-only.
 | Area | URL prefix | Purpose |
 |---|---|---|
 | Customer | `/` | **Online ordering (pickup):** category menu → cart → place order → GCash QR auto-sent (proof auto-verified); product pages, about/branches, open/closed status, announcement banner, item tags, favorites; **rental catalog + booking** (per-date availability, prepaid); **Sign in with Google** required to order |
-| Cashier/POS | `/cashier` | Walk-in orders, **payment method (Cash / GCash / Cash + GCash)**, **online pickup queue** (auto-verify, mismatch flags → one-tap Approve/Reject, recently-verified spot-check, Dismissed / Unclaimed lists), **rental handover / return**, **reservation scheduling** (dine-in, function room, catering), receipts |
+| Cashier/POS | `/cashier` | Walk-in orders, **Cash + GCash settle (cash received + GCash amount)**, **online pickup queue** (auto-verify, mismatch flags → one-tap Approve/Reject, recently-verified spot-check, Dismissed / Unclaimed lists), **rental handover / return**, **reservation scheduling** (dine-in, function room, catering), receipts |
 | Kitchen | `/kitchen` | **Read-only** ticket display: **NOW** (oldest-first, age timers, all-day) + **LATER** (scheduled pickups, auto-promoted) — no login, no cook interaction |
 | Admin | `/admin` | Dashboard (sales analytics), products + inventory + rental items, staff, settings, reports |
 
@@ -34,7 +34,7 @@ Domain vocabulary (glossary: [CONTEXT.md](../CONTEXT.md)):
 
 - **Orders** — two origins, one shared stream: **online** (pickup-only,
   GCash-only, identified by **order code**, no table field) and
-  **walk-in** (cashier at the POS, explicit payment method, table name added there).
+  **walk-in** (cashier at the POS, cash + GCash settle, table name added there).
 - **Payment is the gate** — no cashier approval before the QR: placing
   the order auto-sends it (15-min payment window), and the uploaded
   GCash screenshot **auto-verifies** unless the customer's entered
@@ -261,10 +261,9 @@ Per surface:
   saved add-on prefs sync per account; checkout route `throttle`d
   (anti-spam — accounts alone don't stop scripted sign-ups).
 - **Cashier/POS** — tap tiles build the order; promo price, totals, and
-  change compute themselves; payment is an explicit **Cash / GCash /
-  Cash + GCash** choice, and the form asks for the amounts that choice
-  needs (cash handed over, GCash amount, or both) plus the GCash ref#;
-  receipt = one button; online queue runs
+  change compute themselves; settle through one **Cash + GCash** form
+  (cash received + GCash amount, either may be 0) with the GCash ref#
+  when a GCash leg is present; receipt = one button; online queue runs
   **default-yes**: proof auto-verifies, only an amount/ref mismatch
   flags (**Approve / Reject** — the exception), **Mark served** is
   the one happy-path tap; Dismissed/Unclaimed lists absorb
@@ -598,14 +597,12 @@ All at `/`.
   online orders, printed on the receipt — and the **kitchen ticket
   appears at settle**, not at the first tile tap: payment stays the
   gate, so no food is ever cooked for a walk-in who leaves the counter.
-- **Payment method** — the cashier picks **Cash**, **GCash**, or
-  **Cash + GCash** before settling, and the form asks for that choice's
-  own amounts. **Cash** takes the cash handed over and computes
-  `change = cash − total` (cash must cover the total); **GCash** takes
-  the GCash amount, which must equal the total, and requires a ref#;
-  **Cash + GCash** takes the cash and GCash amounts, which must sum to
-  the total, and requires a ref# (walk-in GCash gets the same
-  verification online orders have). The order stores
+- **Payment** — one **Cash + GCash** form: the cashier types the cash
+  received and the GCash amount (either may be `0`), plus the GCash
+  ref# when the GCash amount is above `0` (walk-in GCash gets the same
+  verification online orders have). The GCash leg is the typed amount;
+  the cash leg is the remaining balance, so
+  `change = cash received − cash leg`. The order stores
   `payments: [{method, amount}]` with **`Σ(payments) = total`
   asserted on write** — true by construction, still validated; the
   receipt prints the breakdown.
@@ -768,7 +765,8 @@ and Top 3 never see them.
   kitchen secret**, **reservation capacities** per area (smart
   defaults feeding the public occupancy view), and a **Complete
   setup** banner until the payment block exists.
-- **Reports** — sales, payment (GCash vs cash), reservation, and
+- **Reports** — sales, payment (GCash vs cash, split per cashier from the
+  same `handledBy` stamps), reservation, and
   rental-booking reports with date filters; a **refunds-owed column** with
   the **Mark refunded**
   action (admin-only — the cashier's money taps are Approve and Mark

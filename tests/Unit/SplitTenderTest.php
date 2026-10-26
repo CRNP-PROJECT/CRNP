@@ -5,10 +5,9 @@ declare(strict_types=1);
 use App\Orders\Payment;
 use App\Orders\PaymentMethod;
 use App\Orders\SplitTender;
-use App\Orders\TenderMethod;
 
-it('treats cash at or above the total as all-cash with computed change', function (): void {
-    $tender = SplitTender::for(TenderMethod::Cash, 250.00, 300.00, 0.00);
+it('treats cash above the total as all-cash with computed change', function (): void {
+    $tender = SplitTender::for(250.00, 300.00, 0.00);
 
     expect($tender->payments)->toHaveCount(1)
         ->and($tender->payments[0]->method)->toBe(PaymentMethod::Cash)
@@ -18,7 +17,7 @@ it('treats cash at or above the total as all-cash with computed change', functio
 });
 
 it('treats exact cash as all-cash with no change', function (): void {
-    $tender = SplitTender::for(TenderMethod::Cash, 250.00, 250.00, 0.00);
+    $tender = SplitTender::for(250.00, 250.00, 0.00);
 
     expect($tender->payments)->toHaveCount(1)
         ->and($tender->payments[0]->amount)->toBe(250.0)
@@ -26,13 +25,8 @@ it('treats exact cash as all-cash with no change', function (): void {
         ->and($tender->requiresGcashRef)->toBeFalse();
 });
 
-it('refuses a cash choice that does not cover the total', function (): void {
-    expect(fn(): mixed => SplitTender::for(TenderMethod::Cash, 250.00, 100.00, 0.00))
-        ->toThrow(InvalidArgumentException::class);
-});
-
-it('treats a full GCash choice as one GCash leg that needs a ref', function (): void {
-    $tender = SplitTender::for(TenderMethod::Gcash, 250.00, 0.00, 250.00);
+it('treats a GCash-only payment as one GCash leg that needs a ref', function (): void {
+    $tender = SplitTender::for(250.00, 0.00, 250.00);
 
     expect($tender->payments)->toHaveCount(1)
         ->and($tender->payments[0]->method)->toBe(PaymentMethod::Gcash)
@@ -41,13 +35,8 @@ it('treats a full GCash choice as one GCash leg that needs a ref', function (): 
         ->and($tender->requiresGcashRef)->toBeTrue();
 });
 
-it('refuses a GCash choice whose typed amount is not the total', function (): void {
-    expect(fn(): mixed => SplitTender::for(TenderMethod::Gcash, 250.00, 0.00, 200.00))
-        ->toThrow(InvalidArgumentException::class);
-});
-
 it('splits the tender into the typed cash and GCash legs', function (): void {
-    $tender = SplitTender::for(TenderMethod::Split, 250.00, 100.00, 150.00);
+    $tender = SplitTender::for(250.00, 100.00, 150.00);
 
     expect($tender->payments)->toHaveCount(2)
         ->and($tender->payments[0]->method)->toBe(PaymentMethod::Cash)
@@ -58,23 +47,40 @@ it('splits the tender into the typed cash and GCash legs', function (): void {
         ->and($tender->requiresGcashRef)->toBeTrue();
 });
 
-it('refuses a split whose amounts do not sum to the total', function (): void {
-    expect(fn(): mixed => SplitTender::for(TenderMethod::Split, 250.00, 100.00, 100.00))
+it('applies the balance to cash and returns the overhand as change', function (): void {
+    $tender = SplitTender::for(250.00, 150.00, 150.00);
+
+    expect($tender->payments)->toHaveCount(2)
+        ->and($tender->payments[0]->method)->toBe(PaymentMethod::Cash)
+        ->and($tender->payments[0]->amount)->toBe(100.0)
+        ->and($tender->payments[1]->method)->toBe(PaymentMethod::Gcash)
+        ->and($tender->payments[1]->amount)->toBe(150.0)
+        ->and($tender->change)->toBe(50.0);
+});
+
+it('refuses tender under the total', function (): void {
+    expect(fn(): mixed => SplitTender::for(250.00, 100.00, 0.00))
+        ->toThrow(InvalidArgumentException::class);
+
+    expect(fn(): mixed => SplitTender::for(250.00, 0.00, 200.00))
+        ->toThrow(InvalidArgumentException::class);
+
+    expect(fn(): mixed => SplitTender::for(250.00, 100.00, 100.00))
         ->toThrow(InvalidArgumentException::class);
 });
 
-it('refuses a split with a zero cash leg', function (): void {
-    expect(fn(): mixed => SplitTender::for(TenderMethod::Split, 250.00, 0.00, 250.00))
+it('refuses a GCash amount above the total', function (): void {
+    expect(fn(): mixed => SplitTender::for(250.00, 0.00, 300.00))
         ->toThrow(InvalidArgumentException::class);
 });
 
-it('refuses a split with a zero GCash leg', function (): void {
-    expect(fn(): mixed => SplitTender::for(TenderMethod::Split, 250.00, 250.00, 0.00))
+it('refuses negative tender amounts', function (): void {
+    expect(fn(): mixed => SplitTender::for(250.00, -1.00, 250.00))
         ->toThrow(InvalidArgumentException::class);
 });
 
 it('derives a clean cent split without float drift', function (): void {
-    $tender = SplitTender::for(TenderMethod::Cash, 87.50, 100.00, 0.00);
+    $tender = SplitTender::for(87.50, 100.00, 0.00);
 
     expect($tender->payments[0]->amount)->toBe(87.5)
         ->and($tender->change)->toBe(12.5);
@@ -82,15 +88,16 @@ it('derives a clean cent split without float drift', function (): void {
 
 it('always derives payments that sum to the total', function (): void {
     $cases = [
-        [TenderMethod::Cash, 250.0, 300.0, 0.0],
-        [TenderMethod::Cash, 250.0, 250.0, 0.0],
-        [TenderMethod::Gcash, 250.0, 0.0, 250.0],
-        [TenderMethod::Split, 250.0, 100.0, 150.0],
-        [TenderMethod::Cash, 87.5, 100.0, 0.0],
+        [250.0, 300.0, 0.0],
+        [250.0, 250.0, 0.0],
+        [250.0, 0.0, 250.0],
+        [250.0, 100.0, 150.0],
+        [250.0, 150.0, 150.0],
+        [87.5, 100.0, 0.0],
     ];
 
-    foreach ($cases as [$method, $total, $cash, $gcash]) {
-        $tender = SplitTender::for($method, $total, $cash, $gcash);
+    foreach ($cases as [$total, $cash, $gcash]) {
+        $tender = SplitTender::for($total, $cash, $gcash);
 
         expect($tender->sum())->toBe($total);
     }
