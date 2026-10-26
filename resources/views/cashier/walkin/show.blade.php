@@ -86,8 +86,10 @@
                     <div class="tile-grid">
                         @foreach ($menu as $product)
                             {{-- The tile carries its product name so the menu search
-                                 can filter the grid without a round trip. --}}
-                            <form method="POST" action="{{ route('cashier.walkins.items.store', ['walkin' => $order->id]) }}" class="tile @if ($product->addOns !== []) tile--options @endif @if (! $order->isPending()) tile--locked @endif" data-name="{{ $product->name }}">
+                                 can filter the grid without a round trip, and its
+                                 selling price so the order panel can price a
+                                 ticked selection before it is sent. --}}
+                            <form method="POST" action="{{ route('cashier.walkins.items.store', ['walkin' => $order->id]) }}" class="tile @if ($product->addOns !== []) tile--options @endif @if (! $order->isPending()) tile--locked @endif" data-name="{{ $product->name }}" data-price="{{ number_format($product->sellingPrice(), 2, '.', '') }}">
                                 @csrf
                                 <input type="hidden" name="product" value="{{ $product->id }}">
                                 <input type="hidden" name="quantity" value="1">
@@ -121,7 +123,7 @@
                                         <legend class="tile__addons-title">Add-ons</legend>
                                         @foreach ($product->addOns as $addOn)
                                             <label class="tile__addon">
-                                                <input type="checkbox" name="addOns[]" value="{{ $addOn->name }}" @disabled(! $order->isPending())>
+                                                <input type="checkbox" name="addOns[]" value="{{ $addOn->name }}" data-price="{{ number_format($addOn->price, 2, '.', '') }}" @disabled(! $order->isPending())>
                                                 <span class="tile__addon-name">{{ $addOn->name }}</span>
                                                 <span class="tile__addon-price">+₱{{ number_format($addOn->price, 2) }}</span>
                                             </label>
@@ -165,6 +167,14 @@
                             <noscript><button type="submit" class="link-button">Update service type</button></noscript>
                         @endif
                     </form>
+                </div>
+
+                {{-- Ticked add-ons surface here before they join the order: the
+                     cashier sees the exact product, picks, and price, and one tap
+                     transfers it. Nothing is charged until the transfer. --}}
+                <div class="walkin-draft" id="walkin-draft" hidden>
+                    <p class="walkin-draft__title" id="walkin-draft-title">Ready to add</p>
+                    <ul class="walkin-draft__list" id="walkin-draft-list" aria-labelledby="walkin-draft-title"></ul>
                 </div>
 
                 @if ($order->lines === [])
@@ -384,6 +394,100 @@
 
             methods.forEach(function (input) { input.addEventListener('change', sync); });
             sync();
+        })();
+    </script>
+
+    {{-- The order panel mirrors the ticks as they happen: every tile with a
+         ticked add-on shows the product, its picks, and the computed price, and
+         its Transfer button submits that tile — the same request the tile's Add
+         button sends. Untick everything and the card leaves again, so nothing is
+         charged until the cashier transfers. --}}
+    <script>
+        (() => {
+            const draft = document.getElementById('walkin-draft');
+            const list = document.getElementById('walkin-draft-list');
+
+            if (!draft || !list) {
+                return;
+            }
+
+            const tiles = Array.from(document.querySelectorAll('.tile-grid .tile'));
+            const money = (amount) => '₱' + amount.toFixed(2);
+
+            const render = () => {
+                list.replaceChildren();
+                let count = 0;
+
+                tiles.forEach((tile) => {
+                    const picked = Array.from(tile.querySelectorAll('input[type="checkbox"]:checked'));
+
+                    if (picked.length === 0) {
+                        return;
+                    }
+
+                    const addOns = picked.map((box) => ({
+                        name: box.value,
+                        price: Number(box.dataset.price || 0),
+                    }));
+                    const total = addOns.reduce((sum, addOn) => sum + addOn.price, Number(tile.dataset.price || 0));
+
+                    const item = document.createElement('li');
+                    item.className = 'walkin-draft__item';
+
+                    const head = document.createElement('p');
+                    head.className = 'walkin-draft__head';
+
+                    const name = document.createElement('span');
+                    name.textContent = tile.dataset.name || '';
+
+                    const price = document.createElement('span');
+                    price.className = 'walkin-draft__price';
+                    price.textContent = money(total);
+
+                    head.append(name, price);
+                    item.append(head);
+
+                    const picks = document.createElement('ul');
+                    picks.className = 'walkin-draft__addons';
+
+                    addOns.forEach((addOn) => {
+                        const row = document.createElement('li');
+                        row.className = 'walkin-draft__addon';
+
+                        const label = document.createElement('span');
+                        label.textContent = '+ ' + addOn.name;
+
+                        const amount = document.createElement('span');
+                        amount.className = 'walkin-draft__addon-price';
+                        amount.textContent = money(addOn.price);
+
+                        row.append(label, amount);
+                        picks.append(row);
+                    });
+
+                    item.append(picks);
+
+                    const transfer = document.createElement('button');
+                    transfer.type = 'button';
+                    transfer.className = 'link-button';
+                    transfer.textContent = 'Transfer to order';
+                    transfer.addEventListener('click', () => tile.requestSubmit());
+
+                    item.append(transfer);
+                    list.append(item);
+                    count += 1;
+                });
+
+                draft.hidden = count === 0;
+            };
+
+            tiles.forEach((tile) => {
+                tile.querySelectorAll('input[type="checkbox"]').forEach((box) => {
+                    box.addEventListener('change', render);
+                });
+            });
+
+            render();
         })();
     </script>
 </body>

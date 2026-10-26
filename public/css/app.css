@@ -2915,6 +2915,84 @@
         font-size: 0.8125rem;
     }
 
+    /* The ticked add-ons waiting in the order panel: one card per selection, so
+       the cashier sees the exact product, picks, and price before the transfer,
+       and the transfer tap moves that line into the order. */
+    .walkin-draft {
+        display: grid;
+        gap: var(--space-2);
+        padding: var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid var(--color-brand);
+        border-radius: var(--radius-md);
+    }
+
+    .walkin-draft[hidden] {
+        display: none;
+    }
+
+    .walkin-draft__title {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .walkin-draft__list {
+        display: grid;
+        gap: var(--space-2);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .walkin-draft__item {
+        display: grid;
+        gap: var(--space-1);
+        padding-bottom: var(--space-2);
+        border-bottom: 1px dashed var(--color-border);
+    }
+
+    .walkin-draft__item:last-child {
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+
+    .walkin-draft__head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-2);
+        font-weight: 600;
+    }
+
+    .walkin-draft__price {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .walkin-draft__addons {
+        display: grid;
+        gap: 2px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        color: var(--color-text-muted);
+        font-size: 0.8125rem;
+    }
+
+    .walkin-draft__addon {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-2);
+    }
+
+    .walkin-draft__addon-price {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
     .walkin-total {
         display: flex;
         align-items: baseline;

@@ -489,6 +489,30 @@ it('shows a menu search box that can filter the tiles by name', function (): voi
         ->assertSee('data-name="Pandesal"', false);
 });
 
+it('shows the ticked add-ons in the order panel ready to transfer', function (): void {
+    seedProduct('p1', [
+        'name' => 'Milktea',
+        'price' => 200.0,
+        'addOns' => [
+            ['name' => 'Extra pearls', 'price' => 20.0],
+            ['name' => 'Less sugar', 'price' => 0.0],
+        ],
+    ]);
+
+    $orderId = openWalkIn();
+
+    // The order panel carries a hidden "ready to add" card that the ticks fill
+    // in, and the tile plus each add-on carry the prices the preview adds up.
+    $this->get(route('cashier.walkins.show', ['walkin' => $orderId]))
+        ->assertOk()
+        ->assertSee('id="walkin-draft"', false)
+        ->assertSee('Ready to add')
+        ->assertSee('data-price="200.00"', false)
+        ->assertSee('data-price="20.00"', false)
+        ->assertSee('data-price="0.00"', false)
+        ->assertSee('walkin-draft-list', false);
+});
+
 it('shows an empty state for a category with no items', function (): void {
     seedCategory('food', 'Food');
     seedProduct('p1', ['name' => 'Milktea', 'price' => 200.0, 'categoryId' => 'drinks']);
