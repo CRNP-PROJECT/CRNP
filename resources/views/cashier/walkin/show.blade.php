@@ -75,11 +75,24 @@
                 @else
                     <div class="tile-grid">
                         @foreach ($menu as $product)
-                            <form method="POST" action="{{ route('cashier.walkins.items.store', ['walkin' => $order->id]) }}">
+                            <form method="POST" action="{{ route('cashier.walkins.items.store', ['walkin' => $order->id]) }}" class="tile">
                                 @csrf
                                 <input type="hidden" name="product" value="{{ $product->id }}">
                                 <input type="hidden" name="quantity" value="1">
-                                <button type="submit" class="tile" @disabled(! $order->isPending())>
+
+                                @if ($product->addOns === [])
+                                    <button type="submit" class="tile__tap" @disabled(! $order->isPending())>
+                                        <span class="tile__name">{{ $product->name }}</span>
+                                        <span class="tile__price">
+                                            @if ($product->promo !== null)
+                                                <s>₱{{ number_format($product->price, 2) }}</s>
+                                                ₱{{ number_format($product->sellingPrice(), 2) }}
+                                            @else
+                                                ₱{{ number_format($product->price, 2) }}
+                                            @endif
+                                        </span>
+                                    </button>
+                                @else
                                     <span class="tile__name">{{ $product->name }}</span>
                                     <span class="tile__price">
                                         @if ($product->promo !== null)
@@ -89,7 +102,22 @@
                                             ₱{{ number_format($product->price, 2) }}
                                         @endif
                                     </span>
-                                </button>
+
+                                    {{-- Per-product add-ons: tick one or more, and the
+                                         server adds each price to this line. --}}
+                                    <fieldset class="tile__addons">
+                                        <legend class="tile__addons-title">Add-ons</legend>
+                                        @foreach ($product->addOns as $addOn)
+                                            <label class="tile__addon">
+                                                <input type="checkbox" name="addOns[]" value="{{ $addOn->name }}" @disabled(! $order->isPending())>
+                                                <span class="tile__addon-name">{{ $addOn->name }}</span>
+                                                <span class="tile__addon-price">+₱{{ number_format($addOn->price, 2) }}</span>
+                                            </label>
+                                        @endforeach
+                                    </fieldset>
+
+                                    <button type="submit" class="tile__add" aria-label="Add {{ $product->name }} to order" @disabled(! $order->isPending())>Add to order</button>
+                                @endif
                             </form>
                         @endforeach
                     </div>
@@ -142,12 +170,21 @@
                         <tbody>
                             @foreach ($order->lines as $line)
                                 <tr>
-                                    <td>{{ $line->name }}</td>
+                                    <td>
+                                        {{ $line->name }}
+                                        @if ($line->addOns !== [])
+                                            <ul class="walkin-line__addons">
+                                                @foreach ($line->addOns as $addOn)
+                                                    <li>+ {{ $addOn->name }} <span>₱{{ number_format($addOn->price, 2) }}</span></li>
+                                                @endforeach
+                                            </ul>
+                                        @endif
+                                    </td>
                                     <td>{{ $line->quantity }}</td>
                                     <td>₱{{ number_format($line->lineTotal(), 2) }}</td>
                                     <td>
                                         @if ($order->isPending())
-                                            <form method="POST" action="{{ route('cashier.walkins.items.destroy', ['walkin' => $order->id, 'product' => $line->productId]) }}" class="inline-form">
+                                            <form method="POST" action="{{ route('cashier.walkins.items.destroy', ['walkin' => $order->id, 'line' => $loop->index]) }}" class="inline-form">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="link-button">Remove</button>

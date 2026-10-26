@@ -26,11 +26,11 @@ function openWalkIn(): string
     return (string) array_key_first($orders);
 }
 
-function addItem(string $orderId, string $productId, int $quantity = 1): void
+function addItem(string $orderId, string $productId, int $quantity = 1, array $addOns = []): void
 {
     test()->post(
         route('cashier.walkins.items.store', ['walkin' => $orderId]),
-        ['product' => $productId, 'quantity' => $quantity],
+        ['product' => $productId, 'quantity' => $quantity, 'addOns' => $addOns],
     )->assertRedirect(route('cashier.walkins.show', ['walkin' => $orderId]));
 }
 
@@ -188,6 +188,99 @@ it('prints a receipt with the breakdown and order code', function (): void {
         ->assertSee('Print receipt');
 });
 
+it('shows each product\'s add-ons and prices on the ring-up tiles', function (): void {
+    seedProduct('p1', [
+        'name' => 'Milktea',
+        'price' => 200.0,
+        'addOns' => [
+            ['name' => 'Extra pearls', 'price' => 20.0],
+            ['name' => 'Less sugar', 'price' => 0.0],
+        ],
+    ]);
+
+    $orderId = openWalkIn();
+
+    $this->get(route('cashier.walkins.show', ['walkin' => $orderId]))
+        ->assertOk()
+        ->assertSee('Add-ons')
+        ->assertSee('Extra pearls')
+        ->assertSee('+₱20.00')
+        ->assertSee('Less sugar')
+        ->assertSee('name="addOns[]"', false);
+});
+
+it('adds only the ticked add-on price to the product line', function (): void {
+    seedProduct('p1', [
+        'name' => 'Milktea',
+        'price' => 200.0,
+        'addOns' => [
+            ['name' => 'Extra pearls', 'price' => 20.0],
+            ['name' => 'Less sugar', 'price' => 0.0],
+        ],
+    ]);
+
+    $orderId = openWalkIn();
+    addItem($orderId, 'p1', 1, ['Extra pearls']);
+
+    $node = rtdb()->get("orders/{$orderId}");
+
+    expect($node['lines'][0]['addOns'])->toBe([
+        ['name' => 'Extra pearls', 'price' => 20.0],
+    ])->and($node['total'])->toBe(220.0);
+});
+
+it('keeps a product at its plain price when no add-on is ticked', function (): void {
+    seedProduct('p1', [
+        'name' => 'Milktea',
+        'price' => 200.0,
+        'addOns' => [
+            ['name' => 'Extra pearls', 'price' => 20.0],
+        ],
+    ]);
+
+    $orderId = openWalkIn();
+    addItem($orderId, 'p1');
+
+    expect(rtdb()->get("orders/{$orderId}")['total'])->toBe(200.0);
+});
+
+it('ignores an add-on the product does not offer', function (): void {
+    seedProduct('p1', [
+        'name' => 'Milktea',
+        'price' => 200.0,
+        'addOns' => [
+            ['name' => 'Extra pearls', 'price' => 20.0],
+        ],
+    ]);
+
+    $orderId = openWalkIn();
+    addItem($orderId, 'p1', 1, ['Free upgrade']);
+
+    $node = rtdb()->get("orders/{$orderId}");
+
+    expect($node['lines'][0]['addOns'])->toBe([])
+        ->and($node['total'])->toBe(200.0);
+});
+
+it('keeps the same product with different add-ons on separate lines', function (): void {
+    seedProduct('p1', [
+        'name' => 'Milktea',
+        'price' => 200.0,
+        'addOns' => [
+            ['name' => 'Extra pearls', 'price' => 20.0],
+        ],
+    ]);
+
+    $orderId = openWalkIn();
+    addItem($orderId, 'p1', 1, ['Extra pearls']);
+    addItem($orderId, 'p1');
+
+    $node = rtdb()->get("orders/{$orderId}");
+
+    expect($node['lines'])->toHaveCount(2)
+        ->and($node['total'])->toBe(420.0);
+});
+
 it('prints the add-ons under each line on the receipt', function (): void {
     seedProduct('p1', [
         'name' => 'Milktea',
@@ -199,7 +292,7 @@ it('prints the add-ons under each line on the receipt', function (): void {
     ]);
 
     $orderId = openWalkIn();
-    addItem($orderId, 'p1');
+    addItem($orderId, 'p1', 1, ['Extra pearls', 'Less sugar']);
 
     $this->post(route('cashier.walkins.settle', ['walkin' => $orderId]), ['cash' => '220']);
 
@@ -222,7 +315,7 @@ it('recomputes the total when an item is removed', function (): void {
 
     expect(rtdb()->get("orders/{$orderId}")['total'])->toBe(250.0);
 
-    $this->delete(route('cashier.walkins.items.destroy', ['walkin' => $orderId, 'product' => 'p1']))
+    $this->delete(route('cashier.walkins.items.destroy', ['walkin' => $orderId, 'line' => 0]))
         ->assertRedirect(route('cashier.walkins.show', ['walkin' => $orderId]));
 
     expect(rtdb()->get("orders/{$orderId}")['total'])->toBe(50.0);

@@ -73,18 +73,20 @@ final class WalkInController extends Controller
             return redirect()->route('cashier.walkins.show', ['walkin' => $walkin]);
         }
 
-        $addItem($walkin, $request->productId(), $request->quantity());
+        $addItem($walkin, $request->productId(), $request->quantity(), $request->addOnNames());
 
         return redirect()->route('cashier.walkins.show', ['walkin' => $walkin]);
     }
 
-    public function removeItem(string $walkin, string $product, RemoveItemFromWalkIn $removeItem): RedirectResponse
+    public function removeItem(string $walkin, string $line, RemoveItemFromWalkIn $removeItem): RedirectResponse
     {
-        if (! $this->find($walkin)->isPending()) {
+        $order = $this->find($walkin);
+
+        if (! $order->isPending() || ! ctype_digit($line) || ! array_key_exists((int) $line, $order->lines)) {
             return redirect()->route('cashier.walkins.show', ['walkin' => $walkin]);
         }
 
-        $removeItem($walkin, $product);
+        $removeItem($walkin, (int) $line);
 
         return redirect()->route('cashier.walkins.show', ['walkin' => $walkin]);
     }

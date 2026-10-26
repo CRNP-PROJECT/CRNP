@@ -2717,6 +2717,23 @@
         transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
     }
 
+    .tile__tap {
+        display: grid;
+        gap: var(--space-1);
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .tile__tap:disabled {
+        cursor: default;
+    }
+
     .tile:hover,
     .tile:focus-visible {
         border-color: var(--color-brand);
@@ -2738,6 +2755,84 @@
     .tile__price {
         color: var(--color-text-muted);
         font-size: 0.9375rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .tile__addons {
+        display: grid;
+        gap: var(--space-1);
+        min-width: 0;
+        margin: var(--space-2) 0 0;
+        padding: var(--space-2) 0 0;
+        border: 0;
+        border-top: 1px solid var(--color-border);
+    }
+
+    .tile__addons-title {
+        padding: 0;
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .tile__addon {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-width: 0;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    .tile__addon input {
+        flex: none;
+    }
+
+    .tile__addon-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .tile__addon-price {
+        margin-left: auto;
+        color: var(--color-text-muted);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .tile__add {
+        margin-top: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        border: 1px solid var(--color-border-strong);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface-raised);
+        color: var(--color-text);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .tile__add:hover,
+    .tile__add:focus-visible {
+        border-color: var(--color-brand);
+        color: var(--color-brand);
+    }
+
+    .tile__add:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+
+    .walkin-line__addons {
+        display: grid;
+        gap: 2px;
+        margin: var(--space-1) 0 0;
+        padding: 0;
+        list-style: none;
+        color: var(--color-text-muted);
+        font-size: 0.8125rem;
         font-variant-numeric: tabular-nums;
     }
 

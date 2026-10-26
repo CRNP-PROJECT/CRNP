@@ -590,12 +590,13 @@ All at `/`.
   row itself; the rejection record and the Restore audit entry
   already carry *who*. No money tap exists without a name behind it,
   and admin **Activity** reads them back (§4 *Admin*).
-- Walk-in ring-up: tap tiles build the order; promo price, totals,
-  and change compute themselves. The walk-in draws an **order code at
-  ring-up** — the same code space as online orders, printed on the
-  receipt — and the **kitchen ticket appears at settle**, not at the
-  first tile tap: payment stays the gate, so no food is ever cooked
-  for a walk-in who leaves the counter.
+- Walk-in ring-up: tap product tiles to build the order; each tile
+  shows that product's **add-ons**, and ticking one adds its price to
+  the line. Promo price, totals, and change compute themselves. The
+  walk-in draws an **order code at ring-up** — the same code space as
+  online orders, printed on the receipt — and the **kitchen ticket
+  appears at settle**, not at the first tile tap: payment stays the
+  gate, so no food is ever cooked for a walk-in who leaves the counter.
 - **Split tender** — GCash + cash on one order. The cashier types
   **exactly one number: the cash handed over**; everything else
   derives — `cash ≥ total` → all-cash, `change = cash − total`, no
