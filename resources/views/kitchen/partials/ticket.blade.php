@@ -58,7 +58,7 @@
     <footer class="kitchen-card__clocks">
         @if ($ticket->isNow())
             <span class="kitchen-card__clock kitchen-card__clock--age @if ($ticket->red) is-red @endif">
-                <span class="kitchen-card__clock-label">Age</span>
+                <span class="kitchen-card__clock-label">Time</span>
                 <span class="kitchen-card__clock-value">{{ $ticket->ageClock() }}</span>
             </span>
 
