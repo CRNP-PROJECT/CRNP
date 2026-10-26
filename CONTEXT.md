@@ -12,7 +12,7 @@ A pickup order placed on the public site. GCash-only, identified by order code.
 _Avoid_: delivery order, web order, e-commerce order
 
 **Walk-in order**:
-An onsite customer's order entered by the cashier at the POS. May carry a table name; draws an order code at ring-up and settles by cash/GCash split tender.
+An onsite customer's order entered by the cashier at the POS. May carry a table name; draws an order code at ring-up and settles by an explicit cash, GCash, or cash + GCash choice.
 _Avoid_: counter order, manual order, POS order
 
 **Order code**:

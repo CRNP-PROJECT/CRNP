@@ -173,7 +173,7 @@ it('flips the customer tracker to the dismissed sentence when the window lapses'
     expect($awaiting)->not->toHaveKey($id);
 });
 
-it('rings up a walk-in with split tender and prints the receipt', function (): void {
+it('rings up a walk-in with cash + GCash and prints the receipt', function (): void {
     seedStaff('maria@example.com', StaffRole::Cashier, 'Maria Santos');
     signIn('maria@example.com', 'Maria Santos');
 
@@ -187,9 +187,11 @@ it('rings up a walk-in with split tender and prints the receipt', function (): v
         'quantity' => 2,
     ])->assertRedirect();
 
-    // One typed number: cash 100 of a 400 total → GCash 300, ref# required.
+    // Cash + GCash: cash 100 of a 400 total → GCash 300, ref# required.
     $this->post(route('cashier.walkins.settle', ['walkin' => $id]), [
+        'method' => 'split',
         'cash' => '100',
+        'gcashAmount' => '300',
         'gcashRef' => '1234567890',
     ])->assertRedirect(route('cashier.walkins.receipt', ['walkin' => $id]));
 

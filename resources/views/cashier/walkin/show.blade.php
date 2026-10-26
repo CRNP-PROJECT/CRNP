@@ -87,7 +87,7 @@
                         @foreach ($menu as $product)
                             {{-- The tile carries its product name so the menu search
                                  can filter the grid without a round trip. --}}
-                            <form method="POST" action="{{ route('cashier.walkins.items.store', ['walkin' => $order->id]) }}" class="tile" data-name="{{ $product->name }}">
+                            <form method="POST" action="{{ route('cashier.walkins.items.store', ['walkin' => $order->id]) }}" class="tile @if ($product->addOns !== []) tile--options @endif @if (! $order->isPending()) tile--locked @endif" data-name="{{ $product->name }}">
                                 @csrf
                                 <input type="hidden" name="product" value="{{ $product->id }}">
                                 <input type="hidden" name="quantity" value="1">
@@ -170,43 +170,31 @@
                 @if ($order->lines === [])
                     <p class="empty-state">No items yet — tap a tile to start the order.</p>
                 @else
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Item</th>
-                                <th scope="col">Qty</th>
-                                <th scope="col">Line</th>
-                                <th scope="col"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($order->lines as $line)
-                                <tr>
-                                    <td>
-                                        {{ $line->name }}
-                                        @if ($line->addOns !== [])
-                                            <ul class="walkin-line__addons">
-                                                @foreach ($line->addOns as $addOn)
-                                                    <li>+ {{ $addOn->name }} <span>₱{{ number_format($addOn->price, 2) }}</span></li>
-                                                @endforeach
-                                            </ul>
-                                        @endif
-                                    </td>
-                                    <td>{{ $line->quantity }}</td>
-                                    <td>₱{{ number_format($line->lineTotal(), 2) }}</td>
-                                    <td>
-                                        @if ($order->isPending())
-                                            <form method="POST" action="{{ route('cashier.walkins.items.destroy', ['walkin' => $order->id, 'line' => $loop->index]) }}" class="inline-form">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="link-button">Remove</button>
-                                            </form>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    <ul class="walkin-lines">
+                        @foreach ($order->lines as $line)
+                            <li class="walkin-line">
+                                <span class="walkin-line__main">
+                                    <span class="walkin-line__name">{{ $line->name }}</span>
+                                    @if ($line->addOns !== [])
+                                        <ul class="walkin-line__addons">
+                                            @foreach ($line->addOns as $addOn)
+                                                <li>+ {{ $addOn->name }} <span>₱{{ number_format($addOn->price, 2) }}</span></li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                </span>
+                                <span class="walkin-line__qty">{{ $line->quantity }}×</span>
+                                <span class="walkin-line__total">₱{{ number_format($line->lineTotal(), 2) }}</span>
+                                @if ($order->isPending())
+                                    <form method="POST" action="{{ route('cashier.walkins.items.destroy', ['walkin' => $order->id, 'line' => $loop->index]) }}" class="inline-form">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="link-button">Remove</button>
+                                    </form>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
                 @endif
 
                 <p class="walkin-total">
@@ -215,21 +203,56 @@
                 </p>
 
                 @if ($order->isPending())
-                    {{-- The cashier types exactly one number: the cash handed over.
-                         The split, change, and any required ref# derive from it. --}}
-                    <form method="POST" action="{{ route('cashier.walkins.settle', ['walkin' => $order->id]) }}" class="settle-form">
+                    {{-- The cashier picks the payment method first, then types only
+                         the amounts that choice needs. The server builds the tender
+                         and refuses a choice that cannot balance. --}}
+                    @php($selectedMethod = old('method', \App\Orders\TenderMethod::Cash->value))
+                    <form
+                        method="POST"
+                        action="{{ route('cashier.walkins.settle', ['walkin' => $order->id]) }}"
+                        class="settle-form"
+                        data-total="{{ number_format($order->total, 2, '.', '') }}"
+                    >
                         @csrf
-                        <label class="field">
-                            <span class="field__label">Cash handed over (₱)</span>
-                            <input class="field__input" type="number" name="cash" step="0.01" min="0" value="{{ old('cash') }}" required>
+
+                        <fieldset class="settle-form__method">
+                            <legend class="field__label">Payment method</legend>
+                            <div class="segmented settle-form__segmented">
+                                @foreach (\App\Orders\TenderMethod::cases() as $method)
+                                    <label class="segmented__option">
+                                        <input
+                                            type="radio"
+                                            name="method"
+                                            value="{{ $method->value }}"
+                                            @checked($selectedMethod === $method->value)
+                                        >
+                                        <span>{{ $method->label() }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </fieldset>
+
+                        <label class="field" data-payment-field="cash">
+                            <span class="field__label" data-payment-cash-label>Cash handed over (₱)</span>
+                            <input class="field__input" type="number" name="cash" step="0.01" min="0" value="{{ old('cash') }}">
                             @error('cash')<span class="field__error">{{ $message }}</span>@enderror
                         </label>
 
-                        <label class="field">
-                            <span class="field__label">GCash ref# (only when cash is under the total)</span>
+                        <label class="field" data-payment-field="gcash-amount">
+                            <span class="field__label">GCash amount (₱)</span>
+                            <input class="field__input" type="number" name="gcashAmount" step="0.01" min="0" value="{{ old('gcashAmount') }}">
+                            @error('gcashAmount')<span class="field__error">{{ $message }}</span>@enderror
+                        </label>
+
+                        <label class="field" data-payment-field="gcash-ref">
+                            <span class="field__label">GCash ref#</span>
                             <input class="field__input" type="text" name="gcashRef" value="{{ old('gcashRef') }}" maxlength="64">
                             @error('gcashRef')<span class="field__error">{{ $message }}</span>@enderror
                         </label>
+
+                        <p class="settle-form__hint" data-payment-hint>
+                            Enter the cash handed over; change is computed automatically.
+                        </p>
 
                         <button type="submit" class="primary-button">Settle &amp; print receipt</button>
                     </form>
@@ -280,6 +303,87 @@
             };
 
             searchEl.addEventListener('input', filter);
+        })();
+    </script>
+
+    {{-- The settle form shows only the fields the picked payment method needs:
+         Cash → cash only; GCash → GCash amount + ref#; Cash + GCash → all
+         three. The GCash amount prefills with the total and is cleared when
+         the cashier switches away, so a split starts from a blank box. --}}
+    <script>
+        (function () {
+            var form = document.querySelector('.settle-form');
+            if (!form) { return; }
+
+            var cash = form.querySelector('[data-payment-field="cash"]');
+            var cashLabel = form.querySelector('[data-payment-cash-label]');
+            var gcashAmount = form.querySelector('[data-payment-field="gcash-amount"]');
+            var gcashRef = form.querySelector('[data-payment-field="gcash-ref"]');
+            var gcashAmountInput = form.querySelector('input[name="gcashAmount"]');
+            var hint = form.querySelector('[data-payment-hint]');
+            var methods = form.querySelectorAll('input[name="method"]');
+            var total = parseFloat(form.getAttribute('data-total') || '0');
+            var autoFilled = false;
+            var lastMethod = null;
+
+            var copy = {
+                cash: {
+                    label: 'Cash handed over (₱)',
+                    hint: 'Enter the cash handed over; change is computed automatically.'
+                },
+                gcash: {
+                    label: 'Cash handed over (₱)',
+                    hint: 'The full total is paid by GCash; confirm the amount and enter the reference number.'
+                },
+                split: {
+                    label: 'Cash amount (₱)',
+                    hint: 'Enter the cash and GCash amounts; together they must equal the total.'
+                }
+            };
+
+            function toggle(field, visible) {
+                if (!field) { return; }
+
+                field.hidden = !visible;
+                field.querySelectorAll('input').forEach(function (input) {
+                    input.disabled = !visible;
+                    input.required = visible;
+                });
+            }
+
+            function sync() {
+                var picked = form.querySelector('input[name="method"]:checked');
+                var method = picked ? picked.value : 'cash';
+
+                toggle(cash, method !== 'gcash');
+                toggle(gcashAmount, method !== 'cash');
+                toggle(gcashRef, method !== 'cash');
+
+                var methodChanged = lastMethod !== null && lastMethod !== method;
+
+                if (gcashAmountInput) {
+                    if (method === 'gcash' && (methodChanged || gcashAmountInput.value === '' || autoFilled)) {
+                        gcashAmountInput.value = total.toFixed(2);
+                        autoFilled = true;
+                    } else if (method !== 'gcash' && autoFilled) {
+                        gcashAmountInput.value = '';
+                        autoFilled = false;
+                    }
+                }
+
+                lastMethod = method;
+
+                var selected = copy[method] || copy.cash;
+                if (cashLabel) { cashLabel.textContent = selected.label; }
+                if (hint) { hint.textContent = selected.hint; }
+            }
+
+            if (gcashAmountInput) {
+                gcashAmountInput.addEventListener('input', function () { autoFilled = false; });
+            }
+
+            methods.forEach(function (input) { input.addEventListener('change', sync); });
+            sync();
         })();
     </script>
 </body>

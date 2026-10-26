@@ -63,7 +63,7 @@ The beats are also proven in isolation by `CheckoutTest` (browse/cart/place/QR),
 
 | Beat | Proving test |
 |---|---|
-| Walk-in ring-up with split tender → receipt | `AcceptanceTest` — *rings up a walk-in with split tender and prints the receipt*; `CashierWalkInTest` |
+| Walk-in ring-up with cash, GCash, or cash + GCash → receipt | `AcceptanceTest` — *rings up a walk-in with cash + GCash and prints the receipt*; `CashierWalkInTest` |
 | Reservation entered → conflict blocked → confirm → calendar | `AcceptanceTest` — *enters a reservation, blocks a conflict, confirms…*; `ReservationEntryTest` |
 | Sale appears in the analytics dashboard | `AcceptanceTest` — happy path (step 10); `AdminDashboardTest` — *shows the KPIs, the 7-day trend, best-sellers, and peak hours* |
 | Monthly GCash vs cash tracked on the dashboard | `AdminDashboardTest` — *shows the monthly payment mix, separating GCash from cash*, *filters the monthly payment mix by the chosen month* |

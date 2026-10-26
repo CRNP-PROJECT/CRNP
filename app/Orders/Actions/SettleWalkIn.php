@@ -10,19 +10,21 @@ use App\Orders\Orders;
 use App\Orders\OrderStatus;
 use App\Orders\Payment;
 use App\Orders\SplitTender;
+use App\Orders\TenderMethod;
 use App\Rtdb\Contracts\RtdbClient;
 use App\Stats\Actions\TopThreeRanking;
 use InvalidArgumentException;
 
 /**
- * Settles a walk-in: derives the split tender from the one number the cashier
- * typed, asserts the tender sums to the total, then writes the order and its
- * sale row.
+ * Settles a walk-in: derives the tender from the cashier's payment choice,
+ * asserts it sums to the total, then writes the order and its sale row.
  *
- * `cash ≥ total` → all-cash with computed change and no GCash leg; `cash <
- * total` → `GCash = total − cash`, change `0`, and a GCash ref# is required
- * because that leg is `> 0` (PLAN §4 *Cashier POS*). At settle the order flips
- * to `cooking`, so the kitchen ticket appears the same instant and not before.
+ * `Cash` → all-cash with computed change and no GCash leg; `GCash` → one
+ * GCash leg for the typed amount, which must equal the total; `Split` → the
+ * typed cash and GCash legs, which must sum to the total, change `0`, and a
+ * ref# is required because the GCash leg is `> 0` (PLAN §4 *Cashier POS*). At
+ * settle the order flips to `cooking`, so the kitchen ticket appears the same
+ * instant and not before.
  *
  * The status guard makes a stale or duplicate settle a friendly no-op. The
  * `sales/{id}` row is keyed by the same order id (1:1 with the order), so a
@@ -38,8 +40,14 @@ final readonly class SettleWalkIn
         private TopThreeRanking $ranking,
     ) {}
 
-    public function __invoke(string $orderId, float $cashTyped, ?string $gcashRef, HandledBy $handledBy): void
-    {
+    public function __invoke(
+        string $orderId,
+        TenderMethod $method,
+        float $cashTyped,
+        float $gcashTyped,
+        ?string $gcashRef,
+        HandledBy $handledBy,
+    ): void {
         $order = $this->orders->require($orderId);
 
         // Status-guarded: a stale or duplicate tap never flips a settled order.
@@ -47,7 +55,7 @@ final readonly class SettleWalkIn
             return;
         }
 
-        $tender = SplitTender::for($order->total, $cashTyped);
+        $tender = SplitTender::for($method, $order->total, $cashTyped, $gcashTyped);
         $gcashRef = $gcashRef !== null ? trim($gcashRef) : null;
 
         if ($tender->requiresGcashRef && ($gcashRef === null || $gcashRef === '')) {

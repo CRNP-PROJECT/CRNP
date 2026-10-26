@@ -27,8 +27,8 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * The walk-in ring-up: tap tiles to build the order, settle with one typed cash
- * number, and print the receipt (PLAN §4 *Cashier POS*).
+ * The walk-in ring-up: tap tiles to build the order, settle with the typed
+ * cash/GCash amounts, and print the receipt (PLAN §4 *Cashier POS*).
  *
  * The controller validates at the boundary, delegates to the order actions, and
  * responds. Every write is attributed to the cashier on duty (`handledBy`),
@@ -120,7 +120,14 @@ final class WalkInController extends Controller
             return redirect()->route('cashier.walkins.receipt', ['walkin' => $walkin]);
         }
 
-        $settle($walkin, $request->cash(), $request->reference(), $this->cashier());
+        $settle(
+            $walkin,
+            $request->tenderMethod(),
+            $request->cash(),
+            $request->gcashAmount(),
+            $request->reference(),
+            $this->cashier(),
+        );
 
         return redirect()->route('cashier.walkins.receipt', ['walkin' => $walkin]);
     }

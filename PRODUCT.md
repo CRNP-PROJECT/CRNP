@@ -87,8 +87,8 @@ presses buttons"** with **payment as the only gate**:
   cooking → READY), proof-of-payment attach with auto-verify, open/closed
   badge, announcement banner, about/branches page, read-only reservation
   occupancy view, and a prepaid rental catalog + booking flow.
-- **Cashier POS (`/cashier`)** — walk-in ring-up with split tender (GCash +
-  cash) and computed change, online pickup queue with flagged holds and a
+- **Cashier POS (`/cashier`)** — walk-in ring-up with an explicit Cash /
+  GCash / Cash + GCash payment choice and computed change, online pickup queue with flagged holds and a
   recently-verified spot-check list, Dismissed / Unclaimed lists with Restore /
   Void / Collect late, rental handover / return, staff-entered reservations
   (phone-lookup-first), and receipts.

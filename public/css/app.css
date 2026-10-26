@@ -2626,6 +2626,7 @@
 
     .walkin-head {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
         gap: var(--space-3);
@@ -2654,9 +2655,9 @@
         gap: var(--space-4);
     }
 
-    @media (min-width: 800px) {
+    @media (min-width: 1000px) {
         .walkin-grid {
-            grid-template-columns: minmax(0, 3fr) minmax(20rem, 2fr);
+            grid-template-columns: minmax(0, 3fr) minmax(22rem, 2fr);
             align-items: start;
         }
     }
@@ -2698,7 +2699,8 @@
 
     .tile-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+        align-items: start;
         gap: var(--space-2);
     }
 
@@ -2724,10 +2726,34 @@
         display: none;
     }
 
+    /* A tile with add-ons holds controls, so the card itself is not the tap
+       target; only its Add to order button is. The lift is reserved for the
+       plain tap tiles. */
+    .tile--options {
+        cursor: default;
+    }
+
+    .tile--locked {
+        opacity: 0.5;
+        cursor: default;
+    }
+
+    .tile--options:hover,
+    .tile--locked:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .tile--options:focus-within {
+        border-color: var(--color-brand);
+        box-shadow: var(--shadow-sm);
+    }
+
     .tile__tap {
         display: grid;
         gap: var(--space-1);
         width: 100%;
+        height: 100%;
         padding: 0;
         border: 0;
         background: none;
@@ -2785,10 +2811,12 @@
     }
 
     .tile__addon {
-        display: flex;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: center;
         gap: var(--space-2);
         min-width: 0;
+        min-height: var(--tap-target-touch);
         font-size: 0.875rem;
         cursor: pointer;
     }
@@ -2799,23 +2827,24 @@
 
     .tile__addon-name {
         min-width: 0;
-        overflow-wrap: anywhere;
+        overflow-wrap: break-word;
     }
 
     .tile__addon-price {
-        margin-left: auto;
         color: var(--color-text-muted);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
 
     .tile__add {
+        justify-self: stretch;
+        min-height: var(--tap-target-touch);
         margin-top: var(--space-2);
         padding: var(--space-2) var(--space-3);
-        border: 1px solid var(--color-border-strong);
+        border: 1px solid transparent;
         border-radius: var(--radius-sm);
-        background: var(--color-surface-raised);
-        color: var(--color-text);
+        background: var(--color-brand);
+        color: var(--color-brand-ink);
         font: inherit;
         font-weight: 600;
         cursor: pointer;
@@ -2823,8 +2852,7 @@
 
     .tile__add:hover,
     .tile__add:focus-visible {
-        border-color: var(--color-brand);
-        color: var(--color-brand);
+        background: var(--color-brand-strong);
     }
 
     .tile__add:disabled {
@@ -2843,16 +2871,48 @@
         font-variant-numeric: tabular-nums;
     }
 
-    /* The order table sits in the narrow half of the POS, and an add-on pick
-       adds a second line of text there — tighter cells keep the four columns
-       inside the panel instead of pushing it off the page. */
-    .walkin-cart .admin-table {
-        font-size: 0.875rem;
+    /* The running order is a list row, not a table: the item name keeps the
+       flexible column and the qty, line total, and Remove control stay put, so
+       the cart never widens the grid or squeezes names. */
+    .walkin-lines {
+        display: grid;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        list-style: none;
     }
 
-    .walkin-cart .admin-table th,
-    .walkin-cart .admin-table td {
-        padding-inline: var(--space-2);
+    .walkin-line {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto auto;
+        align-items: start;
+        gap: var(--space-2);
+        padding: var(--space-2) 0;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .walkin-line__main {
+        min-width: 0;
+    }
+
+    .walkin-line__name {
+        overflow-wrap: break-word;
+    }
+
+    .walkin-line__qty {
+        color: var(--color-text-muted);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .walkin-line__total {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .walkin-line .link-button {
+        min-height: var(--tap-target-touch);
+        padding: 0;
+        font-size: 0.8125rem;
     }
 
     .walkin-total {
@@ -2872,6 +2932,35 @@
     .settle-form {
         display: grid;
         gap: var(--space-3);
+    }
+
+    .settle-form__method {
+        display: grid;
+        gap: var(--space-2);
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+
+    .settle-form__segmented {
+        display: flex;
+        width: 100%;
+    }
+
+    .settle-form__segmented .segmented__option {
+        flex: 1 1 0;
+    }
+
+    .settle-form__hint {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+    }
+
+    /* The method switch hides the field that does not apply; .field's own
+       display rule would otherwise win over the browser's [hidden] default. */
+    .settle-form [hidden] {
+        display: none;
     }
 
     /* The online pickup queue: grouped sections, each a list of scalar rows with

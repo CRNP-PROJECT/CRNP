@@ -7,16 +7,19 @@ namespace App\Orders;
 use InvalidArgumentException;
 
 /**
- * The split tender derived from the one number the cashier typed: the cash
- * handed over (PLAN §4 *Cashier POS*).
+ * The tender derived from the cashier's payment choice at settle (PLAN §4
+ * *Cashier POS*).
  *
- * `cash ≥ total` → all-cash, `change = cash − total`, no GCash leg.
- * `cash < total` → `GCash = total − cash`, change `0`, and a GCash ref# is
- * required because that leg is `> 0`. The payments always sum to the total by
- * construction; {@see assertBalanced()} re-checks it on the write.
+ * `Cash` → all-cash, `change = cash handed − total`, no GCash leg.
+ * `GCash` → one GCash leg equal to the typed amount, which must equal the
+ * total; no change, ref# required.
+ * `Split` → one cash leg and one GCash leg, both typed by the cashier, which
+ * must sum to the total; change `0`, ref# required.
  *
- * The arithmetic runs in integer centavos, so the derived legs and the change
- * carry no floating-point drift.
+ * The payments always sum to the total by construction;
+ * {@see assertBalanced()} re-checks it on the write. The arithmetic runs in
+ * integer centavos, so the derived legs and the change carry no floating-point
+ * drift.
  */
 final readonly class SplitTender
 {
@@ -29,32 +32,67 @@ final readonly class SplitTender
         public bool $requiresGcashRef,
     ) {}
 
-    public static function for(float $total, float $cashTyped): self
+    public static function for(TenderMethod $method, float $total, float $cashTyped, float $gcashTyped): self
+    {
+        return match ($method) {
+            TenderMethod::Cash => self::cash($total, $cashTyped),
+            TenderMethod::Gcash => self::gcash($total, $gcashTyped),
+            TenderMethod::Split => self::split($total, $cashTyped, $gcashTyped),
+        };
+    }
+
+    private static function cash(float $total, float $cashTyped): self
     {
         $totalCents = self::cents($total);
-        $cashCents = max(0, self::cents($cashTyped));
+        $cashCents = self::cents($cashTyped);
 
-        if ($cashCents >= $totalCents) {
-            return new self(
-                [new Payment(PaymentMethod::Cash, self::pesos($totalCents))],
-                self::pesos($cashCents - $totalCents),
-                false,
+        if ($cashCents < $totalCents) {
+            throw new InvalidArgumentException('Cash received must cover the order total.');
+        }
+
+        return new self(
+            [new Payment(PaymentMethod::Cash, self::pesos($totalCents))],
+            self::pesos($cashCents - $totalCents),
+            false,
+        );
+    }
+
+    private static function gcash(float $total, float $gcashTyped): self
+    {
+        $totalCents = self::cents($total);
+        $gcashCents = self::cents($gcashTyped);
+
+        if ($gcashCents !== $totalCents) {
+            throw new InvalidArgumentException('The GCash amount must equal the order total.');
+        }
+
+        return new self(
+            [new Payment(PaymentMethod::Gcash, self::pesos($gcashCents))],
+            0.0,
+            true,
+        );
+    }
+
+    private static function split(float $total, float $cashTyped, float $gcashTyped): self
+    {
+        $totalCents = self::cents($total);
+        $cashCents = self::cents($cashTyped);
+        $gcashCents = self::cents($gcashTyped);
+
+        if ($cashCents <= 0 || $gcashCents <= 0 || $cashCents + $gcashCents !== $totalCents) {
+            throw new InvalidArgumentException(
+                'A split needs cash and GCash amounts that sum to the order total.',
             );
         }
 
-        $payments = [];
-
-        if ($cashCents > 0) {
-            $payments[] = new Payment(PaymentMethod::Cash, self::pesos($cashCents));
-        }
-
-        $gcashCents = $totalCents - $cashCents;
-
-        if ($gcashCents > 0) {
-            $payments[] = new Payment(PaymentMethod::Gcash, self::pesos($gcashCents));
-        }
-
-        return new self($payments, 0.0, $gcashCents > 0);
+        return new self(
+            [
+                new Payment(PaymentMethod::Cash, self::pesos($cashCents)),
+                new Payment(PaymentMethod::Gcash, self::pesos($gcashCents)),
+            ],
+            0.0,
+            true,
+        );
     }
 
     /**

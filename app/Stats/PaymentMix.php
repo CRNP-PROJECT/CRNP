@@ -14,7 +14,7 @@ use App\Orders\PaymentMethod;
  * The split reads the same `sales/{id}` ledger the dashboard and sales report
  * read, so a rental booking never counts. Two tender sources feed it:
  *
- * - a **walk-in** records its split tender as `payments: [{method, amount}]`
+ * - a **walk-in** records its tender legs as `payments: [{method, amount}]`
  *   (`cash` / `gcash`) at settle, so each leg is summed by its method;
  * - an **online** pickup is prepaid through the GCash gate and its ledger row
  *   carries no tender legs, so its whole total is GCash.

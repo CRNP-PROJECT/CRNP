@@ -156,7 +156,7 @@ it('recomputes the ranking when a walk-in is settled', function (): void {
 
     $total = rtdb()->get("orders/{$id}")['total'];
 
-    $this->post(route('cashier.walkins.settle', ['walkin' => $id]), ['cash' => (string) $total])
+    $this->post(route('cashier.walkins.settle', ['walkin' => $id]), ['method' => 'cash', 'cash' => (string) $total])
         ->assertRedirect(route('cashier.walkins.receipt', ['walkin' => $id]));
 
     expect(storedRanking())->toBe(['p1', 'p2', 'p3']);
